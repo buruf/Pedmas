@@ -156,15 +156,15 @@ export function BaseTen({
   );
 }
 
-/** Small legend so a parent or child knows what the colours mean. */
-export function BaseTenKey() {
+/**
+ * Small legend so a parent or child knows what the colours mean. Only shows
+ * the places actually used — a 2-digit lesson should not mention hundreds.
+ */
+export function BaseTenKey({ places = ["tens", "ones"] }: { places?: ("hundreds" | "tens" | "ones")[] }) {
+  const NAMES = { hundreds: "hundred", tens: "ten", ones: "one" } as const;
   return (
     <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-ink-700">
-      {[
-        ["hundreds", "hundred"],
-        ["tens", "ten"],
-        ["ones", "one"],
-      ].map(([k, name]) => (
+      {places.map((k) => [k, NAMES[k]]).map(([k, name]) => (
         <span key={k} className="inline-flex items-center gap-1.5">
           <span
             className="inline-block rounded-sm"
