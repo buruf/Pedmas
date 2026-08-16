@@ -23,6 +23,14 @@ const POLYGONS = [
   { name: "octagon", sides: 8 },
 ] as const;
 
+/**
+ * Shapes available at a stage. The earliest questions stay with triangles and
+ * four-sided shapes — a first geometry question should not turn on whether a
+ * young child knows the word "octagon".
+ */
+const polygonsForStage = (stage: number) =>
+  POLYGONS.filter((p) => (stage <= 1 ? p.sides <= 4 : stage <= 2 ? p.sides <= 6 : true));
+
 const QUADS = [
   { name: "square", clue: "It has 4 equal sides and 4 right angles." },
   { name: "rectangle", clue: "It has 4 right angles, and opposite sides are equal, but not all 4 sides are equal." },
@@ -36,7 +44,7 @@ const shapes2d: GeneratorFamily = {
     ["Sides and corners", "Name the shape", "Classify triangles", "Classify quadrilaterals", "Polygon angle sums"][st - 1],
   generate(skill, stage, rng): RawQuestion {
     if (stage === 1) {
-      const p = rng.pick(POLYGONS);
+      const p = rng.pick(polygonsForStage(1));
       const askSides = rng.chance(0.5);
       return inputQ({
         instruction: "Count the parts of the shape.",
@@ -53,8 +61,8 @@ const shapes2d: GeneratorFamily = {
       });
     }
     if (stage === 2) {
-      const p = rng.pick(POLYGONS);
-      const wrongs = POLYGONS.filter((q) => q.sides !== p.sides).map((q) => q.name);
+      const p = rng.pick(polygonsForStage(2));
+      const wrongs = polygonsForStage(2).filter((q) => q.sides !== p.sides).map((q) => q.name);
       return mcQ({
         instruction: "Name the shape.",
         prompt: `Which shape has exactly ${p.sides} straight sides?`,

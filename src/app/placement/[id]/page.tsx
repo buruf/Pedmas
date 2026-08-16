@@ -141,9 +141,7 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           <FeedbackPanel
             correct={feedback.correct}
             moveOn
-            correctAnswer={feedback.correctAnswer}
-            steps={feedback.correct ? [] : feedback.steps}
-            concept={feedback.correct ? undefined : feedback.concept}
+            neutral
             onNext={next}
             nextLabel={feedback.done ? "See my results" : "Next question"}
           />

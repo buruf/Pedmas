@@ -143,6 +143,7 @@ export function FeedbackPanel({
   concept,
   onNext,
   nextLabel,
+  neutral,
 }: {
   correct: boolean;
   moveOn: boolean;
@@ -151,7 +152,26 @@ export function FeedbackPanel({
   concept?: string;
   onNext: () => void;
   nextLabel: string;
+  /**
+   * Placement mode: report nothing about right or wrong. A diagnostic exists
+   * to find a level, and a child who is placed correctly will miss roughly
+   * half of it by design — telling them so each time only discourages them.
+   */
+  neutral?: boolean;
 }) {
+  if (neutral) {
+    return (
+      <div className="mt-4 rounded-2xl border border-brand-200 bg-brand-50 p-4 pop-in">
+        <div className="text-base font-bold text-ink-900">Answer saved 👍</div>
+        <p className="mt-1 text-sm text-ink-700">
+          There&rsquo;s no pass or fail here — we&rsquo;re just finding the right place to start.
+        </p>
+        <div className="mt-3">
+          <PrimaryButton onClick={onNext}>{nextLabel}</PrimaryButton>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={`mt-4 rounded-2xl border p-4 pop-in ${

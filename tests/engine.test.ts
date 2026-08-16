@@ -287,8 +287,66 @@ describe("placement engine", () => {
     const report = run(6, () => false);
     for (const row of report) {
       expect(row.level).toBeLessThan(6);
-      expect(["Developing", "Practicing"]).toContain(row.status);
+      // Strands gated behind unmet prerequisites are reported honestly as
+      // not-yet-assessed rather than guessed at.
+      expect(["Developing", "Practicing", "Ready to Learn"]).toContain(row.status);
     }
+  });
+
+  it("opens with an easy question rather than one at the school grade", () => {
+    // A young child should meet the gentlest question first, whatever year
+    // they are in — starting at the school grade was what made the test feel
+    // impossible for children who are behind.
+    for (const grade of [1, 2, 3, 5, 8]) {
+      const state = startPlacement(grade, 42, 0);
+      const first = nextPlacementQuestion(state)!;
+      expect(first.question.stage).toBe(1);
+      expect(first.question.grade).toBeLessThanOrEqual(Math.max(1, grade - 3));
+    }
+  });
+
+  it("never asks about a strand the student is not ready for", () => {
+    // A child who cannot yet add must not be quizzed on fractions.
+    const state = startPlacement(3, 42, 0);
+    const seen = new Set<string>();
+    let guard = 0;
+    while (!state.done && guard++ < 400) {
+      const next = nextPlacementQuestion(state);
+      if (!next) break;
+      seen.add(next.strandId);
+      applyPlacementAnswer(state, false);
+    }
+    expect(seen.has("fractions")).toBe(false);
+    const fractions = placementReport(state).find((r) => r.strandId === "fractions");
+    expect(fractions?.status).toBe("Ready to Learn");
+  });
+
+  it("still places a much-older struggling student instead of giving up", () => {
+    // The mercy rule used to fire before the search had found anything, so a
+    // Grade 8 student working at Grade 2 ended up with nothing measured.
+    const report = run(8, (g) => g <= 2);
+    const measured = report.filter((r) => r.status !== "Ready to Learn");
+    expect(measured.length).toBeGreaterThan(0);
+    for (const row of measured) expect(row.level).toBeLessThanOrEqual(3);
+  });
+
+  it("keeps a struggling student's failure rate humane", () => {
+    // Adaptive testing needs some misses to find a ceiling, but a child should
+    // not spend the whole test getting things wrong.
+    const state = startPlacement(3, 42, 0);
+    let asked = 0;
+    let wrong = 0;
+    let guard = 0;
+    while (!state.done && guard++ < 400) {
+      const next = nextPlacementQuestion(state);
+      if (!next) break;
+      const correct = state.probes[state.order[state.current]].testGrade <= 1;
+      asked += 1;
+      if (!correct) wrong += 1;
+      applyPlacementAnswer(state, correct);
+    }
+    expect(asked).toBeLessThanOrEqual(14);
+    expect(wrong / asked).toBeLessThanOrEqual(0.55);
   });
 
   it("a mixed student gets a mixed profile", () => {
