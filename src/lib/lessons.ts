@@ -10,6 +10,14 @@
  * lesson) and the client (rendering it) can use the same mapping.
  */
 export const LESSON_KEYS = [
+  // Foundational spine — where struggling children actually sit.
+  "place-value",
+  "make-ten",
+  "subtract-ten",
+  "mult-meaning",
+  "div-meaning",
+  "frac-meaning",
+  // Building on it.
   "add-regroup",
   "sub-regroup",
   "mult-2digit",
@@ -20,6 +28,12 @@ export const LESSON_KEYS = [
 export type LessonKey = (typeof LESSON_KEYS)[number];
 
 export const LESSON_TITLES: Record<LessonKey, string> = {
+  "place-value": "What the digits in a number mean",
+  "make-ten": "Making ten to add",
+  "subtract-ten": "Jumping back to ten to subtract",
+  "mult-meaning": "Multiplying is counting equal groups",
+  "div-meaning": "Dividing is sharing into equal groups",
+  "frac-meaning": "What a fraction really means",
   "add-regroup": "Adding when the ones spill over",
   "sub-regroup": "Subtracting when you haven't got enough ones",
   "mult-2digit": "Multiplying a 2-digit number",
@@ -42,12 +56,18 @@ export function lessonKeyForSkill(
   const byOp = (): LessonKey => (op === "sub" ? "sub-regroup" : "add-regroup");
 
   if (family === "add-sub") {
-    // These lessons teach regrouping. "Addition Within 5" involves no trade at
-    // all, so offering it there would teach a rule the child does not need yet
-    // and cannot see the point of. Only sums that can pass ten qualify.
     const max = typeof params.max === "number" ? params.max : 0;
-    return max >= 100 ? byOp() : null;
+    // Column regrouping only applies once sums run past 100. Between ten and
+    // there, the idea that matters is bridging through ten — a different
+    // lesson. Below ten there is no crossing at all, so nothing to teach yet.
+    if (max >= 100) return byOp();
+    if (max > 10) return op === "sub" ? "subtract-ten" : "make-ten";
+    return null;
   }
+  if (family === "place-value") return "place-value";
+  if (family === "mult-facts") return "mult-meaning";
+  if (family === "div-facts") return "div-meaning";
+  if (family === "frac-identify") return "frac-meaning";
   if (family === "multi-digit") {
     const digits = typeof params.digits === "number" ? params.digits : 2;
     return digits >= 2 ? byOp() : null;

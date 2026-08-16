@@ -20,14 +20,16 @@ describe("lesson routing", () => {
     expect(lessonKeyForSkill("limits", {})).toBeNull();
   });
 
-  it("does not teach regrouping to a child adding within 5", () => {
-    // Caught in a real session walk: "Addition Within 5" was being offered
-    // the regrouping lesson. 2 + 3 involves no trade, so the lesson would be
-    // teaching a rule the child has no use for and cannot see the point of.
+  it("matches the lesson to the size of the numbers", () => {
+    // Caught in a real session walk: "Addition Within 5" was being offered the
+    // column-regrouping lesson. Each band of numbers needs a different idea.
+    // Below ten nothing crosses, so there is nothing to teach yet.
     expect(lessonKeyForSkill("add-sub", { op: "add", max: 5 })).toBeNull();
     expect(lessonKeyForSkill("add-sub", { op: "add", max: 10 })).toBeNull();
-    expect(lessonKeyForSkill("add-sub", { op: "add", max: 20 })).toBeNull();
-    // Sums that can pass ten do need it.
+    // Between ten and a hundred the idea is bridging through ten.
+    expect(lessonKeyForSkill("add-sub", { op: "add", max: 20 })).toBe("make-ten");
+    expect(lessonKeyForSkill("add-sub", { op: "sub", max: 20 })).toBe("subtract-ten");
+    // Past a hundred it becomes column regrouping.
     expect(lessonKeyForSkill("add-sub", { op: "add", max: 100 })).toBe("add-regroup");
     expect(lessonKeyForSkill("add-sub", { op: "sub", max: 1000 })).toBe("sub-regroup");
     // Single-digit column work needs no trade either.
@@ -43,6 +45,15 @@ describe("lesson routing", () => {
         expect(LESSON_TITLES[key]).toBeTruthy();
       }
     }
+  });
+
+  it("teaches meaning before procedure", () => {
+    // A child meeting multiplication or fractions for the first time needs to
+    // know what the symbol means, not a method for combining them.
+    expect(lessonKeyForSkill("mult-facts", { tables: [2] })).toBe("mult-meaning");
+    expect(lessonKeyForSkill("div-facts", { tables: [2] })).toBe("div-meaning");
+    expect(lessonKeyForSkill("frac-identify", {})).toBe("frac-meaning");
+    expect(lessonKeyForSkill("place-value", { max: 100 })).toBe("place-value");
   });
 
   it("covers the skills a beginner actually meets first", () => {

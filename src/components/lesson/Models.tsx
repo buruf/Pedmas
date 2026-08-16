@@ -306,6 +306,194 @@ export function AreaModel({
   );
 }
 
+/**
+ * Ten frame — the standard model for seeing how far a number is from ten.
+ * `extra` fills a second frame, which is what makes bridging through ten
+ * visible: you can watch the first frame complete before the rest spills over.
+ */
+export function TenFrame({
+  filled,
+  extra = 0,
+  label,
+  shade = "tens",
+  extraShade = "ones",
+}: {
+  filled: number;
+  extra?: number;
+  label?: string;
+  shade?: "tens" | "ones" | "hundreds";
+  extraShade?: "tens" | "ones" | "hundreds";
+}) {
+  const cell = 26;
+  const gap = 4;
+  const frame = (count: number, offsetY: number, colour: string) => (
+    <g transform={`translate(0 ${offsetY})`}>
+      {Array.from({ length: 10 }, (_, i) => {
+        const col = i % 5;
+        const row = Math.floor(i / 5);
+        return (
+          <rect
+            key={i}
+            x={col * (cell + gap)}
+            y={row * (cell + gap)}
+            width={cell}
+            height={cell}
+            rx="4"
+            fill={i < count ? colour : "#f1f5f9"}
+            stroke="#cbd5e1"
+            strokeWidth="1"
+          />
+        );
+      })}
+    </g>
+  );
+  const frameH = cell * 2 + gap;
+  const total = extra > 0 ? frameH * 2 + 10 : frameH;
+  return (
+    <figure className="m-0">
+      <svg
+        viewBox={`0 0 ${5 * (cell + gap)} ${total}`}
+        width="100%"
+        style={{ maxWidth: 5 * (cell + gap) }}
+        role="img"
+        aria-label={label ?? `${filled} of ten filled`}
+      >
+        {frame(filled, 0, COLOURS[shade])}
+        {extra > 0 && frame(extra, frameH + 10, COLOURS[extraShade])}
+      </svg>
+      {label && (
+        <figcaption className="mt-1 text-center text-sm font-semibold text-ink-700">
+          <MathText text={label} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/** Number line with optional jumps drawn above it. */
+export function NumberLine({
+  from,
+  to,
+  marks = [],
+  jumps = [],
+  label,
+}: {
+  from: number;
+  to: number;
+  /** values to highlight with a dot */
+  marks?: number[];
+  /** arcs drawn from -> to with a caption */
+  jumps?: { from: number; to: number; text: string }[];
+  label?: string;
+}) {
+  const w = 300;
+  const padL = 12;
+  const usable = w - padL * 2;
+  const span = Math.max(1, to - from);
+  const x = (v: number) => padL + ((v - from) / span) * usable;
+  const baseY = 58;
+  return (
+    <figure className="m-0">
+      <svg viewBox={`0 0 ${w} 78`} width="100%" style={{ maxWidth: w }} role="img" aria-label={label ?? "number line"}>
+        <line x1={padL} y1={baseY} x2={w - padL} y2={baseY} stroke="#94a3b8" strokeWidth="2" />
+        {Array.from({ length: span + 1 }, (_, i) => from + i).map((v) => (
+          <g key={v}>
+            <line x1={x(v)} y1={baseY - 5} x2={x(v)} y2={baseY + 5} stroke="#94a3b8" strokeWidth="1.5" />
+            <text x={x(v)} y={baseY + 18} fontSize="10" textAnchor="middle" fill="#475569">
+              {v}
+            </text>
+            {marks.includes(v) && <circle cx={x(v)} cy={baseY} r="5" fill={COLOURS.hundreds} />}
+          </g>
+        ))}
+        {jumps.map((j, i) => {
+          const x1 = x(j.from);
+          const x2 = x(j.to);
+          const mid = (x1 + x2) / 2;
+          return (
+            <g key={i}>
+              <path
+                d={`M ${x1} ${baseY - 6} Q ${mid} ${baseY - 34} ${x2} ${baseY - 6}`}
+                fill="none"
+                stroke={COLOURS.ones}
+                strokeWidth="2"
+                markerEnd=""
+              />
+              <text x={mid} y={baseY - 34} fontSize="11" fontWeight="700" textAnchor="middle" fill={COLOURS.ones}>
+                {j.text}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      {label && (
+        <figcaption className="mt-1 text-center text-sm font-semibold text-ink-700">
+          <MathText text={label} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/** Equal groups of dots — the concrete meaning of multiplication and division. */
+export function DotGroups({
+  groups,
+  perGroup,
+  label,
+  asArray = false,
+}: {
+  groups: number;
+  perGroup: number;
+  label?: string;
+  /** Draw as a single rectangular array instead of separate rings. */
+  asArray?: boolean;
+}) {
+  const dot = (k: number) => (
+    <span
+      key={k}
+      className="inline-block h-3.5 w-3.5 rounded-full"
+      style={{ background: COLOURS.hundreds }}
+    />
+  );
+  if (asArray) {
+    return (
+      <figure className="m-0">
+        <div className="mx-auto inline-flex flex-col gap-1.5 rounded-xl border-2 border-brand-200 bg-brand-50 p-3">
+          {Array.from({ length: groups }, (_, r) => (
+            <div key={r} className="flex gap-1.5">
+              {Array.from({ length: perGroup }, (_, c) => dot(c))}
+            </div>
+          ))}
+        </div>
+        {label && (
+          <figcaption className="mt-1 text-center text-sm font-semibold text-ink-700">
+            <MathText text={label} />
+          </figcaption>
+        )}
+      </figure>
+    );
+  }
+  return (
+    <figure className="m-0">
+      <div className="flex flex-wrap justify-center gap-2">
+        {Array.from({ length: groups }, (_, g) => (
+          <div
+            key={g}
+            className="flex flex-wrap gap-1.5 rounded-xl border-2 border-dashed border-ink-300 bg-paper p-2"
+            style={{ maxWidth: 110 }}
+          >
+            {Array.from({ length: perGroup }, (_, k) => dot(k))}
+          </div>
+        ))}
+      </div>
+      {label && (
+        <figcaption className="mt-2 text-center text-sm font-semibold text-ink-700">
+          <MathText text={label} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
 /** Equal groups for sharing — the concrete meaning of division. */
 export function ShareGroups({
   groups,
