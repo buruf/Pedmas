@@ -17,6 +17,11 @@ export const LESSON_KEYS = [
   "mult-meaning",
   "div-meaning",
   "frac-meaning",
+  // Decimals and percent.
+  "dec-place-value",
+  "dec-compare",
+  "dec-add-sub",
+  "percent-basics",
   // Building on it.
   "add-regroup",
   "sub-regroup",
@@ -34,6 +39,10 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "mult-meaning": "Multiplying is counting equal groups",
   "div-meaning": "Dividing is sharing into equal groups",
   "frac-meaning": "What a fraction really means",
+  "dec-place-value": "What the numbers after the point mean",
+  "dec-compare": "Which decimal is bigger?",
+  "dec-add-sub": "Adding decimals: line up the point",
+  "percent-basics": "What percent actually means",
   "add-regroup": "Adding when the ones spill over",
   "sub-regroup": "Subtracting when you haven't got enough ones",
   "mult-2digit": "Multiplying a 2-digit number",
@@ -65,6 +74,10 @@ export function lessonKeyForSkill(
     return null;
   }
   if (family === "place-value") return "place-value";
+  if (family === "dec-place-value") return "dec-place-value";
+  if (family === "dec-compare") return "dec-compare";
+  if (family === "dec-add-sub" || family === "money") return "dec-add-sub";
+  if (family === "percent-basic") return "percent-basics";
   if (family === "mult-facts") return "mult-meaning";
   if (family === "div-facts") return "div-meaning";
   if (family === "frac-identify") return "frac-meaning";

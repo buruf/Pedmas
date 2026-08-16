@@ -7,6 +7,10 @@ import { MultiplicationLesson } from "./arithmetic/MultiplicationLesson";
 import { DivisionLesson } from "./arithmetic/DivisionLesson";
 import { FractionAdditionLesson } from "./fractions/FractionAdditionLesson";
 import { FractionMeaningLesson } from "./fractions/FractionMeaningLesson";
+import { DecimalPlaceValueLesson } from "./decimals/DecimalPlaceValueLesson";
+import { DecimalCompareLesson } from "./decimals/DecimalCompareLesson";
+import { DecimalAddSubLesson } from "./decimals/DecimalAddSubLesson";
+import { PercentBasicsLesson } from "./decimals/PercentBasicsLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -28,6 +32,10 @@ export const LESSON_COMPONENTS: Record<
   "mult-meaning": MultiplicationMeaningLesson,
   "div-meaning": DivisionMeaningLesson,
   "frac-meaning": FractionMeaningLesson,
+  "dec-place-value": DecimalPlaceValueLesson,
+  "dec-compare": DecimalCompareLesson,
+  "dec-add-sub": DecimalAddSubLesson,
+  "percent-basics": PercentBasicsLesson,
   "add-regroup": AdditionLesson,
   "sub-regroup": SubtractionLesson,
   "mult-2digit": MultiplicationLesson,

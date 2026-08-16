@@ -307,6 +307,145 @@ export function AreaModel({
 }
 
 /**
+ * A hundred grid: one whole cut into 100 equal squares.
+ *
+ * The single most useful picture in decimals and percent, because it makes
+ * hundredths, tenths and "per hundred" the same object. Seeing 0.5 fill five
+ * whole columns while 0.45 stops short is what kills the "longer decimal is
+ * bigger" misconception.
+ */
+export function HundredGrid({
+  shaded,
+  second,
+  label,
+  size = 150,
+  shade = "hundreds",
+  secondShade = "ones",
+}: {
+  /** number of hundredths shaded, 0..100 */
+  shaded: number;
+  /** an optional second quantity shaded in another colour, drawn after the first */
+  second?: number;
+  label?: string;
+  size?: number;
+  shade?: "hundreds" | "tens" | "ones";
+  secondShade?: "hundreds" | "tens" | "ones";
+}) {
+  const cell = size / 10;
+  const cells = Array.from({ length: 100 }, (_, i) => i);
+  return (
+    <figure className="m-0">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        width="100%"
+        style={{ maxWidth: size }}
+        role="img"
+        aria-label={label ?? `${shaded} out of 100 squares shaded`}
+      >
+        {cells.map((i) => {
+          const col = i % 10;
+          const row = Math.floor(i / 10);
+          const fill =
+            i < shaded
+              ? COLOURS[shade]
+              : second && i < shaded + second
+                ? COLOURS[secondShade]
+                : "#ffffff";
+          return (
+            <rect
+              key={i}
+              x={col * cell}
+              y={row * cell}
+              width={cell}
+              height={cell}
+              fill={fill}
+              stroke="#cbd5e1"
+              strokeWidth="0.6"
+            />
+          );
+        })}
+        <rect x="0.5" y="0.5" width={size - 1} height={size - 1} fill="none" stroke="#475569" strokeWidth="1.4" />
+      </svg>
+      {label && (
+        <figcaption className="mt-1 text-center text-sm font-semibold text-ink-700">
+          <MathText text={label} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/**
+ * Place-value chart extended past the point, so tenths and hundredths are
+ * seen as the same idea continuing rather than a new set of rules.
+ */
+export function DecimalChart({
+  rows,
+  highlight,
+}: {
+  /** each row is a number to lay out in the columns */
+  rows: { value: string; label?: string }[];
+  /** column key to highlight, e.g. "tenths" */
+  highlight?: string;
+}) {
+  const COLS = [
+    { key: "tens", head: "tens" },
+    { key: "ones", head: "ones" },
+    { key: "point", head: "" },
+    { key: "tenths", head: "tenths" },
+    { key: "hundredths", head: "hundredths" },
+  ];
+  const split = (v: string) => {
+    const [w, d = ""] = v.split(".");
+    const whole = w.padStart(2, " ");
+    return {
+      tens: whole[whole.length - 2] ?? " ",
+      ones: whole[whole.length - 1] ?? " ",
+      point: ".",
+      tenths: d[0] ?? "",
+      hundredths: d[1] ?? "",
+    } as Record<string, string>;
+  };
+  return (
+    <table className="mx-auto border-collapse text-center">
+      <thead>
+        <tr>
+          {COLS.map((c) => (
+            <th
+              key={c.key}
+              className={`px-2 pb-1 text-[10px] font-bold uppercase tracking-wide ${
+                highlight === c.key ? "text-brand-700" : "text-ink-500"
+              }`}
+            >
+              {c.head}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => {
+          const d = split(r.value);
+          return (
+            <tr key={i}>
+              {COLS.map((c) => (
+                <td
+                  key={c.key}
+                  className={`border border-ink-100 px-2 py-1.5 text-xl font-bold tabular-nums text-ink-900 ${
+                    highlight === c.key ? "bg-warn-100" : ""
+                  } ${c.key === "point" ? "border-x-0 px-0.5" : ""}`}
+                >
+                  {d[c.key]}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+/**
  * Ten frame — the standard model for seeing how far a number is from ten.
  * `extra` fills a second frame, which is what makes bridging through ten
  * visible: you can watch the first frame complete before the rest spills over.
