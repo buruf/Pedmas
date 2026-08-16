@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-ink-900: #111827;
+  --color-ink-700: #374151;
+  --color-ink-500: #6b7280;
+  --color-ink-300: #d1d5db;
+  --color-ink-100: #f3f4f6;
+  --color-paper: #f9fafb;
+  --color-ok-600: #16a34a;
+  --color-ok-100: #f0fdf4;
+  --color-warn-600: #f59e0b;
+  --color-warn-100: #fffbeb;
+  --color-err-600: #dc2626;
+  --color-err-100: #fef2f2;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+}
+
+/* Stacked fraction rendering used by MathText */
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 0.15em;
+  line-height: 1.1;
+}
+.frac > .num {
+  padding: 0 0.25em 0.05em;
+  border-bottom: 1.5px solid currentColor;
+}
+.frac > .den {
+  padding: 0.05em 0.25em 0;
+}
+
+/* Minimum touch targets on interactive elements */
+button,
+a.btn,
+input,
+select {
+  min-height: 44px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select {
+  @apply w-full rounded-xl border border-ink-300 bg-white px-4 text-base outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop-in { animation: pop-in 0.15s ease-out; }

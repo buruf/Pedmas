@@ -1,0 +1,113 @@
+import type { GradeDef } from "./types";
+
+export const grade2: GradeDef = {
+  grade: 2,
+  strands: [
+    {
+      id: "number",
+      name: "Number Sense",
+      topics: [
+        { name: "Counting to 1,000", family: "counting", params: { max: 1000 } },
+        { name: "Place Value", family: "place-value", params: { max: 1000 } },
+        { name: "Hundreds Tens and Ones", family: "place-value", params: { max: 1000 } },
+        { name: "Expanded Form", family: "place-value", params: { max: 1000 } },
+        { name: "Comparing Three-digit Numbers", family: "compare-numbers", params: { max: 1000 } },
+        { name: "Ordering Numbers", family: "order-numbers", params: { max: 1000 } },
+        { name: "Number Lines", family: "number-line", params: { max: 1000 } },
+        { name: "Even and Odd Numbers", family: "odd-even", params: { max: 100 } },
+        { name: "Skip Counting", family: "skip-counting", params: { steps: [2, 5, 10] } },
+        { name: "Mental Math", family: "mental-math", params: { op: "mixed" } },
+      ],
+    },
+    {
+      id: "operations",
+      name: "Addition & Subtraction",
+      topics: [
+        { name: "Addition Within 100", family: "add-sub", params: { op: "add", max: 100 } },
+        { name: "Addition Within 1,000", family: "multi-digit", params: { op: "add", digits: 3 } },
+        { name: "Regrouping", family: "multi-digit", params: { op: "add", digits: 2 } },
+        { name: "Subtraction Within 100", family: "add-sub", params: { op: "sub", max: 100 } },
+        { name: "Subtraction Within 1,000", family: "multi-digit", params: { op: "sub", digits: 3 } },
+        { name: "Regrouping in Subtraction", family: "multi-digit", params: { op: "sub", digits: 2 } },
+        { name: "Missing Numbers", family: "missing-number", params: { op: "mixed", max: 100 } },
+        { name: "Fact Families", family: "fact-family", params: { max: 20 } },
+        { name: "Mental Addition", family: "mental-math", params: { op: "add" } },
+        { name: "Mental Subtraction", family: "mental-math", params: { op: "sub" } },
+      ],
+    },
+    {
+      id: "operations",
+      name: "Multiplication & Division Foundations",
+      topics: [
+        { name: "Equal Groups", family: "mult-facts", params: { tables: [2, 5, 10] } },
+        { name: "Repeated Addition", family: "skip-counting", params: { steps: [2, 3, 5, 10] } },
+        { name: "Arrays", family: "mult-facts", params: { tables: [2, 5, 10] } },
+        { name: "Skip Counting", family: "skip-counting", params: { steps: [2, 5, 10] } },
+        { name: "Multiplication by 2", family: "mult-facts", params: { tables: [2] } },
+        { name: "Multiplication by 5", family: "mult-facts", params: { tables: [5] } },
+        { name: "Multiplication by 10", family: "mult-facts", params: { tables: [10] } },
+        { name: "Equal Sharing", family: "div-facts", params: { tables: [2, 5, 10] } },
+        { name: "Introduction to Division", family: "div-facts", params: { tables: [2, 5, 10] } },
+      ],
+    },
+    {
+      id: "fractions",
+      name: "Fractions",
+      topics: [
+        { name: "Equal Parts", family: "frac-identify", params: {} },
+        { name: "Halves", family: "frac-identify", params: {} },
+        { name: "Thirds", family: "frac-identify", params: {} },
+        { name: "Fourths", family: "frac-identify", params: {} },
+        { name: "Unit Fractions", family: "frac-identify", params: {} },
+        { name: "Identifying Fractions", family: "frac-identify", params: {} },
+        { name: "Fractions on Number Lines", family: "frac-number-line", params: {} },
+        { name: "Comparing Simple Fractions", family: "frac-compare", params: {} },
+      ],
+    },
+    {
+      id: "measurement",
+      name: "Measurement",
+      topics: [
+        { name: "Length", family: "measure-units", params: { dim: "length" } },
+        { name: "Centimetres", family: "measure-units", params: { dim: "length" } },
+        { name: "Metres", family: "measure-units", params: { dim: "length" } },
+        { name: "Time", family: "time", params: { kind: "clock" } },
+        { name: "Elapsed Time", family: "time", params: { kind: "elapsed" } },
+        { name: "Money", family: "money", params: { kind: "mixed" } },
+        { name: "Counting Coins", family: "money", params: { kind: "count" } },
+        { name: "Counting Bills", family: "money", params: { kind: "count" } },
+      ],
+    },
+    {
+      id: "geometry",
+      name: "Geometry",
+      topics: [
+        { name: "2D Shapes", family: "shapes-2d", params: {} },
+        { name: "3D Shapes", family: "shapes-3d", params: {} },
+        { name: "Sides", family: "shapes-2d", params: {} },
+        { name: "Vertices", family: "shapes-2d", params: {} },
+        { name: "Angles", family: "angles", params: { kind: "identify" } },
+        { name: "Symmetry", family: "symmetry", params: {} },
+        { name: "Partitioning Shapes", family: "shapes-2d", params: {} },
+      ],
+    },
+    {
+      id: "stats",
+      name: "Data",
+      topics: [
+        { name: "Picture Graphs", family: "read-graph", params: { type: "picture" } },
+        { name: "Bar Graphs", family: "read-graph", params: { type: "bar" } },
+        { name: "Line Plots", family: "read-graph", params: { type: "line-plot" } },
+      ],
+    },
+    {
+      id: "algebra",
+      name: "Patterns",
+      topics: [
+        { name: "Number Patterns", family: "patterns", params: {} },
+        { name: "Shape Patterns", family: "patterns", params: {} },
+        { name: "Pattern Rules", family: "patterns", params: {} },
+      ],
+    },
+  ],
+};

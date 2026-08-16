@@ -1,0 +1,153 @@
+/**
+ * Mastery engine: Learn -> Practice -> Fluency -> Master -> Advance.
+ * A skill has 5 progression stages. Students advance a stage on demonstrated
+ * accuracy (mostly first-try, low hint use) and master the skill after
+ * stage 5 plus multi-session consistency. Mastered skills enter spaced
+ * review; a failed review returns the skill to active practice.
+ */
+
+export interface AttemptRecord {
+  ts: number;
+  stage: number;
+  correct: boolean; // correct on first try
+  eventuallyCorrect: boolean;
+  usedHint: boolean;
+  sessionId: string;
+}
+
+export interface ReviewState {
+  due: number; // epoch ms
+  intervalIndex: number; // index into REVIEW_INTERVALS
+}
+
+export interface SkillState {
+  skillId: string;
+  stage: number; // current working stage 1..5
+  stageMastered: number; // highest stage cleared, 0..5
+  attempts: AttemptRecord[]; // bounded window
+  mastered: boolean;
+  masteredAt?: number;
+  /** Set when placement inferred mastery without direct practice. */
+  assumed?: boolean;
+  review?: ReviewState;
+  /** Set when a failed review or repeated struggle sends it back. */
+  needsRepair?: boolean;
+}
+
+export const REVIEW_INTERVALS_DAYS = [2, 7, 21, 60];
+const DAY = 24 * 60 * 60 * 1000;
+const WINDOW = 30; // attempts kept per skill
+
+export function newSkillState(skillId: string, stage = 1): SkillState {
+  return { skillId, stage, stageMastered: stage - 1, attempts: [], mastered: false };
+}
+
+export function assumedMastered(skillId: string, now: number): SkillState {
+  return {
+    skillId,
+    stage: 5,
+    stageMastered: 5,
+    attempts: [],
+    mastered: true,
+    masteredAt: now,
+    assumed: true,
+    review: { due: now + 7 * DAY, intervalIndex: 1 },
+  };
+}
+
+export interface AttemptOutcome {
+  stageAdvanced: boolean;
+  skillMastered: boolean;
+  returnedToPractice: boolean;
+}
+
+/**
+ * Record one practice attempt and apply stage/mastery transitions.
+ * Mutates and returns the state.
+ */
+export function recordAttempt(
+  state: SkillState,
+  attempt: AttemptRecord,
+  opts: { isReview?: boolean } = {}
+): AttemptOutcome {
+  const outcome: AttemptOutcome = {
+    stageAdvanced: false,
+    skillMastered: false,
+    returnedToPractice: false,
+  };
+  state.attempts.push(attempt);
+  if (state.attempts.length > WINDOW) state.attempts.splice(0, state.attempts.length - WINDOW);
+
+  if (opts.isReview && state.mastered) {
+    if (attempt.correct) {
+      const idx = Math.min((state.review?.intervalIndex ?? 0) + 1, REVIEW_INTERVALS_DAYS.length - 1);
+      state.review = { due: attempt.ts + REVIEW_INTERVALS_DAYS[idx] * DAY, intervalIndex: idx };
+    } else {
+      // Retention slipped: back to active practice at a late stage.
+      state.mastered = false;
+      state.needsRepair = true;
+      state.stage = 4;
+      state.stageMastered = Math.min(state.stageMastered, 3);
+      state.review = undefined;
+      outcome.returnedToPractice = true;
+    }
+    return outcome;
+  }
+
+  const atStage = state.attempts.filter((a) => a.stage === state.stage);
+  const recent = atStage.slice(-6);
+  const firstTry = recent.filter((a) => a.correct).length;
+  const hints = recent.filter((a) => a.usedHint).length;
+  const distinctSessions = new Set(atStage.filter((a) => a.correct).map((a) => a.sessionId));
+
+  const enough = recent.length >= 4;
+  const accurate = firstTry >= Math.max(3, Math.ceil(recent.length * 0.8));
+  const independent = hints <= 1;
+
+  if (enough && accurate && independent) {
+    state.stageMastered = Math.max(state.stageMastered, state.stage);
+    if (state.stage < 5) {
+      state.stage += 1;
+      outcome.stageAdvanced = true;
+    } else {
+      // Stage 5 cleared — mastery needs consistency across sessions.
+      const lateSessions = new Set(
+        state.attempts.filter((a) => a.stage >= 4 && a.correct).map((a) => a.sessionId)
+      );
+      if (lateSessions.size >= 2 || distinctSessions.size >= 2) {
+        state.mastered = true;
+        state.needsRepair = false;
+        state.masteredAt = attempt.ts;
+        state.review = { due: attempt.ts + REVIEW_INTERVALS_DAYS[0] * DAY, intervalIndex: 0 };
+        outcome.skillMastered = true;
+      }
+    }
+  }
+
+  // Persistent struggle at a stage drops back one stage (prerequisite help
+  // is handled by the practice mixer via needsRepair).
+  const recentMisses = recent.filter((a) => !a.eventuallyCorrect).length;
+  if (recent.length >= 5 && firstTry <= 1 && recentMisses >= 3 && state.stage > 1) {
+    state.stage -= 1;
+    state.needsRepair = true;
+  }
+
+  return outcome;
+}
+
+/** Progress within the current skill, 0..100, for UI bars. */
+export function skillProgress(state: SkillState): number {
+  if (state.mastered) return 100;
+  const base = (state.stageMastered / 5) * 100;
+  const atStage = state.attempts.filter((a) => a.stage === state.stage).slice(-6);
+  const partial = atStage.length
+    ? (atStage.filter((a) => a.correct).length / 6) * (100 / 5)
+    : 0;
+  return Math.min(99, Math.round(base + partial));
+}
+
+export function reviewsDue(states: SkillState[], now: number): SkillState[] {
+  return states
+    .filter((s) => s.mastered && s.review && s.review.due <= now)
+    .sort((a, b) => (a.review!.due - b.review!.due));
+}

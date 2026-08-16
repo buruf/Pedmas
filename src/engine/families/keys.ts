@@ -1,0 +1,150 @@
+/**
+ * Canonical generator-family keys. Curriculum topics bind to exactly one
+ * of these; the union type makes a bad binding a compile error.
+ *
+ * Common params (all optional, family-specific):
+ *   max: number            largest number involved (foundations/arith)
+ *   op: string             "add" | "sub" | "mul" | "div" | "mixed"
+ *   tables: number[]       which multiplication/division tables
+ *   kind: string           family-specific variant selector
+ *   shape: string          "rect" | "tri" | "circle" | "mixed" (geometry)
+ *   bank: string           bank id for the mc-bank family
+ */
+export const FAMILY_KEYS = [
+  // foundations
+  "counting",
+  "compare-numbers",
+  "order-numbers",
+  "place-value",
+  "number-line",
+  "odd-even",
+  "skip-counting",
+  "rounding",
+  "estimation",
+  "factors-multiples",
+  "gcf-lcm",
+  "primes",
+  "patterns",
+  // arithmetic
+  "add-sub",
+  "fact-family",
+  "missing-number",
+  "multi-digit",
+  "mult-facts",
+  "div-facts",
+  "mult-multi",
+  "long-division",
+  "mental-math",
+  "order-of-ops",
+  // fractions
+  "frac-identify",
+  "frac-equivalent",
+  "frac-simplify",
+  "frac-compare",
+  "frac-number-line",
+  "frac-add-sub",
+  "frac-mul",
+  "frac-div",
+  "frac-of-number",
+  "mixed-number-ops",
+  // decimals, percent, money
+  "dec-place-value",
+  "dec-compare",
+  "dec-add-sub",
+  "dec-mul",
+  "dec-div",
+  "dec-round",
+  "dec-frac-convert",
+  "money",
+  "percent-basic",
+  "percent-apps",
+  "interest",
+  // ratios & proportions
+  "ratio-basic",
+  "ratio-equivalent",
+  "unit-rate",
+  "proportion-solve",
+  "scale-drawings",
+  "proportional-relationships",
+  // integers, exponents, real numbers
+  "integer-ops",
+  "abs-value",
+  "int-compare",
+  "exponent-eval",
+  "exponent-rules",
+  "sci-notation",
+  "roots",
+  "real-numbers",
+  // algebra
+  "evaluate-expression",
+  "combine-like-terms",
+  "distributive",
+  "translate-expression",
+  "one-step-eq",
+  "two-step-eq",
+  "multi-step-eq",
+  "inequality",
+  "poly-add-sub",
+  "poly-mul",
+  "factor",
+  "quadratic-solve",
+  "quadratic-features",
+  "systems",
+  "slope",
+  "linear-equation",
+  "poly-division",
+  "factor-theorem",
+  "rational-expression",
+  "radical-expression",
+  // functions & advanced algebra
+  "function-notation",
+  "domain-range",
+  "function-transform",
+  "composition",
+  "inverse-function",
+  "exponential",
+  "logarithm",
+  "sequence",
+  "series",
+  "binomial-theorem",
+  "financial",
+  // geometry
+  "shapes-2d",
+  "shapes-3d",
+  "symmetry",
+  "angles",
+  "perimeter-area",
+  "volume-surface",
+  "coordinate-plane",
+  "pythagorean",
+  "transformations",
+  "similarity",
+  "circle-measure",
+  // measurement
+  "length-compare",
+  "measure-units",
+  "time",
+  "unit-conversion",
+  // data, stats, probability
+  "read-graph",
+  "central-tendency",
+  "probability",
+  "counting-principle",
+  "scatter-correlation",
+  "mc-bank",
+  // trigonometry
+  "right-triangle-trig",
+  "unit-circle",
+  "trig-identity",
+  "trig-equation",
+  "trig-graph",
+  "angle-apps",
+  // calculus & vectors
+  "limits",
+  "derivative",
+  "derivative-apps",
+  "integral",
+  "vectors",
+] as const;
+
+export type FamilyKey = (typeof FAMILY_KEYS)[number];
