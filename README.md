@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3040.
+Then open http://localhost:3080.
 
 ```bash
 npm test          # engine + curriculum invariants
@@ -72,8 +72,42 @@ An admin account is seeded on first use. Set `PEDMAS_ADMIN_EMAIL` and
 `PEDMAS_ADMIN_PASSWORD` before deploying — the development fallbacks are
 published in this repository.
 
+## Payments
+
+One family plan: **$11.99/month for the first child, $5.99 for each additional,
+up to 4 children**, after a 7-day free trial. Placement and the starting report
+are free forever; a subscription unlocks daily practice, mastery tracking and
+the parent dashboard.
+
+Stripe holds the truth. The app mirrors subscription state onto the account for
+fast page loads, and one module — `src/lib/billing/entitlement.ts` — decides
+every access question. Seats follow the real child count, so adding a child
+updates the subscription automatically.
+
+Set up in Stripe: one product with two recurring monthly prices (first child and
+additional child), then point `STRIPE_PRICE_FIRST_CHILD` and
+`STRIPE_PRICE_ADDITIONAL_CHILD` at them. Prefer a **restricted key** (`rk_`).
+Point a webhook at `/api/stripe/webhook` — signatures are always verified, and
+the endpoint refuses everything until `STRIPE_WEBHOOK_SECRET` is set.
+
+## Email
+
+Sent through Resend: password reset, the welcome placement report, a weekly
+parent summary, and billing mail (receipt, trial ending, payment failed).
+
+The weekly summary runs from `POST /api/cron/weekly-progress`, guarded by a
+`CRON_SECRET` bearer token; without the secret the endpoint is disabled.
+
+## Demo mode
+
+With no Stripe or Resend keys the app still runs end to end: practice stays
+unlocked, and emails are logged to the server rather than sent. Every billing
+screen says exactly which variables are missing. See `.env.example`.
+
 ## Status
 
 The learning engine is complete and verified: all 121 families implemented,
 with 38,040 raw and 9,510 end-to-end generated questions passing validation.
-Not yet deployed; no payments or email.
+Billing and email are built and tested against the live app.
+
+Not deployed. No sales-tax handling, and no dunning beyond Stripe's own retries.

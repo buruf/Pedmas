@@ -5,7 +5,7 @@
       "name": "pedmas",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3040
+      "port": 3080
     }
   ]
 }

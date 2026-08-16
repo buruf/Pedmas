@@ -5,6 +5,20 @@ import type { QuestionPurpose } from "@/engine/practice";
 
 export type Role = "PARENT" | "STUDENT" | "ADMIN";
 
+/** Subscription state mirrored from Stripe. Stripe remains the source of truth. */
+export interface Billing {
+  customerId?: string;
+  subscriptionId?: string;
+  /** Stripe subscription status: trialing | active | past_due | canceled | unpaid | incomplete */
+  status?: string;
+  /** Children covered by the subscription at the last sync. */
+  seats?: number;
+  currentPeriodEnd?: number;
+  trialEndsAt?: number;
+  cancelAtPeriodEnd?: boolean;
+  updatedAt?: number;
+}
+
 export interface Account {
   id: string;
   email: string;
@@ -12,6 +26,18 @@ export interface Account {
   role: Role;
   name: string;
   createdAt: number;
+  billing?: Billing;
+  /** Weekly parent summary opt-out and send bookkeeping. */
+  emailPrefs?: { weeklySummary?: boolean; lastWeeklySentDay?: string };
+}
+
+/** Single-use password reset token. Only the hash is stored. */
+export interface PasswordResetToken {
+  id: string; // hash of the emailed token
+  accountId: string;
+  createdAt: number;
+  expiresAt: number;
+  usedAt?: number;
 }
 
 export interface AuthSession {

@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo, Card, PrimaryButton, ProgressBar } from "@/components/ui";
 import { QuestionView, FeedbackPanel } from "@/components/QuestionView";
-import { api } from "@/lib/client";
+import { api, ApiError } from "@/lib/client";
 import type { ClientQuestion } from "@/lib/model";
 
 interface PracticePayload {
@@ -35,11 +35,15 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
   const [retryNonce, setRetryNonce] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [locked, setLocked] = useState<string | null>(null);
 
   const load = useCallback(() => {
     api<PracticePayload>(`/api/students/${id}/practice`)
       .then(setState)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
+      .catch((e) => {
+        if (e instanceof ApiError && e.status === 402) setLocked(e.message);
+        else setError(e instanceof Error ? e.message : "Failed to load");
+      });
   }, [id]);
 
   useEffect(load, [load]);
@@ -53,7 +57,8 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
       });
       setFeedback(res);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to submit");
+      if (e instanceof ApiError && e.status === 402) setLocked(e.message);
+      else setError(e instanceof Error ? e.message : "Failed to submit");
     } finally {
       setBusy(false);
     }
@@ -67,6 +72,31 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
     setFeedback(null);
     setRetryNonce((n) => n + 1);
   };
+
+  if (locked) {
+    return (
+      <Shell id={id}>
+        <Card className="pop-in text-center">
+          <div className="text-4xl">🔓</div>
+          <h1 className="mt-2 text-2xl font-extrabold text-ink-900">Unlock daily practice</h1>
+          <p className="mx-auto mt-2 max-w-md text-ink-700">{locked}</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-500">
+            The placement test and your child&rsquo;s starting profile stay free — a subscription adds
+            the personalised daily session, mastery tracking and spaced review.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <PrimaryButton href="/pricing">See plans</PrimaryButton>
+            <Link
+              href={`/app/${id}`}
+              className="btn inline-flex min-h-11 items-center rounded-xl border border-ink-100 bg-white px-4 text-sm font-semibold text-ink-700 hover:border-brand-300"
+            >
+              Back to dashboard
+            </Link>
+          </div>
+        </Card>
+      </Shell>
+    );
+  }
 
   if (error) return <Shell id={id}><p className="text-err-600">{error}</p></Shell>;
   if (!state) return <Shell id={id}><p className="text-ink-500">Building today&rsquo;s practice…</p></Shell>;

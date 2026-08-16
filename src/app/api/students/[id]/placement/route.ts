@@ -7,6 +7,9 @@ import {
   saveStudent,
   studentFor,
 } from "@/lib/students";
+import { sendMail } from "@/lib/email/send";
+import { placementReportMail } from "@/lib/email/templates";
+import { appUrl } from "@/lib/billing/stripe";
 
 /** GET: current placement question (starts placement if needed). */
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -39,9 +42,33 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!student) return bad("Student not found.", 404);
   const body = await req.json().catch(() => null);
   if (typeof body?.answer !== "string") return bad("An answer is required.");
+  const wasPlaced = Boolean(student.placedAt);
   const result = placementAnswer(student, body.answer);
   if (!result) return bad("No placement in progress.", 409);
   await saveStudent(student);
+
+  // First completion only: email the parent the starting profile.
+  if (!wasPlaced && student.placedAt && student.placementReport?.length) {
+    try {
+      await sendMail(
+        placementReportMail(
+          account.email,
+          account.name,
+          student.name,
+          student.grade,
+          student.placementReport.map((r) => ({
+            strandName: r.strandName,
+            level: r.level,
+            status: r.status,
+          })),
+          `${appUrl()}/parent/${student.id}`
+        )
+      );
+    } catch (err) {
+      console.error("[email:placementReport]", err instanceof Error ? err.message : err);
+    }
+  }
+
   return NextResponse.json(result);
 }
 

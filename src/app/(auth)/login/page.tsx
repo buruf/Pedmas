@@ -56,6 +56,9 @@ export default function LoginPage() {
           </PrimaryButton>
         </form>
         <p className="mt-4 text-center text-sm text-ink-500">
+          <Link href="/forgot" className="font-semibold text-brand-600">Forgot your password?</Link>
+        </p>
+        <p className="mt-2 text-center text-sm text-ink-500">
           New to PEDMAS?{" "}
           <Link href="/signup" className="font-semibold text-brand-600">Create an account</Link>
         </p>
