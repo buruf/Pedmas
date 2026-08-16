@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo, PrimaryButton, GhostButton, Card } from "@/components/ui";
 import { MathText } from "@/components/MathText";
+import { StudentIllustration } from "@/components/StudentIllustration";
 
 const STEPS = [
   { icon: "🎯", title: "Find Your Level", text: "A short adaptive placement finds what you already know — strand by strand, not one number." },
@@ -8,14 +9,6 @@ const STEPS = [
   { icon: "🏅", title: "Master Each Concept", text: "You advance by demonstrating mastery across sessions — not by finishing a lesson." },
   { icon: "🚀", title: "Move Forward", text: "Master a skill and the next one unlocks, following real prerequisite chains." },
   { icon: "🔄", title: "Keep It Fresh", text: "Spaced review brings skills back at 2 days, 1 week, 3 weeks — so mastery sticks." },
-];
-
-const PROFILE_DEMO = [
-  { strand: "Number Sense", grade: 6, pct: 80 },
-  { strand: "Fractions", grade: 5, pct: 60 },
-  { strand: "Algebra", grade: 6, pct: 70 },
-  { strand: "Geometry", grade: 7, pct: 90 },
-  { strand: "Statistics", grade: 6, pct: 50 },
 ];
 
 export default function HomePage() {
@@ -61,30 +54,14 @@ export default function HomePage() {
               Adaptive placement · Mastery-based · Spaced review
             </p>
           </div>
-          <Card className="pop-in">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-bold text-ink-900">My Math Profile</span>
-              <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
-                Grade 6 student
-              </span>
-            </div>
-            <div className="space-y-3">
-              {PROFILE_DEMO.map((row) => (
-                <div key={row.strand}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium text-ink-700">{row.strand}</span>
-                    <span className="text-xs font-semibold text-ink-500">Grade {row.grade}</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
-                    <div className="h-full rounded-full bg-brand-500" style={{ width: `${row.pct}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-xl bg-brand-50 p-3 text-sm text-ink-700">
+          {/* The per-strand profile lives in the "adapts to you" section below,
+              so the hero shows the student rather than repeating it. */}
+          <div className="pop-in">
+            <StudentIllustration className="mx-auto h-auto w-full max-w-md" />
+            <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-brand-100 bg-white px-4 py-3 text-center text-sm text-ink-700 shadow-sm">
               <MathText text={"Today: add fractions like {1/2} + {1/3} — you're ready."} />
             </div>
-          </Card>
+          </div>
         </div>
       </section>
 
