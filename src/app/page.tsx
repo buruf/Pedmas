@@ -162,6 +162,11 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-8 text-sm text-ink-500 sm:flex-row sm:justify-between">
           <Logo />
           <p>An adaptive mathematics progression engine for Grades 1–12.</p>
+          <nav className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-ink-900">Privacy</Link>
+            <Link href="/terms" className="hover:text-ink-900">Terms</Link>
+            <Link href="/pricing" className="hover:text-ink-900">Pricing</Link>
+          </nav>
         </div>
       </footer>
     </div>

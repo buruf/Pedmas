@@ -14,12 +14,17 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [parentAffirmed, setParentAffirmed] = useState(false);
 
   const submit = async () => {
     setBusy(true);
     setError("");
     try {
-      await api("/api/auth/register", { method: "POST", json: { email, password, name, role } });
+      await api("/api/auth/register", {
+        method: "POST",
+        json: { email, password, name, role, acceptedTerms, parentAffirmed },
+      });
       router.push("/onboarding");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -77,8 +82,51 @@ export default function SignupPage() {
               required
             />
           </label>
+          {/* Consent is recorded with the policy version — see lib/legal.ts. */}
+          <div className="space-y-2.5 rounded-xl bg-paper px-3 py-3">
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+                required
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="font-semibold text-brand-700 underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" className="font-semibold text-brand-700 underline">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+            {role === "PARENT" && (
+              <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
+                <input
+                  type="checkbox"
+                  checked={parentAffirmed}
+                  onChange={(e) => setParentAffirmed(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+                  required
+                />
+                <span>
+                  I am the parent or legal guardian of any child I add, and I consent to PEDMAS
+                  collecting their learning information as described in the Privacy Policy.
+                </span>
+              </label>
+            )}
+          </div>
+
           {error && <p className="rounded-xl bg-err-100 px-3 py-2 text-sm text-err-600">{error}</p>}
-          <PrimaryButton type="submit" disabled={busy} className="w-full">
+          <PrimaryButton
+            type="submit"
+            disabled={busy || !acceptedTerms || (role === "PARENT" && !parentAffirmed)}
+            className="w-full"
+          >
             {busy ? "Creating..." : "Create account"}
           </PrimaryButton>
         </form>

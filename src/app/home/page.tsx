@@ -37,12 +37,26 @@ export default function HomeHub() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <header className="mb-8 flex items-center justify-between">
         <Link href="/"><Logo /></Link>
-        <button
-          className="btn rounded-xl px-3 py-2 text-sm font-semibold text-ink-500 hover:text-ink-900"
-          onClick={() => api("/api/auth/logout", { method: "POST" }).then(() => router.push("/"))}
-        >
-          Log out
-        </button>
+        <nav className="flex items-center gap-1">
+          <Link
+            href="/billing"
+            className="btn rounded-xl px-3 py-2 text-sm font-semibold text-ink-500 hover:text-ink-900"
+          >
+            Billing
+          </Link>
+          <Link
+            href="/account"
+            className="btn rounded-xl px-3 py-2 text-sm font-semibold text-ink-500 hover:text-ink-900"
+          >
+            Account
+          </Link>
+          <button
+            className="btn rounded-xl px-3 py-2 text-sm font-semibold text-ink-500 hover:text-ink-900"
+            onClick={() => api("/api/auth/logout", { method: "POST" }).then(() => router.push("/"))}
+          >
+            Log out
+          </button>
+        </nav>
       </header>
       <h1 className="text-2xl font-extrabold text-ink-900">
         {me.role === "PARENT" ? "Your learners" : `Welcome, ${me.name}`}

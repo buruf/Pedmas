@@ -29,6 +29,17 @@ export interface Account {
   billing?: Billing;
   /** Weekly parent summary opt-out and send bookkeeping. */
   emailPrefs?: { weeklySummary?: boolean; lastWeeklySentDay?: string };
+  /**
+   * Record of the terms and parental consent accepted at signup. Stored with
+   * the policy version so a material change can require fresh consent, which
+   * is the point of collecting it at all.
+   */
+  consent?: {
+    policyVersion: string;
+    acceptedAt: number;
+    /** True when the holder affirmed they are a parent or guardian. */
+    parentAffirmed: boolean;
+  };
 }
 
 /** Single-use password reset token. Only the hash is stored. */

@@ -3,6 +3,7 @@ import { accountByEmail, createResetToken, RESET_TTL_MINUTES } from "@/lib/passw
 import { sendMail } from "@/lib/email/send";
 import { passwordResetMail } from "@/lib/email/templates";
 import { appUrl } from "@/lib/billing/stripe";
+import { clientKey, rateLimit, LIMITS } from "@/lib/rateLimit";
 
 /**
  * Request a password reset.
@@ -11,6 +12,19 @@ import { appUrl } from "@/lib/billing/stripe";
  * this endpoint becomes an account enumeration oracle.
  */
 export async function POST(req: Request) {
+  // Also stops this endpoint being used to spam someone else's inbox.
+  const gate = await rateLimit(
+    "passwordReset",
+    clientKey(req),
+    LIMITS.passwordReset.limit,
+    LIMITS.passwordReset.windowSeconds
+  );
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: "Too many reset requests. Please wait a while and try again." },
+      { status: 429, headers: { "Retry-After": String(gate.retryAfterSeconds) } }
+    );
+  }
   let email = "";
   try {
     const body = (await req.json()) as { email?: string } | null;

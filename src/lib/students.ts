@@ -1,6 +1,6 @@
 import type { Account, PracticeSessionState, StudentProfile } from "./model";
 import { dayKeyOf, toClientQuestion } from "./model";
-import { allRows, getRow, newId, putRow } from "./store/db";
+import { allRows, deleteRow, getRow, newId, putRow } from "./store/db";
 import {
   applyPlacementAnswer,
   nextPlacementQuestion,
@@ -72,6 +72,19 @@ export async function saveStudent(student: StudentProfile): Promise<void> {
 }
 
 /* ------------------------------------------------------------- placement */
+
+/**
+ * Permanently remove a child profile and its learning history.
+ *
+ * A parent must be able to delete what we hold about their child, so this is
+ * a real delete rather than a flag — nothing is retained afterwards.
+ */
+export async function deleteStudent(account: Account, id: string): Promise<boolean> {
+  const student = await studentFor(account, id);
+  if (!student) return false;
+  await deleteRow(TABLE, id);
+  return true;
+}
 
 export function beginPlacement(student: StudentProfile): void {
   const seed = Math.floor(Math.random() * 2 ** 30);

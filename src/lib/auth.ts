@@ -2,6 +2,7 @@ import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import type { Account, AuthSession, Role } from "./model";
 import { allRows, findRow, getRow, newId, putRow, deleteRow } from "./store/db";
+import { POLICY_VERSION } from "./legal";
 
 const COOKIE = "pedmas_session";
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -24,11 +25,20 @@ export async function createAccount(
   email: string,
   password: string,
   role: Role,
-  name: string
+  name: string,
+  consent?: { acceptedTerms: boolean; parentAffirmed: boolean }
 ): Promise<Account | { error: string }> {
   const norm = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(norm)) return { error: "Please enter a valid email." };
   if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  // Consent is required to create an account: the service is used by children,
+  // so an unrecorded acceptance is not one we could later evidence.
+  if (!consent?.acceptedTerms) {
+    return { error: "Please accept the Terms of Service and Privacy Policy to continue." };
+  }
+  if (role === "PARENT" && !consent.parentAffirmed) {
+    return { error: "Please confirm you are the parent or guardian of the children you add." };
+  }
   const existing = await findRow<Account>("accounts", (a) => a.email === norm);
   if (existing) return { error: "An account with that email already exists." };
   const account: Account = {
@@ -38,6 +48,11 @@ export async function createAccount(
     role,
     name: name.trim() || "Learner",
     createdAt: Date.now(),
+    consent: {
+      policyVersion: POLICY_VERSION,
+      acceptedAt: Date.now(),
+      parentAffirmed: Boolean(consent.parentAffirmed),
+    },
   };
   await putRow("accounts", account.id, account);
   return account;
