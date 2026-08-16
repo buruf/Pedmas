@@ -10,10 +10,23 @@ import {
 import { strandChain, getSkill, strandLabel } from "@/curriculum";
 import { buildPracticeSession, currentSkillFor, SESSION_SIZE } from "@/engine/practice";
 import { assumedMastered, newSkillState, recordAttempt, skillProgress } from "@/engine/mastery";
-import { isCorrect } from "@/engine/validate";
-import { stageLabelFor } from "@/engine/generate";
+import { isCorrect, dedupKey } from "@/engine/validate";
+import { stageLabelFor, generateQuestion } from "@/engine/generate";
 
 const TABLE = "students";
+
+/**
+ * Stable seed from a string, so pressing "Show me" twice on the same question
+ * gives the same worked example rather than a new one each time.
+ */
+function hashSeed(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
 
 export async function createStudent(
   account: Account,
@@ -168,6 +181,52 @@ export interface AnswerResult {
   stageAdvanced?: boolean;
   skillMastered?: boolean;
   skillName?: string;
+}
+
+export interface WorkedExample {
+  instruction: string;
+  prompt: string;
+  answer: string;
+  steps: string[];
+  concept: string;
+  skillName: string;
+}
+
+/**
+ * A worked example for the question the student is currently stuck on.
+ *
+ * Deliberately a *different* question at the same skill and stage, never the
+ * live one: showing the answer to the question in front of them teaches
+ * copying, whereas working a parallel problem teaches the method and leaves
+ * them something to do. Generated on demand, so every family has this
+ * support without any per-skill authoring.
+ */
+export function workedExampleFor(student: StudentProfile): WorkedExample | null {
+  const session = student.activeSession;
+  if (!session || session.completedAt) return null;
+  const item = session.items[session.index];
+  if (!item) return null;
+  const skill = getSkill(item.question.skillId);
+  if (!skill) return null;
+
+  // Exclude the live question so the example cannot be a restatement of it.
+  const avoid = new Set<string>([dedupKey(item.question)]);
+  try {
+    const example = generateQuestion(skill, item.question.stage, {
+      seed: hashSeed(`${session.id}:${item.question.id}:example`),
+      avoid,
+    });
+    return {
+      instruction: example.instruction,
+      prompt: example.prompt,
+      answer: example.answer,
+      steps: example.steps,
+      concept: example.concept,
+      skillName: skill.name,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function answerCurrent(

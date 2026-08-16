@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo, Card, PrimaryButton, ProgressBar } from "@/components/ui";
 import { QuestionView, FeedbackPanel } from "@/components/QuestionView";
+import { WorkedExample, type WorkedExampleData } from "@/components/WorkedExample";
 import { api, ApiError } from "@/lib/client";
 import type { ClientQuestion } from "@/lib/model";
 
@@ -36,6 +37,8 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [locked, setLocked] = useState<string | null>(null);
+  const [example, setExample] = useState<WorkedExampleData | null>(null);
+  const [exampleBusy, setExampleBusy] = useState(false);
 
   const load = useCallback(() => {
     api<PracticePayload>(`/api/students/${id}/practice`)
@@ -66,6 +69,8 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
 
   const next = () => {
     setFeedback(null);
+    // The example belongs to the question that was on screen.
+    setExample(null);
     load();
   };
   const retry = () => {
@@ -147,6 +152,25 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
           disabled={busy || Boolean(feedback)}
           onSubmit={(a, h) => void submit(a, h)}
         />
+
+        {/* Teaching support: a parallel worked example, never this question's answer. */}
+        {!feedback && !example && (
+          <button
+            type="button"
+            disabled={exampleBusy}
+            onClick={() => {
+              setExampleBusy(true);
+              api<WorkedExampleData>(`/api/students/${id}/practice/example`)
+                .then(setExample)
+                .catch(() => setError("Could not load an example just now."))
+                .finally(() => setExampleBusy(false));
+            }}
+            className="btn mt-3 inline-flex items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-100"
+          >
+            {exampleBusy ? "Getting an example…" : "▶ Show me how"}
+          </button>
+        )}
+        {example && <WorkedExample data={example} onClose={() => setExample(null)} />}
         {feedback && !feedback.moveOn && (
           <div className="mt-4 rounded-2xl border border-warn-600/30 bg-warn-100 p-4 pop-in">
             <div className="font-bold text-ink-900">Not quite — you&rsquo;ve got this. Try again!</div>
