@@ -19,7 +19,8 @@ real, named misconception is not finished.
 | Foundational spine | place-value, add-sub (both bands), mult-facts, div-facts, frac-identify | ✅ done |
 | Multi-digit arithmetic | multi-digit (add/sub), mult-multi, long-division | ✅ done |
 | Fraction arithmetic | frac-add-sub | ✅ done |
-| Decimals & percent | dec-place-value, dec-compare, dec-add-sub, dec-mul, dec-div, dec-round, dec-frac-convert, money, percent-basic, percent-apps, interest | 🔨 in progress |
+| Decimals & percent | dec-place-value, dec-compare, dec-add-sub, dec-mul, dec-div, money, percent-basic, percent-apps, interest | ✅ done (94%) |
+| Decimals, remainder | dec-round, dec-frac-convert | ⬜ |
 | Fractions, rest | frac-equivalent, frac-simplify, frac-compare, frac-mul, frac-div, mixed-number-ops | ⬜ |
 | Number sense | counting, compare-numbers, rounding, factors-multiples, gcf-lcm, primes, patterns | ⬜ |
 | Ratios & integers | ratio-basic, unit-rate, proportion-solve, integer-ops, exponent-rules, sci-notation | ⬜ |

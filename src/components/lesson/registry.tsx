@@ -11,6 +11,8 @@ import { DecimalPlaceValueLesson } from "./decimals/DecimalPlaceValueLesson";
 import { DecimalCompareLesson } from "./decimals/DecimalCompareLesson";
 import { DecimalAddSubLesson } from "./decimals/DecimalAddSubLesson";
 import { PercentBasicsLesson } from "./decimals/PercentBasicsLesson";
+import { DecimalMulLesson, DecimalDivLesson } from "./decimals/DecimalMulDivLesson";
+import { PercentChangeLesson } from "./decimals/PercentChangeLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -36,6 +38,9 @@ export const LESSON_COMPONENTS: Record<
   "dec-compare": DecimalCompareLesson,
   "dec-add-sub": DecimalAddSubLesson,
   "percent-basics": PercentBasicsLesson,
+  "dec-mul": DecimalMulLesson,
+  "dec-div": DecimalDivLesson,
+  "percent-change": PercentChangeLesson,
   "add-regroup": AdditionLesson,
   "sub-regroup": SubtractionLesson,
   "mult-2digit": MultiplicationLesson,

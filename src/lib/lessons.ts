@@ -22,6 +22,9 @@ export const LESSON_KEYS = [
   "dec-compare",
   "dec-add-sub",
   "percent-basics",
+  "dec-mul",
+  "dec-div",
+  "percent-change",
   // Building on it.
   "add-regroup",
   "sub-regroup",
@@ -43,6 +46,9 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "dec-compare": "Which decimal is bigger?",
   "dec-add-sub": "Adding decimals: line up the point",
   "percent-basics": "What percent actually means",
+  "dec-mul": "Multiplying by less than one",
+  "dec-div": "Dividing by less than one",
+  "percent-change": "Percent changes in the real world",
   "add-regroup": "Adding when the ones spill over",
   "sub-regroup": "Subtracting when you haven't got enough ones",
   "mult-2digit": "Multiplying a 2-digit number",
@@ -78,6 +84,9 @@ export function lessonKeyForSkill(
   if (family === "dec-compare") return "dec-compare";
   if (family === "dec-add-sub" || family === "money") return "dec-add-sub";
   if (family === "percent-basic") return "percent-basics";
+  if (family === "dec-mul") return "dec-mul";
+  if (family === "dec-div") return "dec-div";
+  if (family === "percent-apps" || family === "interest") return "percent-change";
   if (family === "mult-facts") return "mult-meaning";
   if (family === "div-facts") return "div-meaning";
   if (family === "frac-identify") return "frac-meaning";
