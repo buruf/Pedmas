@@ -48,9 +48,12 @@ serves genuinely distinct questions.
 
 Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Vitest. Mobile-first.
 
-Storage is a JSON file store behind a repository layer (`src/lib/store/db.ts`)
-so it can be swapped for Postgres/Prisma without touching callers. Auth is
-scrypt-hashed passwords with httpOnly session cookies.
+Storage sits behind a repository layer (`src/lib/store/db.ts`) with two
+backends and one interface: **Upstash Redis** when `UPSTASH_REDIS_REST_URL` and
+`UPSTASH_REDIS_REST_TOKEN` are set, and local JSON files otherwise. Production
+needs Redis — a serverless filesystem is read-only, so the store fails fast
+with a clear message rather than losing writes. Auth is scrypt-hashed passwords
+with httpOnly session cookies.
 
 ## Running it
 

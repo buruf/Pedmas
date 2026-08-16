@@ -28,7 +28,16 @@ function authorized(req: Request): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/** Vercel Cron calls scheduled endpoints with GET; keep POST for manual runs. */
+export async function GET(req: Request) {
+  return run(req);
+}
+
 export async function POST(req: Request) {
+  return run(req);
+}
+
+async function run(req: Request) {
   if (!authorized(req)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
