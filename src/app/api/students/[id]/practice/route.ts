@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAccount, isResponse, bad } from "@/lib/api";
-import { answerCurrent, ensureSession, saveStudent, studentFor } from "@/lib/students";
+import {
+  answerCurrent,
+  ensureSession,
+  lessonForCurrent,
+  markLessonSeen,
+  saveStudent,
+  studentFor,
+} from "@/lib/students";
 import { toClientQuestion } from "@/lib/model";
 import { entitlementFor, lockMessage } from "@/lib/billing/entitlement";
 
@@ -42,6 +49,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
           question: toClientQuestion(item.question),
           purpose: item.purpose,
           attempts: item.attempts,
+          lesson: lessonForCurrent(student),
         }
       : null,
     streak: student.streak.count,

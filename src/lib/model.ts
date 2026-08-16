@@ -91,6 +91,8 @@ export interface StudentProfile {
   activeSession?: PracticeSessionState;
   recentSessions: SessionSummary[]; // bounded, newest first
   streak: { count: number; lastDay: string };
+  /** Lesson key -> when it was first completed, so it is taught once. */
+  lessonsSeen?: Record<string, number>;
 }
 
 /** Question shape sent to the client (no answer, no steps until graded). */

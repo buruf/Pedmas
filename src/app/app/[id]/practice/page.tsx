@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Logo, Card, PrimaryButton, ProgressBar } from "@/components/ui";
 import { QuestionView, FeedbackPanel } from "@/components/QuestionView";
 import { WorkedExample, type WorkedExampleData } from "@/components/WorkedExample";
+import { LESSON_COMPONENTS } from "@/components/lesson/registry";
 import { api, ApiError } from "@/lib/client";
+import type { LessonKey } from "@/lib/lessons";
 import type { ClientQuestion } from "@/lib/model";
 
 interface PracticePayload {
@@ -13,7 +15,12 @@ interface PracticePayload {
   index: number;
   complete: boolean;
   summary: { firstTry: number; answered: number; purposes: string[] };
-  current: { question: ClientQuestion; purpose: string; attempts: number } | null;
+  current: {
+    question: ClientQuestion;
+    purpose: string;
+    attempts: number;
+    lesson: { key: LessonKey; title: string; seen: boolean } | null;
+  } | null;
   streak: number;
 }
 interface AnswerPayload {
@@ -39,6 +46,10 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
   const [locked, setLocked] = useState<string | null>(null);
   const [example, setExample] = useState<WorkedExampleData | null>(null);
   const [exampleBusy, setExampleBusy] = useState(false);
+  /** Lesson the student chose to skip or has finished this session. */
+  const [lessonDismissed, setLessonDismissed] = useState<LessonKey | null>(null);
+  /** Lesson reopened deliberately from the practice screen. */
+  const [lessonReopened, setLessonReopened] = useState<LessonKey | null>(null);
 
   const load = useCallback(() => {
     api<PracticePayload>(`/api/students/${id}/practice`)
@@ -131,6 +142,47 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
   }
 
   const cur = state.current;
+
+  // Teach before drilling: a new idea gets its lesson first, and any lesson
+  // can be reopened on demand. Skipping is allowed — some children already
+  // know it, and forcing them through it would be its own kind of failure.
+  const lesson = cur.lesson;
+  const showLesson =
+    lesson &&
+    (lessonReopened === lesson.key ||
+      (!lesson.seen && lessonDismissed !== lesson.key));
+  if (showLesson && lesson) {
+    const LessonBody = LESSON_COMPONENTS[lesson.key];
+    const finish = () => {
+      void api(`/api/students/${id}/lesson`, {
+        method: "POST",
+        body: JSON.stringify({ key: lesson.key }),
+      }).catch(() => undefined);
+      setLessonReopened(null);
+      setLessonDismissed(lesson.key);
+      load();
+    };
+    return (
+      <Shell id={id}>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">
+            📘 Learn this first
+          </span>
+          <button
+            type="button"
+            onClick={finish}
+            className="btn rounded-xl px-3 py-2 text-sm font-semibold text-ink-500 hover:text-ink-900"
+          >
+            Skip to practice →
+          </button>
+        </div>
+        <Card>
+          <LessonBody onFinish={finish} />
+        </Card>
+      </Shell>
+    );
+  }
+
   return (
     <Shell id={id}>
       <div className="mb-4">
@@ -154,6 +206,15 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
         />
 
         {/* Teaching support: a parallel worked example, never this question's answer. */}
+        {!feedback && !example && lesson && (
+          <button
+            type="button"
+            onClick={() => setLessonReopened(lesson.key)}
+            className="btn mr-2 mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-100 bg-white px-4 py-2.5 text-sm font-semibold text-ink-700 hover:border-brand-300 hover:text-brand-700"
+          >
+            📘 Read the lesson
+          </button>
+        )}
         {!feedback && !example && (
           <button
             type="button"

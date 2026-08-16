@@ -12,6 +12,7 @@ import { buildPracticeSession, currentSkillFor, SESSION_SIZE } from "@/engine/pr
 import { assumedMastered, newSkillState, recordAttempt, skillProgress } from "@/engine/mastery";
 import { isCorrect, dedupKey } from "@/engine/validate";
 import { stageLabelFor, generateQuestion } from "@/engine/generate";
+import { lessonKeyForSkill, LESSON_TITLES, type LessonKey } from "./lessons";
 
 const TABLE = "students";
 
@@ -181,6 +182,31 @@ export interface AnswerResult {
   stageAdvanced?: boolean;
   skillMastered?: boolean;
   skillName?: string;
+}
+
+/**
+ * The lesson to teach before the current question, or null.
+ *
+ * Offered once per lesson: a child who has already been taught the trade
+ * should go straight to practising it, and can reopen the lesson from the
+ * practice screen whenever they want.
+ */
+export function lessonForCurrent(
+  student: StudentProfile
+): { key: LessonKey; title: string; seen: boolean } | null {
+  const session = student.activeSession;
+  if (!session || session.completedAt) return null;
+  const item = session.items[session.index];
+  if (!item) return null;
+  const skill = getSkill(item.question.skillId);
+  if (!skill) return null;
+  const key = lessonKeyForSkill(skill.family, skill.params);
+  if (!key) return null;
+  return { key, title: LESSON_TITLES[key], seen: Boolean(student.lessonsSeen?.[key]) };
+}
+
+export function markLessonSeen(student: StudentProfile, key: string, now = Date.now()): void {
+  student.lessonsSeen = { ...(student.lessonsSeen ?? {}), [key]: now };
 }
 
 export interface WorkedExample {
