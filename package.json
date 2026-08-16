@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start -p 3080",
     "test": "vitest run",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "verify:store": "tsx scripts/verify-store.ts"
   },
   "dependencies": {
-    "@upstash/redis": "^1.38.2",
+    "@neondatabase/serverless": "^1.1.0",
     "next": "^15.4.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

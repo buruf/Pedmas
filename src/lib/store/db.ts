@@ -2,58 +2,85 @@
  * Repository over a key/row store. Each logical table is a map of id -> row.
  *
  * Two backends behind one interface:
- *   - Upstash Redis when UPSTASH_REDIS_REST_URL/TOKEN are set. Each table is a
- *     Redis hash, so a row read or write touches only that row. This is what
- *     runs on Vercel, whose filesystem is read-only.
+ *   - Neon Postgres when DATABASE_URL is set. Rows live in one table keyed by
+ *     (tbl, id) with the row itself as jsonb, so the interface maps across
+ *     without a migration per entity, while still being a real database with
+ *     durability and backups. This is what runs on Vercel, whose filesystem
+ *     is read-only.
  *   - A local JSON file per table otherwise, so `npm run dev` and the test
  *     suite need no credentials.
  *
  * Callers never see which is active. Serverless instances are short-lived and
- * concurrent, so the Redis path deliberately keeps no cache — reading stale
+ * concurrent, so the Postgres path deliberately keeps no cache — reading stale
  * rows across instances would corrupt sessions and practice state.
  */
 import { promises as fs } from "fs";
 import path from "path";
-import { Redis } from "@upstash/redis";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
 const DATA_DIR = path.join(process.cwd(), "data");
-const KEY_PREFIX = "pedmas";
 
 type Table = Record<string, unknown>;
 
 interface StoreGlobal {
   cache: Map<string, Table>;
   locks: Map<string, Promise<void>>;
-  redis?: Redis | null;
+  sql?: NeonQueryFunction<false, false>;
+  schemaReady?: Promise<void>;
 }
 
 const g = globalThis as typeof globalThis & { __pedmasStore?: StoreGlobal };
 const store: StoreGlobal = (g.__pedmasStore ??= { cache: new Map(), locks: new Map() });
 
-export function isRedisConfigured(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+/** Vercel's Neon integration sets DATABASE_URL; accept the common aliases. */
+function connectionString(): string | undefined {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.NEON_DATABASE_URL ||
+    undefined
+  );
+}
+
+export function isDatabaseConfigured(): boolean {
+  return Boolean(connectionString());
 }
 
 /** Missing persistence configuration, for health checks. */
 export function storeConfigProblems(): string[] {
-  const missing: string[] = [];
-  if (!process.env.UPSTASH_REDIS_REST_URL) missing.push("UPSTASH_REDIS_REST_URL");
-  if (!process.env.UPSTASH_REDIS_REST_TOKEN) missing.push("UPSTASH_REDIS_REST_TOKEN");
-  return missing;
+  return isDatabaseConfigured() ? [] : ["DATABASE_URL"];
 }
 
-export function storeBackend(): "redis" | "file" {
-  return isRedisConfigured() ? "redis" : "file";
+export function storeBackend(): "postgres" | "file" {
+  return isDatabaseConfigured() ? "postgres" : "file";
 }
 
-function redis(): Redis {
-  if (!store.redis) {
-    store.redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+function db(): NeonQueryFunction<false, false> {
+  if (!store.sql) store.sql = neon(connectionString()!);
+  return store.sql;
+}
+
+/** Create the row table once per instance. Idempotent, so no migration step. */
+function ensureSchema(): Promise<void> {
+  if (!store.schemaReady) {
+    const sql = db();
+    store.schemaReady = (async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS pedmas_rows (
+          tbl        text        NOT NULL,
+          id         text        NOT NULL,
+          data       jsonb       NOT NULL,
+          updated_at timestamptz NOT NULL DEFAULT now(),
+          PRIMARY KEY (tbl, id)
+        )
+      `;
+    })().catch((err) => {
+      // Let the next call retry rather than caching a failure forever.
+      store.schemaReady = undefined;
+      throw err;
     });
   }
-  return store.redis;
+  return store.schemaReady;
 }
 
 /**
@@ -61,27 +88,12 @@ function redis(): Redis {
  * Fail early and say exactly what is wrong instead.
  */
 function assertWritableBackend(): void {
-  if (!isRedisConfigured() && process.env.VERCEL) {
+  if (!isDatabaseConfigured() && process.env.VERCEL) {
     throw new Error(
-      "No durable store configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN — " +
-        "the serverless filesystem is read-only, so data cannot be saved without them."
+      "No durable store configured. Set DATABASE_URL to a Neon connection string — " +
+        "the serverless filesystem is read-only, so data cannot be saved without it."
     );
   }
-}
-
-const tableKey = (table: string) => `${KEY_PREFIX}:${table}`;
-
-/** Upstash decodes JSON automatically; strings may arrive already parsed. */
-function decode<T>(value: unknown): T | undefined {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value === "string") {
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return value as unknown as T;
-    }
-  }
-  return value as T;
 }
 
 /* ----------------------------------------------------------------- file mode */
@@ -120,20 +132,24 @@ async function persistFile(table: string): Promise<void> {
 /* -------------------------------------------------------------- public API */
 
 export async function getRow<T>(table: string, id: string): Promise<T | undefined> {
-  if (isRedisConfigured()) {
-    return decode<T>(await redis().hget(tableKey(table), id));
+  if (isDatabaseConfigured()) {
+    await ensureSchema();
+    const rows = (await db()`
+      SELECT data FROM pedmas_rows WHERE tbl = ${table} AND id = ${id} LIMIT 1
+    `) as { data: T }[];
+    return rows[0]?.data;
   }
   const data = await loadFile(table);
   return data[id] as T | undefined;
 }
 
 export async function allRows<T>(table: string): Promise<T[]> {
-  if (isRedisConfigured()) {
-    const all = await redis().hgetall<Record<string, unknown>>(tableKey(table));
-    if (!all) return [];
-    return Object.values(all)
-      .map((v) => decode<T>(v))
-      .filter((v): v is T => v !== undefined);
+  if (isDatabaseConfigured()) {
+    await ensureSchema();
+    const rows = (await db()`
+      SELECT data FROM pedmas_rows WHERE tbl = ${table}
+    `) as { data: T }[];
+    return rows.map((r) => r.data);
   }
   const data = await loadFile(table);
   return Object.values(data) as T[];
@@ -141,8 +157,14 @@ export async function allRows<T>(table: string): Promise<T[]> {
 
 export async function putRow<T>(table: string, id: string, row: T): Promise<void> {
   assertWritableBackend();
-  if (isRedisConfigured()) {
-    await redis().hset(tableKey(table), { [id]: JSON.stringify(row) });
+  if (isDatabaseConfigured()) {
+    await ensureSchema();
+    await db()`
+      INSERT INTO pedmas_rows (tbl, id, data)
+      VALUES (${table}, ${id}, ${JSON.stringify(row)}::jsonb)
+      ON CONFLICT (tbl, id)
+      DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+    `;
     return;
   }
   const data = await loadFile(table);
@@ -152,8 +174,9 @@ export async function putRow<T>(table: string, id: string, row: T): Promise<void
 
 export async function deleteRow(table: string, id: string): Promise<void> {
   assertWritableBackend();
-  if (isRedisConfigured()) {
-    await redis().hdel(tableKey(table), id);
+  if (isDatabaseConfigured()) {
+    await ensureSchema();
+    await db()`DELETE FROM pedmas_rows WHERE tbl = ${table} AND id = ${id}`;
     return;
   }
   const data = await loadFile(table);

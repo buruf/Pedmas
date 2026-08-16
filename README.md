@@ -49,11 +49,14 @@ serves genuinely distinct questions.
 Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Vitest. Mobile-first.
 
 Storage sits behind a repository layer (`src/lib/store/db.ts`) with two
-backends and one interface: **Upstash Redis** when `UPSTASH_REDIS_REST_URL` and
-`UPSTASH_REDIS_REST_TOKEN` are set, and local JSON files otherwise. Production
-needs Redis — a serverless filesystem is read-only, so the store fails fast
-with a clear message rather than losing writes. Auth is scrypt-hashed passwords
-with httpOnly session cookies.
+backends and one interface: **Neon Postgres** when `DATABASE_URL` is set, and
+local JSON files otherwise. Rows live in a single `pedmas_rows` table keyed by
+`(tbl, id)` with the row as `jsonb`, so the repository maps across without a
+migration per entity while still being a real database. The table is created on
+first use. Production needs the database — a serverless filesystem is
+read-only, so the store fails fast with a clear message rather than losing
+writes. Verify a connection string with `npm run verify:store`. Auth is
+scrypt-hashed passwords with httpOnly session cookies.
 
 ## Running it
 
