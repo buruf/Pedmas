@@ -4,6 +4,7 @@ import { FAMILIES } from "./families";
 import { validateRaw, dedupKey } from "./validate";
 import { makeRng, randomSeed } from "./rng";
 import { errorAnalysisFor, hasErrorAnalysis } from "./errorAnalysis";
+import { deriveMetadata } from "./metadata";
 
 const MAX_ATTEMPTS = 40;
 
@@ -69,6 +70,7 @@ export function generateQuestion(
       representation: "numeric",
       ...pub,
       difficulty: difficultyOf(skill, st),
+      metadata: deriveMetadata(raw, skill, st, family.stageLabel(toRef(skill), st)),
     };
   }
   throw new GenerationError(
@@ -111,6 +113,7 @@ export function generateErrorAnalysis(
       representation: "error-analysis",
       ...pub,
       difficulty: difficultyOf(skill, 4),
+      metadata: deriveMetadata(raw, skill, 4, "Judge the working"),
     };
   }
   return null;

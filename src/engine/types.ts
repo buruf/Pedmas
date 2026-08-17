@@ -27,6 +27,39 @@ export interface Question {
   concept: string;
   difficulty: number; // 1..10, structural
   representation: string;
+  /** Structural difficulty metadata (spec §10). */
+  metadata: QuestionMetadata;
+}
+
+/**
+ * Why a question is as hard as it is (spec §10).
+ *
+ * Every field is derived from the question itself or its curriculum position,
+ * never estimated. The point is that the engine can always answer "why is
+ * this harder?" with something checkable rather than a vibe.
+ */
+export interface QuestionMetadata {
+  /** Skill ids that must come first, straight from the curriculum graph. */
+  prerequisites: string[];
+  /** Largest whole number appearing in the prompt, 0 when none. */
+  numberSize: number;
+  /** How many arithmetic operators the prompt contains. */
+  operationCount: number;
+  /** Denominator size when fractions appear, else 0. */
+  fractionComplexity: number;
+  /** Whether the prompt carries decimals, negatives or variables. */
+  numericalComplexity: {
+    decimals: boolean;
+    negatives: boolean;
+    variables: boolean;
+  };
+  /**
+   * 1..5, rising with the stage and with the demand of the task: recalling a
+   * fact is easier than judging someone else's method.
+   */
+  cognitiveComplexity: number;
+  /** What the student is expected to do, from the family's stage label. */
+  expectedMethod: string;
 }
 
 /** What a generator family produces before metadata + validation. */
