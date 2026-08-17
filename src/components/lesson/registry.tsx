@@ -68,6 +68,20 @@ import { TransformationsLesson, SimilarityLesson } from "./geometry/TransformSim
 import { CircleMeasureLesson } from "./geometry/CircleMeasureLesson";
 import { UnitConversionLesson, MeasureUnitsLesson } from "./geometry/MeasurementLesson";
 import { TimeLesson } from "./geometry/TimeLesson";
+import { OrderOfOpsLesson } from "./early-ops/OrderOfOpsLesson";
+import { CountingOnLesson, CountingBackLesson } from "./early-ops/CountingOnLesson";
+import { FactFamilyLesson } from "./early-ops/FactFamilyLesson";
+import { MissingNumberLesson } from "./early-ops/MissingNumberLesson";
+import { MentalMathLesson } from "./early-ops/MentalMathLesson";
+import { FractionNumberLineLesson } from "./early-ops/FractionNumberLineLesson";
+import { CountingObjectsLesson } from "./early-number/CountingObjectsLesson";
+import { CountingSequenceLesson } from "./early-number/CountingSequenceLesson";
+import { NumberLineLesson } from "./early-number/NumberLineLesson";
+import { CompareNumbersLesson } from "./early-number/CompareNumbersLesson";
+import { OrderBigNumbersLesson } from "./early-number/OrderBigNumbersLesson";
+import { OddEvenLesson } from "./early-number/OddEvenLesson";
+import { SkipCountingLesson } from "./early-number/SkipCountingLesson";
+import { PatternsLesson } from "./early-number/PatternsLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -180,4 +194,19 @@ export const LESSON_COMPONENTS: Record<
   "meas-conversion": UnitConversionLesson,
   "meas-units": MeasureUnitsLesson,
   "meas-time": TimeLesson,
+  "ops-order": OrderOfOpsLesson,
+  "ops-count-on": CountingOnLesson,
+  "ops-count-back": CountingBackLesson,
+  "ops-fact-family": FactFamilyLesson,
+  "ops-missing": MissingNumberLesson,
+  "ops-mental": MentalMathLesson,
+  "frac-number-line": FractionNumberLineLesson,
+  "num-counting-objects": CountingObjectsLesson,
+  "num-counting-sequence": CountingSequenceLesson,
+  "num-number-line": NumberLineLesson,
+  "num-compare-small": CompareNumbersLesson,
+  "num-compare-big": OrderBigNumbersLesson,
+  "num-odd-even": OddEvenLesson,
+  "num-skip-counting": SkipCountingLesson,
+  "num-patterns": PatternsLesson,
 };

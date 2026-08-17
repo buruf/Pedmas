@@ -116,6 +116,23 @@ export const LESSON_KEYS = [
   "meas-conversion",
   "meas-units",
   "meas-time",
+  // Early operations and order of operations.
+  "ops-order",
+  "ops-count-on",
+  "ops-count-back",
+  "ops-fact-family",
+  "ops-missing",
+  "ops-mental",
+  "frac-number-line",
+  // Early number sense.
+  "num-counting-objects",
+  "num-counting-sequence",
+  "num-number-line",
+  "num-compare-small",
+  "num-compare-big",
+  "num-odd-even",
+  "num-skip-counting",
+  "num-patterns",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -218,6 +235,21 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "meas-conversion": "Which way to convert",
   "meas-units": "Choosing and reading a unit",
   "meas-time": "Clock time is not decimal",
+  "ops-order": "The order operations happen in",
+  "ops-count-on": "Counting on from the bigger number",
+  "ops-count-back": "Counting back to subtract",
+  "ops-fact-family": "One fact gives you four",
+  "ops-missing": "Finding the missing number",
+  "ops-mental": "Doing it in your head",
+  "frac-number-line": "Fractions on a number line",
+  "num-counting-objects": "Counting things without losing your place",
+  "num-counting-sequence": "Counting past the tens",
+  "num-number-line": "Reading a number line",
+  "num-compare-small": "Which number is bigger?",
+  "num-compare-big": "Comparing bigger numbers",
+  "num-odd-even": "Odd, even, and where zero sits",
+  "num-skip-counting": "Skip counting past a ten",
+  "num-patterns": "Finding the rule of a pattern",
 };
 
 /**
@@ -241,7 +273,9 @@ export function lessonKeyForSkill(
     // lesson. Below ten there is no crossing at all, so nothing to teach yet.
     if (max >= 100) return byOp();
     if (max > 10) return op === "sub" ? "subtract-ten" : "make-ten";
-    return null;
+    // At or below ten nothing crosses, so the idea is counting on or back
+    // from the larger number rather than any regrouping.
+    return op === "sub" ? "ops-count-back" : "ops-count-on";
   }
   if (family === "place-value") return "place-value";
   if (family === "dec-place-value") return "dec-place-value";
@@ -351,6 +385,25 @@ export function lessonKeyForSkill(
   if (family === "measure-units") return "meas-units";
   if (family === "length-compare") return "meas-units";
   if (family === "time") return "meas-time";
+  if (family === "order-of-ops") return "ops-order";
+  if (family === "fact-family") return "ops-fact-family";
+  if (family === "missing-number") return "ops-missing";
+  if (family === "mental-math") return "ops-mental";
+  if (family === "frac-number-line") return "frac-number-line";
+  // Counting and comparing split on the size of the numbers: small numbers
+  // are taught with objects and ten frames, larger ones by scanning digits.
+  if (family === "counting") {
+    const max = typeof params.max === "number" ? params.max : 20;
+    return max <= 20 ? "num-counting-objects" : "num-counting-sequence";
+  }
+  if (family === "compare-numbers" || family === "order-numbers") {
+    const max = typeof params.max === "number" ? params.max : 20;
+    return max <= 20 ? "num-compare-small" : "num-compare-big";
+  }
+  if (family === "number-line") return "num-number-line";
+  if (family === "odd-even") return "num-odd-even";
+  if (family === "skip-counting") return "num-skip-counting";
+  if (family === "patterns") return "num-patterns";
   // Volume and surface area are taught apart: the confusion between them
   // is the whole point, so each gets its own lesson.
   if (family === "volume-surface") {

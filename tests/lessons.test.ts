@@ -27,9 +27,9 @@ describe("lesson routing", () => {
   it("matches the lesson to the size of the numbers", () => {
     // Caught in a real session walk: "Addition Within 5" was being offered the
     // column-regrouping lesson. Each band of numbers needs a different idea.
-    // Below ten nothing crosses, so there is nothing to teach yet.
-    expect(lessonKeyForSkill("add-sub", { op: "add", max: 5 })).toBeNull();
-    expect(lessonKeyForSkill("add-sub", { op: "add", max: 10 })).toBeNull();
+    // At or below ten nothing crosses, so the idea is counting on or back.
+    expect(lessonKeyForSkill("add-sub", { op: "add", max: 5 })).toBe("ops-count-on");
+    expect(lessonKeyForSkill("add-sub", { op: "sub", max: 10 })).toBe("ops-count-back");
     // Between ten and a hundred the idea is bridging through ten.
     expect(lessonKeyForSkill("add-sub", { op: "add", max: 20 })).toBe("make-ten");
     expect(lessonKeyForSkill("add-sub", { op: "sub", max: 20 })).toBe("subtract-ten");
