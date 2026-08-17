@@ -15,13 +15,19 @@ describe("lesson routing", () => {
     expect(lessonKeyForSkill("frac-add-sub", { op: "add" })).toBe("frac-add");
   });
 
-  it("returns null for families without a lesson yet", () => {
-    // Uncovered families must fall through to null rather than being routed to
-    // a loosely-related lesson — "Show me how" already covers every family, so
-    // a wrong lesson is worse than none.
-    expect(lessonKeyForSkill("mc-bank", { bank: "sorting-data" })).toBeNull();
-    expect(lessonKeyForSkill("vectors", {})).toBeNull();
+  it("returns null for anything outside the curriculum", () => {
+    // Every family in the curriculum now has a lesson, so the only route to
+    // null is a family that does not exist. An unknown bank must also fall
+    // through rather than being handed a loosely-related lesson.
     expect(lessonKeyForSkill("not-a-real-family", {})).toBeNull();
+    expect(lessonKeyForSkill("mc-bank", { bank: "no-such-bank" })).toBeNull();
+  });
+
+  it("covers every skill in the curriculum", () => {
+    // The whole point of the lesson system: a child can never reach a skill
+    // that has nothing to teach it.
+    const uncovered = allSkills().filter((s) => !lessonKeyForSkill(s.family, s.params));
+    expect(uncovered.map((s) => s.id)).toEqual([]);
   });
 
   it("matches the lesson to the size of the numbers", () => {

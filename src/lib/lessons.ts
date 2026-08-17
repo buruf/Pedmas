@@ -133,6 +133,28 @@ export const LESSON_KEYS = [
   "num-odd-even",
   "num-skip-counting",
   "num-patterns",
+  // Concept banks and decimal leftovers.
+  "bank-number-writing",
+  "bank-shape-attributes",
+  "bank-sorting-data",
+  "bank-lines",
+  "bank-relations",
+  "bank-distributions",
+  "bank-sampling",
+  "bank-correlation",
+  "dec-round",
+  "dec-frac-convert",
+  // Senior remainder.
+  "vec-basics",
+  "vec-dot",
+  "trig-graph",
+  "trig-equation",
+  "trig-angle-apps",
+  "calc-critical",
+  "calc-optimise",
+  "num-real",
+  "fin-interest",
+  "alg-binomial",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -250,6 +272,26 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "num-odd-even": "Odd, even, and where zero sits",
   "num-skip-counting": "Skip counting past a ten",
   "num-patterns": "Finding the rule of a pattern",
+  "bank-number-writing": "Writing numbers the right way round",
+  "bank-shape-attributes": "A shape keeps its name when you turn it",
+  "bank-sorting-data": "Sorting by one rule at a time",
+  "bank-lines": "Parallel, perpendicular, or neither",
+  "bank-relations": "What makes a relation a function",
+  "bank-distributions": "When the average misleads",
+  "bank-sampling": "Asking the right people",
+  "bank-correlation": "Correlation, cause, and going too far",
+  "dec-round": "Rounding a decimal in one step",
+  "dec-frac-convert": "Fractions and decimals are the same amount",
+  "vec-basics": "Direction changes everything",
+  "vec-dot": "The dot product gives a number",
+  "trig-graph": "Amplitude and period",
+  "trig-equation": "Finding every solution, not just one",
+  "trig-angle-apps": "Angles of elevation and depression",
+  "calc-critical": "Not every turning point is a maximum",
+  "calc-optimise": "Answering the question that was asked",
+  "num-real": "Numbers that are not fractions",
+  "fin-interest": "Simple and compound interest",
+  "alg-binomial": "Why the middle terms appear",
 };
 
 /**
@@ -404,6 +446,39 @@ export function lessonKeyForSkill(
   if (family === "odd-even") return "num-odd-even";
   if (family === "skip-counting") return "num-skip-counting";
   if (family === "patterns") return "num-patterns";
+  // The conceptual banks each teach a distinct idea, so they route on the
+  // bank id rather than sharing one lesson for the whole family.
+  if (family === "mc-bank") {
+    const bank = typeof params.bank === "string" ? params.bank : "";
+    if (bank === "number-writing") return "bank-number-writing";
+    if (bank === "shape-attributes") return "bank-shape-attributes";
+    if (bank === "sorting-data") return "bank-sorting-data";
+    if (bank === "lines") return "bank-lines";
+    if (bank === "relations") return "bank-relations";
+    if (bank === "distributions") return "bank-distributions";
+    if (bank === "sampling") return "bank-sampling";
+    if (bank === "correlation") return "bank-correlation";
+    return null;
+  }
+  if (family === "dec-round") return "dec-round";
+  if (family === "dec-frac-convert") return "dec-frac-convert";
+  // Vectors and calculus applications split on kind: the dot product and
+  // optimisation each carry a distinct misconception of their own.
+  if (family === "vectors") {
+    return params.kind === "dot" || params.kind === "angle" ? "vec-dot" : "vec-basics";
+  }
+  if (family === "derivative-apps") {
+    return params.kind === "optimize" ? "calc-optimise" : "calc-critical";
+  }
+  // percent-change already has a lesson over in decimals; the rest is interest.
+  if (family === "financial") {
+    return params.kind === "percent-change" ? "percent-change" : "fin-interest";
+  }
+  if (family === "trig-graph") return "trig-graph";
+  if (family === "trig-equation") return "trig-equation";
+  if (family === "angle-apps") return "trig-angle-apps";
+  if (family === "real-numbers") return "num-real";
+  if (family === "binomial-theorem") return "alg-binomial";
   // Volume and surface area are taught apart: the confusion between them
   // is the whole point, so each gets its own lesson.
   if (family === "volume-surface") {

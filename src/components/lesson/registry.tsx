@@ -82,6 +82,24 @@ import { OrderBigNumbersLesson } from "./early-number/OrderBigNumbersLesson";
 import { OddEvenLesson } from "./early-number/OddEvenLesson";
 import { SkipCountingLesson } from "./early-number/SkipCountingLesson";
 import { PatternsLesson } from "./early-number/PatternsLesson";
+import { NumberWritingLesson } from "./concepts/NumberWritingLesson";
+import { ShapeAttributesLesson } from "./concepts/ShapeAttributesLesson";
+import { SortingDataLesson } from "./concepts/SortingDataLesson";
+import { LinesLesson } from "./concepts/LinesLesson";
+import { RelationsLesson } from "./concepts/RelationsLesson";
+import { DistributionShapeLesson } from "./concepts/DistributionShapeLesson";
+import { SamplingLesson } from "./concepts/SamplingLesson";
+import { CorrelationLesson } from "./concepts/CorrelationLesson";
+import { DecimalRoundLesson } from "./concepts/DecimalRoundLesson";
+import { DecimalFractionConvertLesson } from "./concepts/DecimalFractionConvertLesson";
+import { VectorBasicsLesson, DotProductLesson } from "./senior/VectorsLesson";
+import { TrigGraphLesson } from "./senior/TrigGraphLesson";
+import { TrigEquationLesson } from "./senior/TrigEquationLesson";
+import { AngleAppsLesson } from "./senior/AngleAppsLesson";
+import { CriticalPointsLesson, OptimisationLesson } from "./senior/DerivativeAppsLesson";
+import { RealNumbersLesson } from "./senior/RealNumbersLesson";
+import { InterestLesson } from "./senior/InterestLesson";
+import { BinomialTheoremLesson } from "./senior/BinomialTheoremLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -209,4 +227,24 @@ export const LESSON_COMPONENTS: Record<
   "num-odd-even": OddEvenLesson,
   "num-skip-counting": SkipCountingLesson,
   "num-patterns": PatternsLesson,
+  "bank-number-writing": NumberWritingLesson,
+  "bank-shape-attributes": ShapeAttributesLesson,
+  "bank-sorting-data": SortingDataLesson,
+  "bank-lines": LinesLesson,
+  "bank-relations": RelationsLesson,
+  "bank-distributions": DistributionShapeLesson,
+  "bank-sampling": SamplingLesson,
+  "bank-correlation": CorrelationLesson,
+  "dec-round": DecimalRoundLesson,
+  "dec-frac-convert": DecimalFractionConvertLesson,
+  "vec-basics": VectorBasicsLesson,
+  "vec-dot": DotProductLesson,
+  "trig-graph": TrigGraphLesson,
+  "trig-equation": TrigEquationLesson,
+  "trig-angle-apps": AngleAppsLesson,
+  "calc-critical": CriticalPointsLesson,
+  "calc-optimise": OptimisationLesson,
+  "num-real": RealNumbersLesson,
+  "fin-interest": InterestLesson,
+  "alg-binomial": BinomialTheoremLesson,
 };
