@@ -36,6 +36,11 @@ export const LESSON_KEYS = [
   "frac-div",
   "mixed-numbers",
   "frac-add",
+  // Number sense.
+  "rounding",
+  "factors-multiples",
+  "primes",
+  "gcf-lcm",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -64,6 +69,10 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "frac-div": "Dividing by a fraction",
   "mixed-numbers": "Whole numbers and fractions together",
   "frac-add": "Adding fractions when the bottoms are different",
+  rounding: "Rounding is asking which one it is nearer to",
+  "factors-multiples": "Factors go in, multiples come out",
+  primes: "Numbers that cannot be split",
+  "gcf-lcm": "Greatest common factor and lowest common multiple",
 };
 
 /**
@@ -112,5 +121,9 @@ export function lessonKeyForSkill(
   if (family === "mult-multi") return "mult-2digit";
   if (family === "long-division") return "div-2digit";
   if (family === "frac-add-sub") return "frac-add";
+  if (family === "rounding" || family === "estimation") return "rounding";
+  if (family === "factors-multiples") return "factors-multiples";
+  if (family === "primes") return "primes";
+  if (family === "gcf-lcm") return "gcf-lcm";
   return null;
 }

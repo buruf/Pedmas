@@ -17,6 +17,9 @@ import { FractionCompareLesson } from "./fractions/FractionCompareLesson";
 import { FractionEquivalentLesson } from "./fractions/FractionEquivalentLesson";
 import { FractionMulLesson, FractionDivLesson } from "./fractions/FractionMulDivLesson";
 import { MixedNumberLesson } from "./fractions/MixedNumberLesson";
+import { RoundingLesson } from "./number/RoundingLesson";
+import { FactorsMultiplesLesson } from "./number/FactorsMultiplesLesson";
+import { PrimesLesson, GcfLcmLesson } from "./number/PrimesGcfLcmLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -55,4 +58,8 @@ export const LESSON_COMPONENTS: Record<
   "frac-div": FractionDivLesson,
   "mixed-numbers": MixedNumberLesson,
   "frac-add": FractionAdditionLesson,
+  rounding: RoundingLesson,
+  "factors-multiples": FactorsMultiplesLesson,
+  primes: PrimesLesson,
+  "gcf-lcm": GcfLcmLesson,
 };
