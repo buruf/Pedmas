@@ -41,6 +41,15 @@ export const LESSON_KEYS = [
   "factors-multiples",
   "primes",
   "gcf-lcm",
+  // Early algebra.
+  "alg-evaluate",
+  "alg-translate",
+  "alg-like-terms",
+  "alg-distributive",
+  "alg-one-step",
+  "alg-two-step",
+  "alg-multi-step",
+  "alg-inequality",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -73,6 +82,14 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "factors-multiples": "Factors go in, multiples come out",
   primes: "Numbers that cannot be split",
   "gcf-lcm": "Greatest common factor and lowest common multiple",
+  "alg-evaluate": "What a letter is worth",
+  "alg-translate": "Turning words into algebra",
+  "alg-like-terms": "Only add what matches",
+  "alg-distributive": "Multiplying into a bracket",
+  "alg-one-step": "Keeping the scales level",
+  "alg-two-step": "Undoing in the right order",
+  "alg-multi-step": "When x is on both sides",
+  "alg-inequality": "The one rule that flips",
 };
 
 /**
@@ -125,5 +142,13 @@ export function lessonKeyForSkill(
   if (family === "factors-multiples") return "factors-multiples";
   if (family === "primes") return "primes";
   if (family === "gcf-lcm") return "gcf-lcm";
+  if (family === "evaluate-expression") return "alg-evaluate";
+  if (family === "translate-expression") return "alg-translate";
+  if (family === "combine-like-terms") return "alg-like-terms";
+  if (family === "distributive") return "alg-distributive";
+  if (family === "one-step-eq") return "alg-one-step";
+  if (family === "two-step-eq") return "alg-two-step";
+  if (family === "multi-step-eq") return "alg-multi-step";
+  if (family === "inequality") return "alg-inequality";
   return null;
 }

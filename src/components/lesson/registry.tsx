@@ -20,6 +20,13 @@ import { MixedNumberLesson } from "./fractions/MixedNumberLesson";
 import { RoundingLesson } from "./number/RoundingLesson";
 import { FactorsMultiplesLesson } from "./number/FactorsMultiplesLesson";
 import { PrimesLesson, GcfLcmLesson } from "./number/PrimesGcfLcmLesson";
+import { EvaluateExpressionLesson } from "./algebra/EvaluateExpressionLesson";
+import { TranslateExpressionLesson } from "./algebra/TranslateExpressionLesson";
+import { CombineLikeTermsLesson } from "./algebra/CombineLikeTermsLesson";
+import { DistributiveLesson } from "./algebra/DistributiveLesson";
+import { OneStepEquationLesson, TwoStepEquationLesson } from "./algebra/EquationLessons";
+import { MultiStepEquationLesson } from "./algebra/MultiStepEquationLesson";
+import { InequalityLesson } from "./algebra/InequalityLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -62,4 +69,12 @@ export const LESSON_COMPONENTS: Record<
   "factors-multiples": FactorsMultiplesLesson,
   primes: PrimesLesson,
   "gcf-lcm": GcfLcmLesson,
+  "alg-evaluate": EvaluateExpressionLesson,
+  "alg-translate": TranslateExpressionLesson,
+  "alg-like-terms": CombineLikeTermsLesson,
+  "alg-distributive": DistributiveLesson,
+  "alg-one-step": OneStepEquationLesson,
+  "alg-two-step": TwoStepEquationLesson,
+  "alg-multi-step": MultiStepEquationLesson,
+  "alg-inequality": InequalityLesson,
 };
