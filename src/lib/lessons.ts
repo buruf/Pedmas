@@ -30,6 +30,11 @@ export const LESSON_KEYS = [
   "sub-regroup",
   "mult-2digit",
   "div-2digit",
+  "frac-equivalent",
+  "frac-compare",
+  "frac-mul",
+  "frac-div",
+  "mixed-numbers",
   "frac-add",
 ] as const;
 
@@ -53,6 +58,11 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "sub-regroup": "Subtracting when you haven't got enough ones",
   "mult-2digit": "Multiplying a 2-digit number",
   "div-2digit": "Sharing when the tens don't split evenly",
+  "frac-equivalent": "Different fractions, same amount",
+  "frac-compare": "Which fraction is bigger?",
+  "frac-mul": "Multiplying fractions means of",
+  "frac-div": "Dividing by a fraction",
+  "mixed-numbers": "Whole numbers and fractions together",
   "frac-add": "Adding fractions when the bottoms are different",
 };
 
@@ -90,6 +100,11 @@ export function lessonKeyForSkill(
   if (family === "mult-facts") return "mult-meaning";
   if (family === "div-facts") return "div-meaning";
   if (family === "frac-identify") return "frac-meaning";
+  if (family === "frac-equivalent" || family === "frac-simplify") return "frac-equivalent";
+  if (family === "frac-compare") return "frac-compare";
+  if (family === "frac-mul" || family === "frac-of-number") return "frac-mul";
+  if (family === "frac-div") return "frac-div";
+  if (family === "mixed-number-ops") return "mixed-numbers";
   if (family === "multi-digit") {
     const digits = typeof params.digits === "number" ? params.digits : 2;
     return digits >= 2 ? byOp() : null;

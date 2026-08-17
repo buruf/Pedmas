@@ -95,6 +95,63 @@ export function FractionBar({
 }
 
 /**
+ * Area model for one fraction OF another.
+ *
+ * The whole is cut vertically by the first fraction and horizontally by the
+ * second; the overlap is the product. This is the picture that shows why
+ * multiplying denominators is not an arbitrary rule — the grid genuinely has
+ * that many pieces.
+ */
+export function FractionArea({
+  cols,
+  colsShaded,
+  rows,
+  rowsShaded,
+  label,
+  size = 150,
+}: {
+  cols: number;
+  colsShaded: number;
+  rows: number;
+  rowsShaded: number;
+  label?: string;
+  size?: number;
+}) {
+  const w = size / cols;
+  const h = size / rows;
+  return (
+    <figure className="m-0">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        width="100%"
+        style={{ maxWidth: size }}
+        role="img"
+        aria-label={label ?? `${colsShaded} of ${cols} by ${rowsShaded} of ${rows}`}
+      >
+        {/* first fraction — vertical strips */}
+        <rect x="0" y="0" width={colsShaded * w} height={size} fill={SHADE.brand.soft} />
+        {/* second fraction — horizontal strips */}
+        <rect x="0" y="0" width={size} height={rowsShaded * h} fill={SHADE.teal.soft} opacity="0.75" />
+        {/* the overlap — the product */}
+        <rect x="0" y="0" width={colsShaded * w} height={rowsShaded * h} fill={SHADE.brand.fill} />
+        {Array.from({ length: cols - 1 }, (_, i) => (
+          <line key={`c${i}`} x1={(i + 1) * w} y1="0" x2={(i + 1) * w} y2={size} stroke="#fff" strokeWidth="1.5" />
+        ))}
+        {Array.from({ length: rows - 1 }, (_, i) => (
+          <line key={`r${i}`} x1="0" y1={(i + 1) * h} x2={size} y2={(i + 1) * h} stroke="#fff" strokeWidth="1.5" />
+        ))}
+        <rect x="0.75" y="0.75" width={size - 1.5} height={size - 1.5} fill="none" stroke="#475569" strokeWidth="1.5" />
+      </svg>
+      {label && (
+        <figcaption className="mt-1 text-center text-sm font-semibold text-ink-700">
+          <MathText text={label} />
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/**
  * Two bars stacked so unequal piece sizes are obvious at a glance. This is the
  * picture that makes "you cannot add quarters to halves yet" self-evident.
  */

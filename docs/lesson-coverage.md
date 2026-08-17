@@ -21,7 +21,7 @@ real, named misconception is not finished.
 | Fraction arithmetic | frac-add-sub | ✅ done |
 | Decimals & percent | dec-place-value, dec-compare, dec-add-sub, dec-mul, dec-div, money, percent-basic, percent-apps, interest | ✅ done (94%) |
 | Decimals, remainder | dec-round, dec-frac-convert | ⬜ |
-| Fractions, rest | frac-equivalent, frac-simplify, frac-compare, frac-mul, frac-div, mixed-number-ops | ⬜ |
+| Fractions, rest | frac-equivalent, frac-simplify, frac-compare, frac-mul, frac-div, mixed-number-ops | ✅ done (93%) |
 | Number sense | counting, compare-numbers, rounding, factors-multiples, gcf-lcm, primes, patterns | ⬜ |
 | Ratios & integers | ratio-basic, unit-rate, proportion-solve, integer-ops, exponent-rules, sci-notation | ⬜ |
 | Early algebra | evaluate-expression, combine-like-terms, distributive, one/two/multi-step-eq, inequality | ⬜ |

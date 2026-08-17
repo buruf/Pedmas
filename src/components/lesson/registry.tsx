@@ -13,6 +13,10 @@ import { DecimalAddSubLesson } from "./decimals/DecimalAddSubLesson";
 import { PercentBasicsLesson } from "./decimals/PercentBasicsLesson";
 import { DecimalMulLesson, DecimalDivLesson } from "./decimals/DecimalMulDivLesson";
 import { PercentChangeLesson } from "./decimals/PercentChangeLesson";
+import { FractionCompareLesson } from "./fractions/FractionCompareLesson";
+import { FractionEquivalentLesson } from "./fractions/FractionEquivalentLesson";
+import { FractionMulLesson, FractionDivLesson } from "./fractions/FractionMulDivLesson";
+import { MixedNumberLesson } from "./fractions/MixedNumberLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -45,5 +49,10 @@ export const LESSON_COMPONENTS: Record<
   "sub-regroup": SubtractionLesson,
   "mult-2digit": MultiplicationLesson,
   "div-2digit": DivisionLesson,
+  "frac-equivalent": FractionEquivalentLesson,
+  "frac-compare": FractionCompareLesson,
+  "frac-mul": FractionMulLesson,
+  "frac-div": FractionDivLesson,
+  "mixed-numbers": MixedNumberLesson,
   "frac-add": FractionAdditionLesson,
 };
