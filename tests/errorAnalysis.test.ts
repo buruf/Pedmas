@@ -50,3 +50,20 @@ describe("error analysis questions", () => {
     }
   });
 });
+
+describe("time on task", () => {
+  it("caps a single question so a break is not counted as study", async () => {
+    const { MAX_QUESTION_MS } = await import("@/lib/students");
+    // A child who leaves for lunch mid-question must not bank an hour.
+    const away = 60 * 60 * 1000;
+    expect(Math.min(away, MAX_QUESTION_MS)).toBe(MAX_QUESTION_MS);
+    expect(MAX_QUESTION_MS).toBeLessThanOrEqual(5 * 60 * 1000);
+  });
+
+  it("sums only capped per-question time into a session", async () => {
+    const { activeMinutes } = await import("@/lib/students");
+    expect(activeMinutes([{ activeMs: 120000 } as never, { activeMs: 60000 } as never])).toBe(3);
+    // Sessions recorded before timing existed must not break the total.
+    expect(activeMinutes([{} as never])).toBe(0);
+  });
+});

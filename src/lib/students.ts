@@ -1,4 +1,4 @@
-import type { Account, PracticeSessionState, StudentProfile } from "./model";
+import type { Account, PracticeSessionState, SessionSummary, StudentProfile } from "./model";
 import { dayKeyOf, toClientQuestion } from "./model";
 import { allRows, deleteRow, getRow, newId, putRow } from "./store/db";
 import {
@@ -222,6 +222,28 @@ export function markLessonSeen(student: StudentProfile, key: string, now = Date.
   student.lessonsSeen = { ...(student.lessonsSeen ?? {}), [key]: now };
 }
 
+/**
+ * Longest stretch counted towards one question.
+ *
+ * Children leave the tab open, go to dinner, and come back. Without a cap the
+ * "time spent" a parent sees would be wall-clock, not work — which would make
+ * the number both flattering and useless. Anything past this is treated as
+ * time away.
+ */
+export const MAX_QUESTION_MS = 3 * 60 * 1000;
+
+/** Stamp the current question as shown, so time on task can be measured. */
+export function markServed(student: StudentProfile, now = Date.now()): void {
+  const item = student.activeSession?.items[student.activeSession.index];
+  if (item && item.servedAt === undefined) item.servedAt = now;
+}
+
+/** Time on task, in minutes, for a set of sessions. */
+export function activeMinutes(sessions: SessionSummary[]): number {
+  const ms = sessions.reduce((total, s) => total + (s.activeMs ?? 0), 0);
+  return Math.round(ms / 60000);
+}
+
 export interface WorkedExample {
   instruction: string;
   prompt: string;
@@ -279,6 +301,13 @@ export function answerCurrent(
   if (!item) return null;
   item.attempts += 1;
   if (usedHint) item.usedHint = true;
+  // Accumulate time on task, capping each stretch so a break away from the
+  // screen is not recorded as study. The clock restarts for a retry.
+  const now = Date.now();
+  if (item.servedAt !== undefined) {
+    item.elapsedMs = (item.elapsedMs ?? 0) + Math.min(now - item.servedAt, MAX_QUESTION_MS);
+    item.servedAt = now;
+  }
   const correct = isCorrect(item.question, input);
   const exhausted = !correct && item.attempts >= MAX_ATTEMPTS_PER_QUESTION;
   const moveOn = correct || exhausted;
@@ -336,6 +365,7 @@ function completeSession(student: StudentProfile, session: PracticeSessionState)
     total: session.items.length,
     firstTryCorrect: firstTry,
     completedAt: now,
+    activeMs: session.items.reduce((total, i) => total + (i.elapsedMs ?? 0), 0),
   });
   if (student.recentSessions.length > 60) student.recentSessions.length = 60;
 
@@ -398,6 +428,14 @@ export function progressSummary(student: StudentProfile) {
     masteredRecent: masteredNames,
     streak: student.streak,
     accuracy: totalAnswered ? Math.round((totalFirstTry / totalAnswered) * 100) : null,
+    // Time on task, for the parent dashboard (spec §18).
+    timeSpent: {
+      today: activeMinutes(
+        student.recentSessions.filter((s) => s.dayKey === dayKeyOf(Date.now()))
+      ),
+      last7Days: activeMinutes(student.recentSessions.slice(0, 7)),
+      allTime: activeMinutes(student.recentSessions),
+    },
     sessions: student.recentSessions.slice(0, 14),
     placementReport: student.placementReport ?? null,
     placed: Boolean(student.placedAt),

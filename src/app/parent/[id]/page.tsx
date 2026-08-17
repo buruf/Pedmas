@@ -22,6 +22,7 @@ interface StudentPayload {
     masteredRecent: string[];
     streak: { count: number };
     accuracy: number | null;
+    timeSpent: { today: number; last7Days: number; allTime: number };
     sessions: { dayKey: string; total: number; firstTryCorrect: number }[];
     placementReport: { strandId: string; strandName: string; level: number; status: string }[] | null;
   };
@@ -74,7 +75,7 @@ export default function ParentDashboard({ params }: { params: Promise<{ id: stri
         </Card>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-4">
         <Card className="text-center">
           <div className="text-3xl font-black text-brand-600">{p.streak.count}</div>
           <div className="text-xs font-semibold uppercase text-ink-500">Day streak</div>
@@ -87,7 +88,21 @@ export default function ParentDashboard({ params }: { params: Promise<{ id: stri
           <div className="text-3xl font-black text-brand-600">{p.accuracy ?? "—"}{p.accuracy !== null ? "%" : ""}</div>
           <div className="text-xs font-semibold uppercase text-ink-500">First-try accuracy</div>
         </Card>
+        <Card className="text-center">
+          <div className="text-3xl font-black text-brand-600">
+            {p.timeSpent.last7Days}
+            <span className="text-lg">m</span>
+          </div>
+          <div className="text-xs font-semibold uppercase text-ink-500">Time this week</div>
+          {p.timeSpent.today > 0 && (
+            <div className="mt-0.5 text-xs text-ink-500">{p.timeSpent.today}m today</div>
+          )}
+        </Card>
       </div>
+      <p className="mt-2 text-center text-xs text-ink-500">
+        Time counts only minutes spent working on a question, so a break away from the screen
+        isn&rsquo;t included.
+      </p>
 
       <Card className="mt-4">
         <h2 className="font-bold text-ink-900">Mathematics Profile</h2>

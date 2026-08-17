@@ -66,6 +66,10 @@ export interface SessionItemState {
   usedHint: boolean;
   correctFirstTry?: boolean;
   eventuallyCorrect?: boolean;
+  /** When this question was first shown, for measuring time on task. */
+  servedAt?: number;
+  /** Time actually spent on it, capped so a break is not counted as study. */
+  elapsedMs?: number;
 }
 
 export interface PracticeSessionState {
@@ -83,6 +87,8 @@ export interface SessionSummary {
   total: number;
   firstTryCorrect: number;
   completedAt: number;
+  /** Time on task for the session, summed from capped per-question times. */
+  activeMs?: number;
 }
 
 export interface StudentProfile {

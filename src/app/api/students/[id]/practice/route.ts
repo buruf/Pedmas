@@ -3,6 +3,7 @@ import { requireAccount, isResponse, bad } from "@/lib/api";
 import {
   answerCurrent,
   ensureSession,
+  markServed,
   lessonForCurrent,
   markLessonSeen,
   saveStudent,
@@ -32,6 +33,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const gate = locked(account);
   if (gate) return gate;
   const session = ensureSession(student);
+  // Start the clock on whichever question is now in front of the student.
+  markServed(student);
   await saveStudent(student);
   const item = session.items[session.index];
   return NextResponse.json({
