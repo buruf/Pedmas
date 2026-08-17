@@ -27,6 +27,12 @@ import { DistributiveLesson } from "./algebra/DistributiveLesson";
 import { OneStepEquationLesson, TwoStepEquationLesson } from "./algebra/EquationLessons";
 import { MultiStepEquationLesson } from "./algebra/MultiStepEquationLesson";
 import { InequalityLesson } from "./algebra/InequalityLesson";
+import { RatioBasicsLesson, EquivalentRatioLesson } from "./ratios/RatioLesson";
+import { UnitRateLesson } from "./ratios/UnitRateLesson";
+import { ProportionSolveLesson, ScaleDrawingLesson } from "./ratios/ProportionLesson";
+import { IntegerCompareLesson, IntegerOpsLesson } from "./ratios/IntegerLesson";
+import { ExponentEvalLesson, ExponentRulesLesson } from "./ratios/ExponentLesson";
+import { SciNotationLesson } from "./ratios/SciNotationLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -77,4 +83,14 @@ export const LESSON_COMPONENTS: Record<
   "alg-two-step": TwoStepEquationLesson,
   "alg-multi-step": MultiStepEquationLesson,
   "alg-inequality": InequalityLesson,
+  "rat-basics": RatioBasicsLesson,
+  "rat-equivalent": EquivalentRatioLesson,
+  "rat-unit-rate": UnitRateLesson,
+  "rat-proportion": ProportionSolveLesson,
+  "rat-scale": ScaleDrawingLesson,
+  "int-compare": IntegerCompareLesson,
+  "int-ops": IntegerOpsLesson,
+  "exp-eval": ExponentEvalLesson,
+  "exp-rules": ExponentRulesLesson,
+  "sci-notation": SciNotationLesson,
 };

@@ -50,6 +50,17 @@ export const LESSON_KEYS = [
   "alg-two-step",
   "alg-multi-step",
   "alg-inequality",
+  // Ratios, integers and exponents.
+  "rat-basics",
+  "rat-equivalent",
+  "rat-unit-rate",
+  "rat-proportion",
+  "rat-scale",
+  "int-compare",
+  "int-ops",
+  "exp-eval",
+  "exp-rules",
+  "sci-notation",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -90,6 +101,16 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "alg-two-step": "Undoing in the right order",
   "alg-multi-step": "When x is on both sides",
   "alg-inequality": "The one rule that flips",
+  "rat-basics": "What a ratio is comparing",
+  "rat-equivalent": "Different numbers, same mix",
+  "rat-unit-rate": "The price of exactly one",
+  "rat-proportion": "Solving a proportion",
+  "rat-scale": "Reading a scale both ways",
+  "int-compare": "Which is bigger, minus 7 or minus 3?",
+  "int-ops": "Taking away a negative",
+  "exp-eval": "What a power really means",
+  "exp-rules": "Why the exponents add",
+  "sci-notation": "Very big and very small numbers",
 };
 
 /**
@@ -150,5 +171,18 @@ export function lessonKeyForSkill(
   if (family === "two-step-eq") return "alg-two-step";
   if (family === "multi-step-eq") return "alg-multi-step";
   if (family === "inequality") return "alg-inequality";
+  if (family === "ratio-basic") return "rat-basics";
+  if (family === "ratio-equivalent") return "rat-equivalent";
+  if (family === "unit-rate") return "rat-unit-rate";
+  if (family === "proportional-relationships") return "rat-unit-rate";
+  if (family === "proportion-solve") return "rat-proportion";
+  if (family === "scale-drawings") return "rat-scale";
+  if (family === "int-compare") return "int-compare";
+  if (family === "abs-value") return "int-compare";
+  if (family === "integer-ops") return "int-ops";
+  if (family === "exponent-eval") return "exp-eval";
+  if (family === "roots") return "exp-eval";
+  if (family === "exponent-rules") return "exp-rules";
+  if (family === "sci-notation") return "sci-notation";
   return null;
 }
