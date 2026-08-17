@@ -3,6 +3,7 @@ import type { Skill } from "@/curriculum/types";
 import { FAMILIES } from "./families";
 import { validateRaw, dedupKey } from "./validate";
 import { makeRng, randomSeed } from "./rng";
+import { errorAnalysisFor, hasErrorAnalysis } from "./errorAnalysis";
 
 const MAX_ATTEMPTS = 40;
 
@@ -73,6 +74,46 @@ export function generateQuestion(
   throw new GenerationError(
     `Could not generate a valid question for ${skill.id} stage ${st}: ${lastReasons.join("; ")}`
   );
+}
+
+/**
+ * Generate an error-analysis question for a skill (spec §11): someone else's
+ * wrong working, shown for judgement. Returns null when the family has no
+ * case written, or when nothing valid could be produced.
+ */
+export function generateErrorAnalysis(
+  skill: Skill,
+  opts: { seed?: number; avoid?: Set<string> } = {}
+): Question | null {
+  if (!hasErrorAnalysis(skill.family)) return null;
+  const avoid = opts.avoid ?? new Set<string>();
+  const seed = opts.seed ?? randomSeed();
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const rng = makeRng(seed + attempt * 7919);
+    const raw = errorAnalysisFor(toRef(skill), rng);
+    if (!raw) return null;
+    if (!validateRaw(raw).ok) continue;
+    const key = dedupKey(raw);
+    if (avoid.has(key)) continue;
+    avoid.add(key);
+    const { verify: _verify, ...pub } = raw;
+    return {
+      id: `${skill.id}.err.${(seed + attempt * 7919) >>> 0}`,
+      skillId: skill.id,
+      // Judging a method is a stage-4 act: it needs the procedure known first.
+      stage: 4,
+      grade: skill.grade,
+      strandId: skill.strandId,
+      strandName: skill.strandName,
+      topicName: skill.name,
+      accept: [],
+      representation: "error-analysis",
+      ...pub,
+      difficulty: difficultyOf(skill, 4),
+    };
+  }
+  return null;
 }
 
 /**

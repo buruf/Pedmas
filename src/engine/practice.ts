@@ -8,13 +8,19 @@
  */
 import { getSkill, nextSkillInStrand, strandChain } from "@/curriculum";
 import type { Skill } from "@/curriculum/types";
-import { generateQuestion } from "./generate";
+import { generateQuestion, generateErrorAnalysis } from "./generate";
 import type { Question } from "./types";
 import { newSkillState, reviewsDue, type SkillState } from "./mastery";
 
 export const SESSION_SIZE = 12;
 
-export type QuestionPurpose = "Current skill" | "Practice" | "Fluency" | "Review" | "Skill builder";
+export type QuestionPurpose =
+  | "Current skill"
+  | "Practice"
+  | "Fluency"
+  | "Review"
+  | "Skill builder"
+  | "Spot the mistake";
 
 export interface SessionItem {
   question: Question;
@@ -105,6 +111,19 @@ export function buildPracticeSession(
     if (skill) {
       const st = stateFor(learner, skill.id);
       for (let i = 0; i < 4; i++) push(skill, st.stage, "Current skill");
+
+      // Judging someone else's working is a different act from computing, and
+      // it targets the same misconception the skill's lesson teaches against.
+      // Only once the procedure is known — stage 3 onwards.
+      if (st.stage >= 3) {
+        const err = generateErrorAnalysis(skill, {
+          seed: seed + seedStep++ * 104729,
+          avoid,
+        });
+        if (err && items.length < SESSION_SIZE) {
+          items.push({ question: err, purpose: "Spot the mistake", isReview: false });
+        }
+      }
     }
   }
 
