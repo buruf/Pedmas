@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo, PrimaryButton, GhostButton, Card } from "@/components/ui";
 import { MathText } from "@/components/MathText";
+import { registrationOpen } from "@/lib/flags";
 import { StudentIllustration } from "@/components/StudentIllustration";
 
 const STEPS = [
@@ -12,8 +13,16 @@ const STEPS = [
 ];
 
 export default function HomePage() {
+  const signupsOpen = registrationOpen();
   return (
     <div className="min-h-screen bg-white">
+      {/* Sits above the header so it is the first thing read, and is not
+          dismissible — a visitor who misses it could try to sign up. */}
+      <div className="bg-warn-600 px-4 py-2.5 text-center text-sm font-semibold text-white">
+        🚧 Under construction — PEDMAS is still being built and tested.
+        {!signupsOpen && <span className="font-normal"> New sign-ups are closed for now.</span>}
+      </div>
+
       <header className="sticky top-0 z-10 border-b border-ink-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Logo />
@@ -26,9 +35,11 @@ export default function HomePage() {
             <Link href="/login" className="btn inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold text-ink-700 hover:text-brand-700">
               Log in
             </Link>
-            <Link href="/signup" className="btn inline-flex items-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-              Sign up
-            </Link>
+            {signupsOpen && (
+              <Link href="/signup" className="btn inline-flex items-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+                Sign up
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -46,9 +57,19 @@ export default function HomePage() {
               PEDMAS finds what you know, identifies what you need to learn, and
               gives you the right practice until you master it. Grades 1–12.
             </p>
+            {/* Don't offer a placement test that cannot be started. */}
             <div className="mt-7 flex flex-wrap gap-3">
-              <PrimaryButton href="/signup">Start Free Placement Test</PrimaryButton>
-              <GhostButton href="/curriculum">Explore Mathematics</GhostButton>
+              {signupsOpen ? (
+                <>
+                  <PrimaryButton href="/signup">Start Free Placement Test</PrimaryButton>
+                  <GhostButton href="/curriculum">Explore Mathematics</GhostButton>
+                </>
+              ) : (
+                <>
+                  <PrimaryButton href="/curriculum">Explore Mathematics</PrimaryButton>
+                  <GhostButton href="/login">Log in</GhostButton>
+                </>
+              )}
             </div>
             <p className="mt-4 text-sm text-ink-500">
               Adaptive placement · Mastery-based · Spaced review
@@ -122,7 +143,9 @@ export default function HomePage() {
               advances you when mastery is demonstrated — the way a great tutor would.
             </p>
             <div className="mt-5">
-              <PrimaryButton href="/signup">Find Your Starting Point</PrimaryButton>
+              <PrimaryButton href={signupsOpen ? "/signup" : "/curriculum"}>
+                {signupsOpen ? "Find Your Starting Point" : "Explore the Curriculum"}
+              </PrimaryButton>
             </div>
           </div>
           <Card>

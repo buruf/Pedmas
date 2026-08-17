@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAccount, startSession } from "@/lib/auth";
 import { clientKey, rateLimit, LIMITS } from "@/lib/rateLimit";
+import { registrationOpen, REGISTRATION_CLOSED_MESSAGE } from "@/lib/flags";
 
 export async function POST(req: NextRequest) {
+  // Enforced here, not merely hidden in the UI: without this the endpoint
+  // stays open to anyone who posts to it directly.
+  if (!registrationOpen()) {
+    return NextResponse.json({ error: REGISTRATION_CLOSED_MESSAGE }, { status: 403 });
+  }
   const gate = await rateLimit(
     "register",
     clientKey(req),
