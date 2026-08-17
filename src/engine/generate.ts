@@ -66,6 +66,7 @@ export function generateQuestion(
       strandId: skill.strandId,
       strandName: skill.strandName,
       topicName: skill.name,
+      microSkill: family.stageLabel(toRef(skill), st),
       accept: [],
       representation: "numeric",
       ...pub,
@@ -109,6 +110,7 @@ export function generateErrorAnalysis(
       strandId: skill.strandId,
       strandName: skill.strandName,
       topicName: skill.name,
+      microSkill: "Judge the working",
       accept: [],
       representation: "error-analysis",
       ...pub,
@@ -143,4 +145,16 @@ export function stageLabelFor(skill: Skill, stage: number): string {
   const family = FAMILIES[skill.family];
   if (!family) return `Stage ${stage}`;
   return family.stageLabel(toRef(skill), stage);
+}
+
+/**
+ * The named micro-skills within a topic (spec §5, §7).
+ *
+ * A topic progresses through five of these, each a distinct idea rather than
+ * the same idea with bigger numbers: "Add unlike denominators" is a different
+ * skill from "Add mixed numbers", not a harder version of it. They come from
+ * the generator family, which is where the progression is actually defined.
+ */
+export function microSkillsOf(skill: Skill): { stage: number; name: string }[] {
+  return [1, 2, 3, 4, 5].map((stage) => ({ stage, name: stageLabelFor(skill, stage) }));
 }

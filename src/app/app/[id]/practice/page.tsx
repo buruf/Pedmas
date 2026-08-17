@@ -199,7 +199,10 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
       </div>
       <Card>
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
-          {cur.question.strandName} · {cur.question.topicName} · Stage {cur.question.stage} of 5
+          {/* Grade → strand → topic → micro-skill → stage (spec §5). */}
+          {cur.question.strandName} › {cur.question.topicName} ›{" "}
+          <span className="font-semibold text-brand-700">{cur.question.microSkill}</span> · Stage{" "}
+          {cur.question.stage} of 5
         </div>
         <QuestionView
               band={band}

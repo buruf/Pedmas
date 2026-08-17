@@ -10,6 +10,11 @@ export interface Question {
   strandId: string;
   strandName: string;
   topicName: string;
+  /**
+   * The named micro-skill within the topic (spec §5, §7) — the stage label,
+   * e.g. "Add unlike denominators". Topics progress through five of these.
+   */
+  microSkill: string;
   kind: QKind;
   /** Short instruction line, e.g. "Add the fractions." */
   instruction: string;

@@ -121,3 +121,4 @@ export function nextSkillInStrand(skillId: string): Skill | undefined {
   const idx = chain.findIndex((s) => s.id === skillId);
   return idx >= 0 ? chain[idx + 1] : undefined;
 }
+

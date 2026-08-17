@@ -156,6 +156,7 @@ export interface ClientQuestion {
   answerHint?: string;
   hint: string;
   topicName: string;
+  microSkill: string;
   strandName: string;
   stage: number;
   representation: string;
@@ -172,6 +173,7 @@ export function toClientQuestion(q: Question): ClientQuestion {
     answerHint: q.answerHint,
     hint: q.hint,
     topicName: q.topicName,
+    microSkill: q.microSkill,
     strandName: q.strandName,
     stage: q.stage,
     representation: q.representation,
