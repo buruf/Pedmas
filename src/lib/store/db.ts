@@ -23,14 +23,13 @@ const DATA_DIR = path.join(process.cwd(), "data");
 type Table = Record<string, unknown>;
 
 interface StoreGlobal {
-  cache: Map<string, Table>;
   locks: Map<string, Promise<void>>;
   sql?: NeonQueryFunction<false, false>;
   schemaReady?: Promise<void>;
 }
 
 const g = globalThis as typeof globalThis & { __pedmasStore?: StoreGlobal };
-const store: StoreGlobal = (g.__pedmasStore ??= { cache: new Map(), locks: new Map() });
+const store: StoreGlobal = (g.__pedmasStore ??= { locks: new Map() });
 
 /** Vercel's Neon integration sets DATABASE_URL; accept the common aliases. */
 function connectionString(): string | undefined {
@@ -98,24 +97,37 @@ function assertWritableBackend(): void {
 
 /* ----------------------------------------------------------------- file mode */
 
+/**
+ * Read a table from disk. Deliberately uncached.
+ *
+ * The cache that used to live here held whole tables in memory, so a script
+ * and the dev server would each write back their own stale copy and undo the
+ * other's changes — a seed script's delete was silently resurrected by the
+ * running server. Rereading costs nothing at development data sizes, and the
+ * production path (Postgres) never had this problem because it reads per row.
+ */
 async function loadFile(table: string): Promise<Table> {
-  const cached = store.cache.get(table);
-  if (cached) return cached;
   const file = path.join(DATA_DIR, `${table}.json`);
-  let data: Table = {};
   try {
-    data = JSON.parse(await fs.readFile(file, "utf8")) as Table;
+    return JSON.parse(await fs.readFile(file, "utf8")) as Table;
   } catch {
-    data = {};
+    return {};
   }
-  store.cache.set(table, data);
-  return data;
 }
 
-async function persistFile(table: string): Promise<void> {
-  const data = store.cache.get(table) ?? {};
+/**
+ * Apply a change to a table: read fresh, mutate, write — all inside the
+ * per-table lock.
+ *
+ * Reading immediately before writing is what stops one process undoing
+ * another's change. Writing a snapshot captured earlier is exactly how a
+ * deleted row came back to life.
+ */
+async function mutateFile(table: string, change: (data: Table) => void): Promise<void> {
   const prev = store.locks.get(table) ?? Promise.resolve();
   const next = prev.then(async () => {
+    const data = await loadFile(table);
+    change(data);
     await fs.mkdir(DATA_DIR, { recursive: true });
     const file = path.join(DATA_DIR, `${table}.json`);
     const tmp = `${file}.tmp`;
@@ -167,9 +179,9 @@ export async function putRow<T>(table: string, id: string, row: T): Promise<void
     `;
     return;
   }
-  const data = await loadFile(table);
-  data[id] = row;
-  await persistFile(table);
+  await mutateFile(table, (data) => {
+    data[id] = row;
+  });
 }
 
 export async function deleteRow(table: string, id: string): Promise<void> {
@@ -179,9 +191,9 @@ export async function deleteRow(table: string, id: string): Promise<void> {
     await db()`DELETE FROM pedmas_rows WHERE tbl = ${table} AND id = ${id}`;
     return;
   }
-  const data = await loadFile(table);
-  delete data[id];
-  await persistFile(table);
+  await mutateFile(table, (data) => {
+    delete data[id];
+  });
 }
 
 export async function findRow<T>(table: string, pred: (row: T) => boolean): Promise<T | undefined> {
