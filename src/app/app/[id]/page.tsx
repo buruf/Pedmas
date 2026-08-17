@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo, Card, PrimaryButton, GhostButton, ProgressBar, StatusPill } from "@/components/ui";
+import { styleForGrade } from "@/lib/ageBand";
 import { api } from "@/lib/client";
 
 interface StudentPayload {
@@ -53,6 +54,7 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
   if (!data) return <div className="grid min-h-screen place-items-center text-ink-500">Loading your dashboard…</div>;
 
   const p = data.progress;
+  const band = styleForGrade(data.grade);
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
@@ -69,10 +71,13 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
         </div>
       </header>
 
-      <h1 className="text-2xl font-extrabold text-ink-900">
-        Welcome back, {data.name}! 👋
-      </h1>
-      <p className="mt-1 text-ink-500">Let&rsquo;s keep your math skills growing.</p>
+      {/* Tone matures with the student's year — see lib/ageBand.ts (spec §25). */}
+      <h1 className="text-2xl font-extrabold text-ink-900">{band.greeting(data.name)}</h1>
+      <p className="mt-1 text-ink-500">
+        {band.playful
+          ? "Let’s keep your math skills growing."
+          : "Your next session is ready."}
+      </p>
 
       {/* Today's practice */}
       <Card className="mt-6 bg-gradient-to-br from-brand-600 to-brand-800 !border-0 text-white">
@@ -85,9 +90,9 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
           </div>
           <Link
             href={`/app/${id}/practice`}
-            className="btn inline-flex items-center rounded-xl bg-white px-6 py-3 font-bold text-brand-700 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]"
+            className={`btn inline-flex items-center ${band.radius} ${band.touchTarget} bg-white px-6 py-3 font-bold text-brand-700 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]`}
           >
-            Start Practice →
+            {band.practiceCta} →
           </Link>
         </div>
       </Card>

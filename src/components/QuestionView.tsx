@@ -14,12 +14,18 @@ export function QuestionView({
   onSubmit,
   disabled,
   resetKey,
+  band,
 }: {
   question: ClientQuestion;
   onSubmit: (answer: string, usedHint: boolean) => void;
   disabled?: boolean;
   resetKey: string;
+  /** Age-appropriate sizing (spec §25); defaults suit the middle years. */
+  band?: { questionText: string; touchTarget: string; radius: string };
 }) {
+  const size = band?.questionText ?? "text-2xl";
+  const target = band?.touchTarget ?? "min-h-11";
+  const radius = band?.radius ?? "rounded-xl";
   const [answer, setAnswer] = useState("");
   const [choice, setChoice] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
@@ -43,7 +49,7 @@ export function QuestionView({
       <div className="text-sm font-semibold text-ink-500">
         <MathText text={question.instruction} />
       </div>
-      <div className="mt-3 whitespace-pre-line text-2xl font-bold leading-relaxed text-ink-900">
+      <div className={`mt-3 whitespace-pre-line ${size} font-bold leading-relaxed text-ink-900`}>
         <MathText text={question.prompt} />
       </div>
 
@@ -55,7 +61,7 @@ export function QuestionView({
               type="button"
               disabled={disabled}
               onClick={() => setChoice(c)}
-              className={`btn rounded-xl border-2 px-4 py-3 text-left text-lg font-semibold transition ${
+              className={`btn ${radius} ${target} border-2 px-4 py-3 text-left text-lg font-semibold transition ${
                 choice === c
                   ? "border-brand-600 bg-brand-50 text-brand-800"
                   : "border-ink-100 bg-white text-ink-900 hover:border-brand-300"

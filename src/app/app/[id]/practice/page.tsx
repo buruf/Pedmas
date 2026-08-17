@@ -8,9 +8,11 @@ import { WorkedExample, type WorkedExampleData } from "@/components/WorkedExampl
 import { LESSON_COMPONENTS } from "@/components/lesson/registry";
 import { api, ApiError } from "@/lib/client";
 import type { LessonKey } from "@/lib/lessons";
+import { styleForGrade } from "@/lib/ageBand";
 import type { ClientQuestion } from "@/lib/model";
 
 interface PracticePayload {
+  grade: number;
   total: number;
   index: number;
   complete: boolean;
@@ -140,6 +142,7 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
       </Shell>
     );
   }
+  const band = styleForGrade(state?.grade ?? 5);
 
   const cur = state.current;
 
@@ -199,6 +202,7 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
           {cur.question.strandName} · {cur.question.topicName} · Stage {cur.question.stage} of 5
         </div>
         <QuestionView
+              band={band}
           question={cur.question}
           resetKey={`${cur.question.id}-${retryNonce}`}
           disabled={busy || Boolean(feedback)}

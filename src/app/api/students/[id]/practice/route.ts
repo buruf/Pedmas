@@ -39,6 +39,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const item = session.items[session.index];
   return NextResponse.json({
     sessionId: session.id,
+    // Drives age-appropriate presentation on the practice screen (spec §25).
+    grade: student.grade,
     total: session.items.length,
     index: session.index,
     complete: Boolean(session.completedAt) || session.index >= session.items.length,
