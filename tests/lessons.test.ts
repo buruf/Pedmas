@@ -16,8 +16,12 @@ describe("lesson routing", () => {
   });
 
   it("returns null for families without a lesson yet", () => {
-    expect(lessonKeyForSkill("trig-identity", {})).toBeNull();
-    expect(lessonKeyForSkill("limits", {})).toBeNull();
+    // Uncovered families must fall through to null rather than being routed to
+    // a loosely-related lesson — "Show me how" already covers every family, so
+    // a wrong lesson is worse than none.
+    expect(lessonKeyForSkill("mc-bank", { bank: "sorting-data" })).toBeNull();
+    expect(lessonKeyForSkill("vectors", {})).toBeNull();
+    expect(lessonKeyForSkill("not-a-real-family", {})).toBeNull();
   });
 
   it("matches the lesson to the size of the numbers", () => {

@@ -84,6 +84,22 @@ export const LESSON_KEYS = [
   "st-counting",
   "st-perm-comb",
   "st-scatter",
+  // Functions, trigonometry and calculus.
+  "fn-notation",
+  "fn-domain-range",
+  "fn-composition",
+  "fn-inverse",
+  "fn-transform",
+  "fn-exponential",
+  "fn-logarithm",
+  "fn-sequence",
+  "fn-series",
+  "trig-right",
+  "trig-unit-circle",
+  "trig-identity",
+  "calc-limits",
+  "calc-derivative",
+  "calc-integral",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -156,6 +172,21 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "st-counting": "Multiplying choices",
   "st-perm-comb": "When order matters",
   "st-scatter": "Correlation is not cause",
+  "fn-notation": "What f(x) actually means",
+  "fn-domain-range": "What goes in and what comes out",
+  "fn-composition": "Putting one function inside another",
+  "fn-inverse": "Running a function backwards",
+  "fn-transform": "Moving and stretching a graph",
+  "fn-exponential": "Growth that speeds up",
+  "fn-logarithm": "Logarithms ask what power",
+  "fn-sequence": "Finding the rule of a sequence",
+  "fn-series": "Adding a sequence up",
+  "trig-right": "Choosing sine, cosine or tangent",
+  "trig-unit-circle": "Reading the unit circle",
+  "trig-identity": "Why sin 2x is not 2 sin x",
+  "calc-limits": "Approaching a value without reaching it",
+  "calc-derivative": "The slope of a curve at a point",
+  "calc-integral": "Undoing a derivative",
 };
 
 /**
@@ -260,5 +291,20 @@ export function lessonKeyForSkill(
     return params.kind === "fcp" ? "st-counting" : "st-perm-comb";
   }
   if (family === "scatter-correlation") return "st-scatter";
+  if (family === "function-notation") return "fn-notation";
+  if (family === "domain-range") return "fn-domain-range";
+  if (family === "composition") return "fn-composition";
+  if (family === "inverse-function") return "fn-inverse";
+  if (family === "function-transform") return "fn-transform";
+  if (family === "exponential") return "fn-exponential";
+  if (family === "logarithm") return "fn-logarithm";
+  if (family === "sequence") return "fn-sequence";
+  if (family === "series") return "fn-series";
+  if (family === "right-triangle-trig") return "trig-right";
+  if (family === "unit-circle") return "trig-unit-circle";
+  if (family === "trig-identity") return "trig-identity";
+  if (family === "limits") return "calc-limits";
+  if (family === "derivative") return "calc-derivative";
+  if (family === "integral") return "calc-integral";
   return null;
 }

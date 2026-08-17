@@ -47,6 +47,16 @@ import { LinePlotLesson } from "./stats/LinePlotLesson";
 import { ProbabilityBasicsLesson, CompoundProbabilityLesson } from "./stats/ProbabilityLesson";
 import { CountingPrincipleLesson, PermutationCombinationLesson } from "./stats/CountingPrincipleLesson";
 import { ScatterCorrelationLesson } from "./stats/ScatterCorrelationLesson";
+import { FunctionNotationLesson } from "./functions/FunctionNotationLesson";
+import { DomainRangeLesson } from "./functions/DomainRangeLesson";
+import { CompositionLesson, InverseFunctionLesson } from "./functions/CompositionInverseLesson";
+import { FunctionTransformLesson } from "./functions/FunctionTransformLesson";
+import { ExponentialLesson, LogarithmLesson } from "./functions/ExponentialLogLesson";
+import { SequenceLesson, SeriesLesson } from "./functions/SequenceSeriesLesson";
+import { RightTriangleTrigLesson } from "./functions/RightTriangleTrigLesson";
+import { UnitCircleLesson, TrigIdentityLesson } from "./functions/UnitCircleTrigIdentityLesson";
+import { LimitsLesson, DerivativeLesson } from "./functions/LimitsDerivativeLesson";
+import { IntegralLesson } from "./functions/IntegralLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -129,4 +139,19 @@ export const LESSON_COMPONENTS: Record<
   "st-counting": CountingPrincipleLesson,
   "st-perm-comb": PermutationCombinationLesson,
   "st-scatter": ScatterCorrelationLesson,
+  "fn-notation": FunctionNotationLesson,
+  "fn-domain-range": DomainRangeLesson,
+  "fn-composition": CompositionLesson,
+  "fn-inverse": InverseFunctionLesson,
+  "fn-transform": FunctionTransformLesson,
+  "fn-exponential": ExponentialLesson,
+  "fn-logarithm": LogarithmLesson,
+  "fn-sequence": SequenceLesson,
+  "fn-series": SeriesLesson,
+  "trig-right": RightTriangleTrigLesson,
+  "trig-unit-circle": UnitCircleLesson,
+  "trig-identity": TrigIdentityLesson,
+  "calc-limits": LimitsLesson,
+  "calc-derivative": DerivativeLesson,
+  "calc-integral": IntegralLesson,
 };
