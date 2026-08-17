@@ -100,6 +100,22 @@ export const LESSON_KEYS = [
   "calc-limits",
   "calc-derivative",
   "calc-integral",
+  // Geometry and measurement.
+  "geo-perimeter-area",
+  "geo-volume",
+  "geo-surface",
+  "geo-angles",
+  "geo-shapes-2d",
+  "geo-shapes-3d",
+  "geo-symmetry",
+  "geo-coordinates",
+  "geo-pythagoras",
+  "geo-transformations",
+  "geo-similarity",
+  "geo-circle",
+  "meas-conversion",
+  "meas-units",
+  "meas-time",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -187,6 +203,21 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "calc-limits": "Approaching a value without reaching it",
   "calc-derivative": "The slope of a curve at a point",
   "calc-integral": "Undoing a derivative",
+  "geo-perimeter-area": "Perimeter and area are different questions",
+  "geo-volume": "Filling a box",
+  "geo-surface": "Wrapping a box",
+  "geo-angles": "Measuring an angle properly",
+  "geo-shapes-2d": "Naming shapes by their properties",
+  "geo-shapes-3d": "Counting faces you cannot see",
+  "geo-symmetry": "Where a shape folds exactly",
+  "geo-coordinates": "Along the corridor, up the stairs",
+  "geo-pythagoras": "The squares add, not the sides",
+  "geo-transformations": "Sliding, flipping and turning",
+  "geo-similarity": "Doubling the sides does not double the area",
+  "geo-circle": "Round the edge and across the middle",
+  "meas-conversion": "Which way to convert",
+  "meas-units": "Choosing and reading a unit",
+  "meas-time": "Clock time is not decimal",
 };
 
 /**
@@ -306,5 +337,24 @@ export function lessonKeyForSkill(
   if (family === "limits") return "calc-limits";
   if (family === "derivative") return "calc-derivative";
   if (family === "integral") return "calc-integral";
+  if (family === "perimeter-area") return "geo-perimeter-area";
+  if (family === "angles") return "geo-angles";
+  if (family === "shapes-2d") return "geo-shapes-2d";
+  if (family === "shapes-3d") return "geo-shapes-3d";
+  if (family === "symmetry") return "geo-symmetry";
+  if (family === "coordinate-plane") return "geo-coordinates";
+  if (family === "pythagorean") return "geo-pythagoras";
+  if (family === "transformations") return "geo-transformations";
+  if (family === "similarity") return "geo-similarity";
+  if (family === "circle-measure") return "geo-circle";
+  if (family === "unit-conversion") return "meas-conversion";
+  if (family === "measure-units") return "meas-units";
+  if (family === "length-compare") return "meas-units";
+  if (family === "time") return "meas-time";
+  // Volume and surface area are taught apart: the confusion between them
+  // is the whole point, so each gets its own lesson.
+  if (family === "volume-surface") {
+    return params.kind === "surface" ? "geo-surface" : "geo-volume";
+  }
   return null;
 }

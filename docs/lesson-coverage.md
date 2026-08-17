@@ -22,13 +22,13 @@ real, named misconception is not finished.
 | Decimals & percent | dec-place-value, dec-compare, dec-add-sub, dec-mul, dec-div, money, percent-basic, percent-apps, interest | ✅ done (94%) |
 | Decimals, remainder | dec-round, dec-frac-convert | ⬜ |
 | Fractions, rest | frac-equivalent, frac-simplify, frac-compare, frac-mul, frac-div, mixed-number-ops | ✅ done (93%) |
-| Number sense | counting, compare-numbers, rounding, factors-multiples, gcf-lcm, primes, patterns | ⬜ |
-| Ratios & integers | ratio-basic, unit-rate, proportion-solve, integer-ops, exponent-rules, sci-notation | ⬜ |
-| Early algebra | evaluate-expression, combine-like-terms, distributive, one/two/multi-step-eq, inequality | ⬜ |
-| Geometry & measurement | perimeter-area, volume-surface, angles, shapes-2d, coordinate-plane, pythagorean, unit-conversion, time | ⬜ |
-| Statistics | central-tendency, probability, read-graph, scatter-correlation | ⬜ |
-| Senior algebra | factor, quadratic-solve, poly-mul, systems, slope, linear-equation | ⬜ |
-| Functions & beyond | function-notation, exponential, logarithm, sequence, trig, calculus | ⬜ |
+| Number sense | rounding, factors-multiples, primes, gcf-lcm | ✅ done |
+| Ratios & integers | all | ✅ done (100%) |
+| Early algebra | all | ✅ done |
+| Geometry & measurement | all | ✅ done (92% / 100%) |
+| Statistics | all | ✅ done (88%) |
+| Senior algebra | all | ✅ done (91%) |
+| Functions & beyond | all | ✅ done (93% / trig 65% / calculus 53%) |
 
 ## Known misconceptions to confront
 

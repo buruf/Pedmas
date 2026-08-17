@@ -57,6 +57,17 @@ import { RightTriangleTrigLesson } from "./functions/RightTriangleTrigLesson";
 import { UnitCircleLesson, TrigIdentityLesson } from "./functions/UnitCircleTrigIdentityLesson";
 import { LimitsLesson, DerivativeLesson } from "./functions/LimitsDerivativeLesson";
 import { IntegralLesson } from "./functions/IntegralLesson";
+import { PerimeterAreaLesson } from "./geometry/PerimeterAreaLesson";
+import { VolumeLesson, SurfaceAreaLesson } from "./geometry/VolumeSurfaceLesson";
+import { AnglesLesson } from "./geometry/AnglesLesson";
+import { Shapes2dLesson, Shapes3dLesson } from "./geometry/ShapesLesson";
+import { SymmetryLesson } from "./geometry/SymmetryLesson";
+import { CoordinatePlaneLesson } from "./geometry/CoordinatePlaneLesson";
+import { PythagoreanLesson } from "./geometry/PythagoreanLesson";
+import { TransformationsLesson, SimilarityLesson } from "./geometry/TransformSimilarityLesson";
+import { CircleMeasureLesson } from "./geometry/CircleMeasureLesson";
+import { UnitConversionLesson, MeasureUnitsLesson } from "./geometry/MeasurementLesson";
+import { TimeLesson } from "./geometry/TimeLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -154,4 +165,19 @@ export const LESSON_COMPONENTS: Record<
   "calc-limits": LimitsLesson,
   "calc-derivative": DerivativeLesson,
   "calc-integral": IntegralLesson,
+  "geo-perimeter-area": PerimeterAreaLesson,
+  "geo-volume": VolumeLesson,
+  "geo-surface": SurfaceAreaLesson,
+  "geo-angles": AnglesLesson,
+  "geo-shapes-2d": Shapes2dLesson,
+  "geo-shapes-3d": Shapes3dLesson,
+  "geo-symmetry": SymmetryLesson,
+  "geo-coordinates": CoordinatePlaneLesson,
+  "geo-pythagoras": PythagoreanLesson,
+  "geo-transformations": TransformationsLesson,
+  "geo-similarity": SimilarityLesson,
+  "geo-circle": CircleMeasureLesson,
+  "meas-conversion": UnitConversionLesson,
+  "meas-units": MeasureUnitsLesson,
+  "meas-time": TimeLesson,
 };
