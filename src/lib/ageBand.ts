@@ -91,6 +91,15 @@ export function bandForGrade(grade: number): AgeBand {
   return "senior";
 }
 
-export function styleForGrade(grade: number): BandStyle {
-  return BANDS[bandForGrade(grade)];
+export function styleForGrade(grade: number, plainMode = false): BandStyle {
+  const style = BANDS[bandForGrade(grade)];
+  if (!plainMode) return style;
+  // Plain mode is a learning preference (spec §2): some students find
+  // celebration patronising, and it should be honoured at any age.
+  return {
+    ...style,
+    playful: false,
+    greeting: (name) => name,
+    doneLabel: "Session complete",
+  };
 }

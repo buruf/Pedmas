@@ -110,6 +110,39 @@ export interface StudentProfile {
   streak: { count: number; lastDay: string };
   /** Lesson key -> when it was first completed, so it is taught once. */
   lessonsSeen?: Record<string, number>;
+  /**
+   * Learning preferences (spec §2). Only settings that genuinely change the
+   * product live here — a preference that does nothing is worse than none,
+   * because it implies a promise the app does not keep.
+   */
+  preferences?: LearningPreferences;
+}
+
+export interface LearningPreferences {
+  /** Questions per daily session. Some children need a shorter sitting. */
+  sessionLength: "short" | "standard" | "long";
+  /** Teach the lesson before a new skill, or go straight to practice. */
+  lessonsFirst: boolean;
+  /** Suppress emoji and celebration for students who find it patronising. */
+  plainMode: boolean;
+}
+
+export const DEFAULT_PREFERENCES: LearningPreferences = {
+  sessionLength: "standard",
+  lessonsFirst: true,
+  plainMode: false,
+};
+
+/** Questions in a session, from the chosen length. */
+export function sessionSizeFor(prefs: LearningPreferences | undefined): number {
+  switch (prefs?.sessionLength) {
+    case "short":
+      return 8;
+    case "long":
+      return 16;
+    default:
+      return 12;
+  }
 }
 
 /** Question shape sent to the client (no answer, no steps until graded). */

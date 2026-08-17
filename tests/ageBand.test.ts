@@ -39,3 +39,23 @@ describe("age-appropriate presentation", () => {
     expect(styleForGrade(9).playful).toBe(false);
   });
 });
+
+describe("learning preferences (spec §2)", () => {
+  it("changes the session length rather than just recording a choice", async () => {
+    const { sessionSizeFor, DEFAULT_PREFERENCES } = await import("@/lib/model");
+    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "short" })).toBe(8);
+    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "standard" })).toBe(12);
+    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "long" })).toBe(16);
+    // A student created before preferences existed still gets a session.
+    expect(sessionSizeFor(undefined)).toBe(12);
+  });
+
+  it("lets plain mode suppress celebration at any age", async () => {
+    const { styleForGrade } = await import("@/lib/ageBand");
+    // A Grade 2 student is playful by default...
+    expect(styleForGrade(2).playful).toBe(true);
+    // ...but plain mode wins, because some children find it patronising.
+    expect(styleForGrade(2, true).playful).toBe(false);
+    expect(styleForGrade(2, true).greeting("Sam")).toBe("Sam");
+  });
+});

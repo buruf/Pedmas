@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     name: String(body.name),
     grade,
     age: body.age ? Number(body.age) : undefined,
+    preferences: body.preferences,
     goal: body.goal ? String(body.goal) : undefined,
   });
 

@@ -12,6 +12,9 @@ export default function OnboardingPage() {
   const [grade, setGrade] = useState(6);
   const [age, setAge] = useState("");
   const [goal, setGoal] = useState("");
+  const [sessionLength, setSessionLength] = useState<"short" | "standard" | "long">("standard");
+  const [lessonsFirst, setLessonsFirst] = useState(true);
+  const [plainMode, setPlainMode] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -21,7 +24,13 @@ export default function OnboardingPage() {
     try {
       const student = await api<{ id: string }>("/api/students", {
         method: "POST",
-        json: { name, grade, age: age ? Number(age) : undefined, goal: goal || undefined },
+        json: {
+          name,
+          grade,
+          age: age ? Number(age) : undefined,
+          goal: goal || undefined,
+          preferences: { sessionLength, lessonsFirst, plainMode },
+        },
       });
       router.push(`/placement/${student.id}`);
     } catch (e) {
@@ -91,6 +100,46 @@ export default function OnboardingPage() {
               <option>Build daily math habits</option>
             </select>
           </label>
+          {/* Learning preferences (spec §2). Each one changes the product. */}
+          <fieldset className="rounded-xl bg-paper px-3 py-3">
+            <legend className="px-1 text-sm font-medium text-ink-700">
+              How would you like to practise?
+            </legend>
+            <label className="mt-1 block text-sm text-ink-700">
+              Daily session
+              <select
+                value={sessionLength}
+                onChange={(e) => setSessionLength(e.target.value as typeof sessionLength)}
+                className="mt-1"
+              >
+                <option value="short">Short — 8 questions</option>
+                <option value="standard">Standard — 12 questions</option>
+                <option value="long">Long — 16 questions</option>
+              </select>
+            </label>
+            <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
+              <input
+                type="checkbox"
+                checked={lessonsFirst}
+                onChange={(e) => setLessonsFirst(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>Teach me a short lesson before a new skill</span>
+            </label>
+            <label className="mt-2 flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
+              <input
+                type="checkbox"
+                checked={plainMode}
+                onChange={(e) => setPlainMode(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>Plain mode — no emoji or celebrations</span>
+            </label>
+            <p className="mt-2 text-xs text-ink-500">
+              You can change any of these later.
+            </p>
+          </fieldset>
+
           {error && <p className="rounded-xl bg-err-100 px-3 py-2 text-sm text-err-600">{error}</p>}
           <PrimaryButton type="submit" disabled={busy} className="w-full">
             {busy ? "Setting up..." : "Start the Placement Test"}

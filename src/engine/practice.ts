@@ -71,9 +71,12 @@ export function focusStrand(learner: LearnerState, dayIndex: number): string | u
 
 export function buildPracticeSession(
   learner: LearnerState,
-  opts: { now: number; seed: number }
+  opts: { now: number; seed: number; size?: number }
 ): SessionItem[] {
   const { now, seed } = opts;
+  // Session length is a learning preference (spec §2); some children need a
+  // shorter sitting, and a short finished session beats a long abandoned one.
+  const SIZE = opts.size ?? SESSION_SIZE;
   const avoid = new Set<string>();
   const items: SessionItem[] = [];
   let seedStep = 0;
@@ -85,7 +88,7 @@ export function buildPracticeSession(
     }
   };
   const push = (skill: Skill | undefined, stage: number, purpose: QuestionPurpose, isReview = false) => {
-    if (!skill || items.length >= SESSION_SIZE) return;
+    if (!skill || items.length >= SIZE) return;
     const q = gen(skill, Math.max(1, Math.min(5, stage)));
     if (q) items.push({ question: q, purpose, isReview });
   };
@@ -120,7 +123,7 @@ export function buildPracticeSession(
           seed: seed + seedStep++ * 104729,
           avoid,
         });
-        if (err && items.length < SESSION_SIZE) {
+        if (err && items.length < SIZE) {
           items.push({ question: err, purpose: "Spot the mistake", isReview: false });
         }
       }
@@ -131,9 +134,9 @@ export function buildPracticeSession(
   const others = strandIds.filter((s) => s !== focus);
   others.sort((a, b) => (learner.strandLevels[a] ?? 0) - (learner.strandLevels[b] ?? 0));
   let round = 0;
-  while (items.length < SESSION_SIZE - 1 && round < 3 && others.length) {
+  while (items.length < SIZE - 1 && round < 3 && others.length) {
     for (const sid of others) {
-      if (items.length >= SESSION_SIZE - 1) break;
+      if (items.length >= SIZE - 1) break;
       const skill = currentSkillFor(learner, sid);
       if (!skill) continue;
       const st = stateFor(learner, skill.id);
@@ -149,7 +152,7 @@ export function buildPracticeSession(
 
   // Fill any remaining slots from the focus strand.
   let guard = 0;
-  while (items.length < SESSION_SIZE && guard++ < 20) {
+  while (items.length < SIZE && guard++ < 20) {
     const sid = focus ?? strandIds[guard % Math.max(1, strandIds.length)];
     const skill = sid ? currentSkillFor(learner, sid) : undefined;
     if (!skill) break;

@@ -1,5 +1,11 @@
 import type { Account, PracticeSessionState, SessionSummary, StudentProfile } from "./model";
-import { dayKeyOf, toClientQuestion } from "./model";
+import {
+  dayKeyOf,
+  toClientQuestion,
+  sessionSizeFor,
+  DEFAULT_PREFERENCES,
+  type LearningPreferences,
+} from "./model";
 import { allRows, deleteRow, getRow, newId, putRow } from "./store/db";
 import {
   applyPlacementAnswer,
@@ -31,7 +37,13 @@ function hashSeed(s: string): number {
 
 export async function createStudent(
   account: Account,
-  input: { name: string; grade: number; age?: number; goal?: string }
+  input: {
+    name: string;
+    grade: number;
+    age?: number;
+    goal?: string;
+    preferences?: Partial<LearningPreferences>;
+  }
 ): Promise<StudentProfile> {
   const student: StudentProfile = {
     id: newId("stu"),
@@ -40,6 +52,7 @@ export async function createStudent(
     grade: Math.max(1, Math.min(12, Math.round(input.grade))),
     age: input.age,
     goal: input.goal,
+    preferences: { ...DEFAULT_PREFERENCES, ...(input.preferences ?? {}) },
     createdAt: Date.now(),
     strandLevels: {},
     pointers: {},
@@ -162,7 +175,7 @@ export function ensureSession(student: StudentProfile): PracticeSessionState {
       pointers: student.pointers,
       skills: student.skills,
     },
-    { now, seed: Math.floor(Math.random() * 2 ** 30) }
+    { now, seed: Math.floor(Math.random() * 2 ** 30), size: sessionSizeFor(student.preferences) }
   );
   const session: PracticeSessionState = {
     id: newId("ps"),
@@ -215,6 +228,8 @@ export function lessonForCurrent(
   if (!skill) return null;
   const key = lessonKeyForSkill(skill.family, skill.params);
   if (!key) return null;
+  // A student who prefers to go straight to practice is never interrupted.
+  if (student.preferences?.lessonsFirst === false) return null;
   return { key, title: LESSON_TITLES[key], seen: Boolean(student.lessonsSeen?.[key]) };
 }
 
