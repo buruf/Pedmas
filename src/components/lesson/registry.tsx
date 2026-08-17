@@ -33,6 +33,20 @@ import { ProportionSolveLesson, ScaleDrawingLesson } from "./ratios/ProportionLe
 import { IntegerCompareLesson, IntegerOpsLesson } from "./ratios/IntegerLesson";
 import { ExponentEvalLesson, ExponentRulesLesson } from "./ratios/ExponentLesson";
 import { SciNotationLesson } from "./ratios/SciNotationLesson";
+import { SlopeLesson, LinearEquationLesson } from "./senior-algebra/SlopeAndLinesLesson";
+import { SystemsLesson } from "./senior-algebra/SystemsLesson";
+import { PolyAddSubLesson, PolyMulLesson } from "./senior-algebra/PolynomialArithmeticLesson";
+import { FactorLesson } from "./senior-algebra/FactorLesson";
+import { QuadraticSolveLesson } from "./senior-algebra/QuadraticSolveLesson";
+import { QuadraticFeaturesLesson } from "./senior-algebra/QuadraticFeaturesLesson";
+import { PolyDivisionLesson, FactorTheoremLesson } from "./senior-algebra/PolyDivisionLesson";
+import { RationalExpressionLesson, RadicalExpressionLesson } from "./senior-algebra/RationalRadicalLesson";
+import { MeanMedianModeLesson, ChoosingAverageLesson } from "./stats/CentralTendencyLesson";
+import { PictographLesson, BarGraphLesson } from "./stats/ReadGraphLesson";
+import { LinePlotLesson } from "./stats/LinePlotLesson";
+import { ProbabilityBasicsLesson, CompoundProbabilityLesson } from "./stats/ProbabilityLesson";
+import { CountingPrincipleLesson, PermutationCombinationLesson } from "./stats/CountingPrincipleLesson";
+import { ScatterCorrelationLesson } from "./stats/ScatterCorrelationLesson";
 import { MakingTenLesson } from "./early/MakingTenLesson";
 import { SubtractThroughTenLesson } from "./early/SubtractThroughTenLesson";
 import { PlaceValueLesson } from "./early/PlaceValueLesson";
@@ -93,4 +107,26 @@ export const LESSON_COMPONENTS: Record<
   "exp-eval": ExponentEvalLesson,
   "exp-rules": ExponentRulesLesson,
   "sci-notation": SciNotationLesson,
+  "sa-slope": SlopeLesson,
+  "sa-linear": LinearEquationLesson,
+  "sa-systems": SystemsLesson,
+  "sa-poly-addsub": PolyAddSubLesson,
+  "sa-poly-mul": PolyMulLesson,
+  "sa-factor": FactorLesson,
+  "sa-quad-solve": QuadraticSolveLesson,
+  "sa-quad-features": QuadraticFeaturesLesson,
+  "sa-poly-div": PolyDivisionLesson,
+  "sa-factor-thm": FactorTheoremLesson,
+  "sa-rational": RationalExpressionLesson,
+  "sa-radical": RadicalExpressionLesson,
+  "st-averages": MeanMedianModeLesson,
+  "st-choosing": ChoosingAverageLesson,
+  "st-pictograph": PictographLesson,
+  "st-bargraph": BarGraphLesson,
+  "st-lineplot": LinePlotLesson,
+  "st-prob-basic": ProbabilityBasicsLesson,
+  "st-prob-compound": CompoundProbabilityLesson,
+  "st-counting": CountingPrincipleLesson,
+  "st-perm-comb": PermutationCombinationLesson,
+  "st-scatter": ScatterCorrelationLesson,
 };

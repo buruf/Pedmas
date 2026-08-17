@@ -61,6 +61,29 @@ export const LESSON_KEYS = [
   "exp-eval",
   "exp-rules",
   "sci-notation",
+  // Senior algebra and statistics.
+  "sa-slope",
+  "sa-linear",
+  "sa-systems",
+  "sa-poly-addsub",
+  "sa-poly-mul",
+  "sa-factor",
+  "sa-quad-solve",
+  "sa-quad-features",
+  "sa-poly-div",
+  "sa-factor-thm",
+  "sa-rational",
+  "sa-radical",
+  "st-averages",
+  "st-choosing",
+  "st-pictograph",
+  "st-bargraph",
+  "st-lineplot",
+  "st-prob-basic",
+  "st-prob-compound",
+  "st-counting",
+  "st-perm-comb",
+  "st-scatter",
 ] as const;
 
 export type LessonKey = (typeof LESSON_KEYS)[number];
@@ -111,6 +134,28 @@ export const LESSON_TITLES: Record<LessonKey, string> = {
   "exp-eval": "What a power really means",
   "exp-rules": "Why the exponents add",
   "sci-notation": "Very big and very small numbers",
+  "sa-slope": "Reading slope from a line",
+  "sa-linear": "Writing the equation of a line",
+  "sa-systems": "Solving two equations at once",
+  "sa-poly-addsub": "Adding and subtracting polynomials",
+  "sa-poly-mul": "The middle term everyone forgets",
+  "sa-factor": "Factoring a quadratic",
+  "sa-quad-solve": "Solving quadratic equations",
+  "sa-quad-features": "Reading a parabola",
+  "sa-poly-div": "Dividing polynomials",
+  "sa-factor-thm": "The factor theorem",
+  "sa-rational": "Cancelling safely",
+  "sa-radical": "Roots do not split over plus",
+  "st-averages": "Mean, median and mode",
+  "st-choosing": "Choosing the right average",
+  "st-pictograph": "Reading a pictograph key",
+  "st-bargraph": "Reading a bar graph",
+  "st-lineplot": "Reading a line plot",
+  "st-prob-basic": "What probability measures",
+  "st-prob-compound": "Two things happening together",
+  "st-counting": "Multiplying choices",
+  "st-perm-comb": "When order matters",
+  "st-scatter": "Correlation is not cause",
 };
 
 /**
@@ -184,5 +229,36 @@ export function lessonKeyForSkill(
   if (family === "roots") return "exp-eval";
   if (family === "exponent-rules") return "exp-rules";
   if (family === "sci-notation") return "sci-notation";
+  if (family === "slope") return "sa-slope";
+  if (family === "linear-equation") return "sa-linear";
+  if (family === "systems") return "sa-systems";
+  if (family === "poly-add-sub") return "sa-poly-addsub";
+  if (family === "poly-mul") return "sa-poly-mul";
+  if (family === "factor") return "sa-factor";
+  if (family === "quadratic-solve") return "sa-quad-solve";
+  if (family === "quadratic-features") return "sa-quad-features";
+  if (family === "poly-division") return "sa-poly-div";
+  if (family === "factor-theorem") return "sa-factor-thm";
+  if (family === "rational-expression") return "sa-rational";
+  if (family === "radical-expression") return "sa-radical";
+  // Statistics routes on params: the same family teaches different ideas
+  // depending on which statistic or display the topic asks for.
+  if (family === "central-tendency") {
+    const stats = Array.isArray(params.stats) ? (params.stats as string[]) : [];
+    return stats.includes("range") ? "st-choosing" : "st-averages";
+  }
+  if (family === "read-graph") {
+    const type = typeof params.type === "string" ? params.type : "bar";
+    if (type === "picture") return "st-pictograph";
+    if (type === "line-plot") return "st-lineplot";
+    return "st-bargraph";
+  }
+  if (family === "probability") {
+    return params.kind === "simple" ? "st-prob-basic" : "st-prob-compound";
+  }
+  if (family === "counting-principle") {
+    return params.kind === "fcp" ? "st-counting" : "st-perm-comb";
+  }
+  if (family === "scatter-correlation") return "st-scatter";
   return null;
 }
