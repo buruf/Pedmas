@@ -24,6 +24,8 @@ interface StudentPayload {
         grade: number;
         stage: number;
         stageLabel: string;
+        lessonKey: string | null;
+        lessonTitle: string | null;
         progress: number;
       } | null;
     }[];
@@ -116,9 +118,21 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
                   </div>
                   <ProgressBar value={s.percent} />
                   {s.currentSkill && (
-                    <div className="mt-1 text-xs text-ink-500">
-                      Now: <span className="font-medium text-brand-700">{s.currentSkill.name}</span>{" "}
-                      · Stage {s.currentSkill.stage}/5 — {s.currentSkill.stageLabel}
+                    <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+                      <div className="text-xs text-ink-500">
+                        Now: <span className="font-medium text-brand-700">{s.currentSkill.name}</span>{" "}
+                        · Stage {s.currentSkill.stage}/5 — {s.currentSkill.stageLabel}
+                      </div>
+                      {/* Teaching should be reachable without starting a session. */}
+                      {s.currentSkill.lessonKey && (
+                        <Link
+                          href={`/app/${id}/learn/${s.currentSkill.lessonKey}`}
+                          title={s.currentSkill.lessonTitle ?? undefined}
+                          className="btn inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700 hover:border-brand-400"
+                        >
+                          📘 Learn
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>

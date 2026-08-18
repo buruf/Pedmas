@@ -425,6 +425,13 @@ export function progressSummary(student: StudentProfile) {
             grade: current.grade,
             stage: state?.stage ?? 1,
             stageLabel: stageLabelFor(current, state?.stage ?? 1),
+            // The lesson that teaches THIS skill, so a parent or child can
+            // open the teaching without starting a practice session.
+            lessonKey: lessonKeyForSkill(current.family, current.params),
+            lessonTitle: (() => {
+              const k = lessonKeyForSkill(current.family, current.params);
+              return k ? LESSON_TITLES[k] : null;
+            })(),
             progress: state ? skillProgress(state) : 0,
           }
         : null,

@@ -326,7 +326,10 @@ export function lessonKeyForSkill(
   if (family === "percent-basic") return "percent-basics";
   if (family === "dec-mul") return "dec-mul";
   if (family === "dec-div") return "dec-div";
-  if (family === "percent-apps" || family === "interest") return "percent-change";
+  if (family === "percent-apps") return "percent-change";
+  // Interest has its own lesson; it used to fall through to percent-change
+  // because this route predated it.
+  if (family === "interest") return "fin-interest";
   if (family === "mult-facts") return "mult-meaning";
   if (family === "div-facts") return "div-meaning";
   if (family === "frac-identify") return "frac-meaning";
