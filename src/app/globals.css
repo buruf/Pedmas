@@ -62,6 +62,9 @@ select {
   min-height: 44px;
 }
 
+/* A bare <input> has no type attribute, so [type="text"] does NOT match it.
+   The answer box was invisible for exactly that reason. */
+input:not([type]),
 input[type="text"],
 input[type="number"],
 input[type="email"],

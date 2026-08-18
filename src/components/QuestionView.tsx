@@ -74,6 +74,7 @@ export function QuestionView({
       ) : (
         <div className="mt-5">
           <input
+            type="text"
             inputMode={question.answerFormat === "text" ? "text" : "decimal"}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}

@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Logo, Card, PrimaryButton, ProgressBar, StatusPill } from "@/components/ui";
+import { Logo, Card, PrimaryButton, GhostButton, ProgressBar, StatusPill } from "@/components/ui";
 import { QuestionView, FeedbackPanel } from "@/components/QuestionView";
 import { api } from "@/lib/client";
 import type { ClientQuestion } from "@/lib/model";
@@ -37,6 +37,8 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
   const [feedback, setFeedback] = useState<AnswerPayload | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Nobody should land mid-test without being told what it is.
+  const [started, setStarted] = useState(false);
 
   const load = useCallback(() => {
     api<CurrentPayload>(`/api/students/${id}/placement`)
@@ -109,6 +111,47 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           </p>
           <div className="mt-5">
             <PrimaryButton href={`/app/${id}`}>Go to my dashboard</PrimaryButton>
+          </div>
+        </Card>
+      </Shell>
+    );
+  }
+
+  // Explain before asking anything (spec 2): a child dropped straight into
+  // questions reads varying difficulty as failure rather than as the test
+  // finding their level.
+  if (!started) {
+    return (
+      <Shell>
+        <Card>
+          <div className="text-center">
+            <div className="text-4xl">👋</div>
+            <h1 className="mt-3 text-2xl font-extrabold text-ink-900">
+              Let&rsquo;s find the right starting point for you
+            </h1>
+            <p className="mx-auto mt-3 max-w-md text-ink-700">
+              This is a short check, not a test to pass. Nobody sees a score, and
+              nothing here counts against you.
+            </p>
+          </div>
+          <div className="mt-6 space-y-3">
+            {[
+              ["🎯", "It finds your level", "Questions get harder when you get one right, and easier when you don't. That is how it works out where to start you."],
+              ["🤷", "Getting some wrong is normal", "You are meant to meet questions that are too hard. That is how we find the top of what you know."],
+              ["⏱️", "It is short", "Usually about 10 to 20 questions, and you can stop and come back."],
+            ].map(([icon, title, body]) => (
+              <div key={title} className="flex gap-3 rounded-xl bg-paper px-4 py-3">
+                <span className="text-xl">{icon}</span>
+                <span>
+                  <span className="block font-bold text-ink-900">{title}</span>
+                  <span className="mt-0.5 block text-sm text-ink-700">{body}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <PrimaryButton onClick={() => setStarted(true)}>Start</PrimaryButton>
+            <GhostButton href={"/app/" + id}>Not now</GhostButton>
           </div>
         </Card>
       </Shell>
