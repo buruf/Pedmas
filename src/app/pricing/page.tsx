@@ -164,6 +164,17 @@ export default function PricingPage() {
               <GhostButton>Manage billing</GhostButton>
             </Link>
           </>
+        ) : status && !status.configured ? (
+          <>
+            {/* Never offer a checkout the server cannot complete. */}
+            <div className="text-sm font-semibold text-ink-700">
+              Payments are not connected yet, so there is nothing to buy — practice is
+              unlocked for everyone in the meantime.
+            </div>
+            <Link href="/home">
+              <GhostButton>Go to practice</GhostButton>
+            </Link>
+          </>
         ) : status && status.children === 0 ? (
           <>
             <Link href="/onboarding">
