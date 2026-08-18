@@ -10,3 +10,7 @@ next-env.d.ts
 .env*.local
 
 .vercel
+
+# Backups of env files must never be committed.
+.env*.bak
+*.env.bak

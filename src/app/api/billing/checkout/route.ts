@@ -26,7 +26,11 @@ export async function POST() {
     if ("error" in result) return bad(result.error);
     return NextResponse.json({ url: result.url });
   } catch (err) {
-    console.error("[billing:checkout]", err instanceof Error ? err.message : err);
-    return bad("Could not start checkout. Please try again.", 502);
+    // Surface what Stripe actually said. "Try again" invites a retry that
+    // cannot work when the real cause is a stale price id or a key from a
+    // different account — which is exactly what it was.
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[billing:checkout]", detail);
+    return bad(`Stripe rejected the request: ${detail}`, 502);
   }
 }
