@@ -66,6 +66,28 @@ export async function login(email: string, password: string): Promise<Account | 
   return account;
 }
 
+
+/**
+ * Cookie options shared by set and clear — they must match exactly or the
+ * browser keeps a stale cookie the app can no longer see.
+ *
+ * Domain matters here: without it the cookie is host-only, so a session
+ * started on www.pedmas.com is invisible on pedmas.com. A cached redirect
+ * between the two then reads as being logged straight back out. Set
+ * AUTH_COOKIE_DOMAIN=.pedmas.com in production to cover both.
+ */
+function cookieOptions() {
+  const domain = process.env.AUTH_COOKIE_DOMAIN;
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    // A session cookie for a children's service must never cross plain HTTP.
+    secure: Boolean(process.env.VERCEL),
+    ...(domain ? { domain } : {}),
+  };
+}
+
 export async function startSession(accountId: string): Promise<string> {
   const token = newId("sess") + randomBytes(24).toString("hex");
   const session: AuthSession = {
@@ -76,12 +98,7 @@ export async function startSession(accountId: string): Promise<string> {
   };
   await putRow("authSessions", token, session);
   const jar = await cookies();
-  jar.set(COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_TTL / 1000,
-  });
+  jar.set(COOKIE, token, { ...cookieOptions(), maxAge: SESSION_TTL / 1000 });
   return token;
 }
 
@@ -89,7 +106,8 @@ export async function endSession(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) await deleteRow("authSessions", token);
-  jar.delete(COOKIE);
+  // Delete with the same attributes it was set with, or it survives.
+  jar.set(COOKIE, "", { ...cookieOptions(), maxAge: 0 });
 }
 
 export async function currentAccount(): Promise<Account | null> {
