@@ -4,13 +4,20 @@ import { FAMILIES } from "./families";
 import { validateRaw, dedupKey } from "./validate";
 import { makeRng, randomSeed } from "./rng";
 import { errorAnalysisFor, hasErrorAnalysis } from "./errorAnalysis";
+import type { Region } from "@/lib/region";
 import { deriveMetadata } from "./metadata";
 
 const MAX_ATTEMPTS = 40;
 
 export class GenerationError extends Error {}
 
-function toRef(skill: Skill): SkillRef {
+/**
+ * Region rides in on params so families can opt into it without changing the
+ * GeneratorFamily signature. Units cannot be translated after the fact — 5 cm
+ * is not 5 inches — so a family that teaches measurement has to generate the
+ * right system from the start. Everything else simply ignores it.
+ */
+function toRef(skill: Skill, region: Region = "INTL"): SkillRef {
   return {
     id: skill.id,
     name: skill.name,
@@ -18,7 +25,7 @@ function toRef(skill: Skill): SkillRef {
     strandId: skill.strandId,
     strandName: skill.strandName,
     family: skill.family,
-    params: skill.params,
+    params: { ...skill.params, region },
   };
 }
 
@@ -35,7 +42,7 @@ function difficultyOf(skill: Skill, stage: number): number {
 export function generateQuestion(
   skill: Skill,
   stage: number,
-  opts: { seed?: number; avoid?: Set<string> } = {}
+  opts: { seed?: number; avoid?: Set<string>; region?: Region } = {}
 ): Question {
   const family = FAMILIES[skill.family];
   if (!family) {
@@ -48,7 +55,7 @@ export function generateQuestion(
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const rng = makeRng(seed + attempt * 7919);
-    const raw = family.generate(toRef(skill), st, rng);
+    const raw = family.generate(toRef(skill, opts.region), st, rng);
     const res = validateRaw(raw);
     if (!res.ok) {
       lastReasons = res.reasons;

@@ -10,6 +10,7 @@ import { getSkill, nextSkillInStrand, strandChain } from "@/curriculum";
 import type { Skill } from "@/curriculum/types";
 import { generateQuestion, generateErrorAnalysis } from "./generate";
 import type { Question } from "./types";
+import type { Region } from "@/lib/region";
 import { newSkillState, reviewsDue, type SkillState } from "./mastery";
 
 export const SESSION_SIZE = 12;
@@ -71,7 +72,7 @@ export function focusStrand(learner: LearnerState, dayIndex: number): string | u
 
 export function buildPracticeSession(
   learner: LearnerState,
-  opts: { now: number; seed: number; size?: number }
+  opts: { now: number; seed: number; size?: number; region?: Region }
 ): SessionItem[] {
   const { now, seed } = opts;
   // Session length is a learning preference (spec §2); some children need a
@@ -82,7 +83,7 @@ export function buildPracticeSession(
   let seedStep = 0;
   const gen = (skill: Skill, stage: number): Question | null => {
     try {
-      return generateQuestion(skill, stage, { seed: seed + seedStep++ * 104729, avoid });
+      return generateQuestion(skill, stage, { seed: seed + seedStep++ * 104729, avoid, region: opts.region });
     } catch {
       return null;
     }

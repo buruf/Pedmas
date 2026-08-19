@@ -120,6 +120,47 @@ interface UnitTier {
   unit: string;
   objects: string[];
 }
+/**
+ * US customary units.
+ *
+ * American schools teach inches, feet, pounds and cups in exactly these
+ * grades, so a metric-only measurement strand is the wrong curriculum rather
+ * than merely unfamiliar wording. Units cannot be swapped in the text after
+ * the fact — 5 cm is not 5 inches — so the whole question is generated in the
+ * right system.
+ */
+const US_DIMS: Record<string, { tiers: UnitTier[]; scaleUnit: string; step: number; foils: string[] }> = {
+  length: {
+    tiers: [
+      { unit: "inches", objects: ["a pencil", "a crayon", "a spoon"] },
+      { unit: "feet", objects: ["a desk", "a door", "a bed"] },
+      { unit: "yards", objects: ["a classroom", "a swimming pool"] },
+      { unit: "miles", objects: ["the distance between two cities", "a marathon"] },
+    ],
+    scaleUnit: "inches",
+    step: 1,
+    foils: ["ounces", "pounds", "cups", "gallons"],
+  },
+  mass: {
+    tiers: [
+      { unit: "ounces", objects: ["an apple", "a letter", "a coin"] },
+      { unit: "pounds", objects: ["a person", "a bag of rice", "a dog"] },
+    ],
+    scaleUnit: "ounces",
+    step: 4,
+    foils: ["inches", "feet", "cups", "gallons"],
+  },
+  capacity: {
+    tiers: [
+      { unit: "cups", objects: ["a glass of water", "a small carton of juice"] },
+      { unit: "gallons", objects: ["a bucket", "a fish tank", "a car's fuel tank"] },
+    ],
+    scaleUnit: "cups",
+    step: 1,
+    foils: ["ounces", "pounds", "inches", "feet"],
+  },
+};
+
 const DIMS: Record<string, { tiers: UnitTier[]; scaleUnit: string; step: number; foils: string[] }> = {
   length: {
     tiers: [
@@ -157,7 +198,9 @@ const measureUnits: GeneratorFamily = {
     ["Choose the unit", "Read the scale", "Start at any mark", "Estimate", "Measure in problems"][st - 1],
   generate(skill, stage, rng): RawQuestion {
     const dim = str(skill.params, "dim", "length");
-    const cfg = DIMS[dim] ?? DIMS.length;
+    // American schools teach customary units at these grades.
+    const table = str(skill.params, "region", "INTL") === "US" ? US_DIMS : DIMS;
+    const cfg = table[dim] ?? table.length;
     const verb = dim === "length" ? "measure the length of" : dim === "mass" ? "measure the mass of" : "measure how much liquid fits in";
 
     if (stage === 1 || stage === 4) {
@@ -540,7 +583,35 @@ interface ConvRule {
   big: string;
   small: string;
   factor: number;
+  /** Plural forms. Metric symbols never pluralise; unit words do. */
+  bigPlural?: string;
+  smallPlural?: string;
 }
+
+/**
+ * Label a unit for a quantity. "13 yard" and "1 feet" both read as broken
+ * English to the child being taught, and metric symbols must stay unchanged:
+ * "13 cms" is not a unit.
+ */
+function unitLabel(rule: ConvRule, side: "big" | "small", n: number): string {
+  const one = side === "big" ? rule.big : rule.small;
+  const many = side === "big" ? rule.bigPlural : rule.smallPlural;
+  if (!many) return one; // metric symbol
+  return n === 1 ? one : many;
+}
+/**
+ * Customary conversions. Unlike metric these are not powers of ten, which is
+ * the whole difficulty for an American child: 12, 3, 16 and 4 have to be
+ * remembered rather than derived from place value.
+ */
+const US_CONV: ConvRule[] = [
+  { big: "foot", bigPlural: "feet", small: "inch", smallPlural: "inches", factor: 12 },
+  { big: "yard", bigPlural: "yards", small: "foot", smallPlural: "feet", factor: 3 },
+  { big: "pound", bigPlural: "pounds", small: "ounce", smallPlural: "ounces", factor: 16 },
+  { big: "gallon", bigPlural: "gallons", small: "quart", smallPlural: "quarts", factor: 4 },
+  { big: "quart", bigPlural: "quarts", small: "cup", smallPlural: "cups", factor: 4 },
+];
+
 const CONV: ConvRule[] = [
   { big: "cm", small: "mm", factor: 10 },
   { big: "m", small: "cm", factor: 100 },
@@ -559,24 +630,31 @@ const unitConversion: GeneratorFamily = {
       "Two steps and comparing",
     ][st - 1],
   generate(skill, stage, rng): RawQuestion {
-    const rule =
-      stage === 1
-        ? rng.pick(CONV.filter((c) => c.factor <= 100))
-        : stage === 2
-        ? rng.pick(CONV.filter((c) => c.factor === 1000))
-        : rng.pick(CONV);
+    const us = str(skill.params, "region", "INTL") === "US";
+    const table = us ? US_CONV : CONV;
+    // Metric climbs by powers of ten; customary has no such ladder, so the
+    // early stages simply take the smaller factors.
+    const rule = us
+      ? stage <= 2
+        ? rng.pick(table.filter((c) => c.factor <= 4))
+        : rng.pick(table)
+      : stage === 1
+      ? rng.pick(table.filter((c) => c.factor <= 100))
+      : stage === 2
+      ? rng.pick(table.filter((c) => c.factor === 1000))
+      : rng.pick(table);
 
     if (stage === 1 || stage === 2) {
       const v = rng.int(2, stage === 1 ? 20 : 9);
       return inputQ({
         instruction: "Convert the measurement.",
-        prompt: `${v} ${rule.big} = ___ ${rule.small}`,
+        prompt: `${v} ${unitLabel(rule, "big", v)} = ___ ${unitLabel(rule, "small", v * rule.factor)}`,
         answer: String(v * rule.factor),
         answerHint: rule.small,
         hint: `1 ${rule.big} = ${rule.factor} ${rule.small}, so multiply by ${rule.factor}.`,
         steps: [
-          `1 ${rule.big} = ${rule.factor} ${rule.small}.`,
-          `${v} × ${rule.factor} = ${v * rule.factor} ${rule.small}.`,
+          `1 ${rule.big} = ${rule.factor} ${unitLabel(rule, "small", rule.factor)}.`,
+          `${v} × ${rule.factor} = ${v * rule.factor} ${unitLabel(rule, "small", v * rule.factor)}.`,
         ],
         concept: "Going to a smaller unit gives a bigger number, so multiply.",
         verify: () => (v * rule.factor) / rule.factor === v,
@@ -588,13 +666,13 @@ const unitConversion: GeneratorFamily = {
       const total = v * rule.factor;
       return inputQ({
         instruction: "Convert the measurement.",
-        prompt: `${total} ${rule.small} = ___ ${rule.big}`,
+        prompt: `${total} ${unitLabel(rule, "small", total)} = ___ ${unitLabel(rule, "big", v)}`,
         answer: String(v),
         answerHint: rule.big,
         hint: `1 ${rule.big} = ${rule.factor} ${rule.small}, so divide by ${rule.factor}.`,
         steps: [
-          `1 ${rule.big} = ${rule.factor} ${rule.small}.`,
-          `${total} ÷ ${rule.factor} = ${v} ${rule.big}.`,
+          `1 ${rule.big} = ${rule.factor} ${unitLabel(rule, "small", rule.factor)}.`,
+          `${total} ÷ ${rule.factor} = ${v} ${unitLabel(rule, "big", v)}.`,
         ],
         concept: "Going to a larger unit gives a smaller number, so divide.",
         verify: () => v * rule.factor === total,
@@ -607,18 +685,18 @@ const unitConversion: GeneratorFamily = {
       return inputQ({
         instruction: "Convert the measurement.",
         prompt: toSmall
-          ? `${v} ${rule.big} = ___ ${rule.small}`
-          : `${v * rule.factor} ${rule.small} = ___ ${rule.big}`,
+          ? `${v} ${unitLabel(rule, "big", v)} = ___ ${unitLabel(rule, "small", v * rule.factor)}`
+          : `${v * rule.factor} ${unitLabel(rule, "small", v * rule.factor)} = ___ ${unitLabel(rule, "big", v)}`,
         answer: String(toSmall ? v * rule.factor : v),
         answerHint: toSmall ? rule.small : rule.big,
         hint: toSmall
           ? `Multiply by ${rule.factor} to reach the smaller unit.`
           : `Divide by ${rule.factor} to reach the larger unit.`,
         steps: [
-          `1 ${rule.big} = ${rule.factor} ${rule.small}.`,
+          `1 ${rule.big} = ${rule.factor} ${unitLabel(rule, "small", rule.factor)}.`,
           toSmall
-            ? `${v} × ${rule.factor} = ${v * rule.factor} ${rule.small}.`
-            : `${v * rule.factor} ÷ ${rule.factor} = ${v} ${rule.big}.`,
+            ? `${v} × ${rule.factor} = ${v * rule.factor} ${unitLabel(rule, "small", v * rule.factor)}.`
+            : `${v * rule.factor} ÷ ${rule.factor} = ${v} ${unitLabel(rule, "big", v)}.`,
         ],
         concept: "Multiply going down a unit size; divide going up.",
         verify: () => (toSmall ? (v * rule.factor) / rule.factor === v : v * rule.factor === v * rule.factor),
@@ -626,7 +704,7 @@ const unitConversion: GeneratorFamily = {
     }
 
     // Stage 5: two-step conversion, or compare across units.
-    if (rng.chance(0.5)) {
+    if (!us && rng.chance(0.5)) {
       const v = rng.int(2, 9);
       return inputQ({
         instruction: "Convert the measurement.",
@@ -645,24 +723,24 @@ const unitConversion: GeneratorFamily = {
     const bigVal = rng.int(2, 8);
     const smallVal = rng.int(1, bigVal * rule.factor - 1);
     const bigAsSmall = bigVal * rule.factor;
-    const answer = bigAsSmall > smallVal ? `${bigVal} ${rule.big}` : `${smallVal} ${rule.small}`;
+    const answer = bigAsSmall > smallVal ? `${bigVal} ${unitLabel(rule, "big", bigVal)}` : `${smallVal} ${unitLabel(rule, "small", smallVal)}`;
     return mcQ({
       instruction: "Which measurement is larger?",
-      prompt: `${bigVal} ${rule.big}  or  ${smallVal} ${rule.small}`,
+      prompt: `${bigVal} ${unitLabel(rule, "big", bigVal)}  or  ${smallVal} ${unitLabel(rule, "small", smallVal)}`,
       choices: mcChoices(rng, answer, [
-        answer === `${bigVal} ${rule.big}` ? `${smallVal} ${rule.small}` : `${bigVal} ${rule.big}`,
+        answer === `${bigVal} ${unitLabel(rule, "big", bigVal)}` ? `${smallVal} ${unitLabel(rule, "small", smallVal)}` : `${bigVal} ${unitLabel(rule, "big", bigVal)}`,
         "They are equal",
         "You cannot compare them",
       ]),
       answer,
       hint: "Change both to the same unit before comparing.",
       steps: [
-        `${bigVal} ${rule.big} = ${bigAsSmall} ${rule.small}.`,
-        `Compare ${bigAsSmall} ${rule.small} with ${smallVal} ${rule.small}.`,
+        `${bigVal} ${unitLabel(rule, "big", bigVal)} = ${bigAsSmall} ${unitLabel(rule, "small", bigAsSmall)}.`,
+        `Compare ${bigAsSmall} ${unitLabel(rule, "small", bigAsSmall)} with ${smallVal} ${unitLabel(rule, "small", smallVal)}.`,
         `So ${answer} is larger.`,
       ],
       concept: "You can only compare measurements once they share a unit.",
-      verify: () => (bigAsSmall > smallVal ? answer === `${bigVal} ${rule.big}` : answer === `${smallVal} ${rule.small}`),
+      verify: () => (bigAsSmall > smallVal ? answer === `${bigVal} ${unitLabel(rule, "big", bigVal)}` : answer === `${smallVal} ${unitLabel(rule, "small", smallVal)}`),
     });
   },
 };

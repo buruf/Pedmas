@@ -18,7 +18,7 @@ export async function GET(
     goal: student.goal ?? null,
     placed: Boolean(student.placedAt),
     placementInProgress: Boolean(student.placement && !student.placement.done),
-    progress: progressSummary(student),
+    progress: progressSummary(student, account.timezone),
   });
 }
 

@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const gate = locked(account);
   if (gate) return gate;
   const region = await ensureAccountRegion(account);
-  const session = ensureSession(student);
+  const session = ensureSession(student, account.timezone, region);
   // Start the clock on whichever question is now in front of the student.
   markServed(student);
   await saveStudent(student);
@@ -73,9 +73,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!student) return bad("Student not found.", 404);
   const gate = locked(account);
   if (gate) return gate;
+  await ensureAccountRegion(account);
   const body = await req.json().catch(() => null);
   if (typeof body?.answer !== "string") return bad("An answer is required.");
-  const result = answerCurrent(student, body.answer, Boolean(body.usedHint));
+  const result = answerCurrent(student, body.answer, Boolean(body.usedHint), account.timezone);
   if (!result) return bad("No active question.", 409);
   await saveStudent(student);
   return NextResponse.json(result);

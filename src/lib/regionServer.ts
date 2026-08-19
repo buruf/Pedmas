@@ -25,9 +25,23 @@ export async function regionForRequest(account?: Pick<Account, "region"> | null)
  * experience stops moving around if the family travels.
  */
 export async function ensureAccountRegion(account: Account): Promise<Region> {
-  if (account.region) return account.region;
-  const detected = await regionForRequest(null);
-  account.region = detected;
+  const hadRegion = Boolean(account.region);
+  const hadZone = Boolean(account.timezone);
+  if (hadRegion && hadZone) return account.region!;
+
+  let country: string | null = null;
+  let zone: string | null = null;
+  try {
+    const h = await headers();
+    country = h.get("x-vercel-ip-country");
+    zone = h.get("x-vercel-ip-timezone");
+  } catch {
+    // Outside a request context: keep whatever is stored.
+  }
+  if (!hadRegion) account.region = regionForCountry(country);
+  // The timezone decides when a streak day ends, so it is worth storing even
+  // when the region was already known.
+  if (!hadZone && zone) account.timezone = zone;
   await putRow("accounts", account.id, account);
-  return detected;
+  return account.region!;
 }

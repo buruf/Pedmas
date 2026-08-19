@@ -41,6 +41,8 @@ export interface Account {
    * switched by their holiday.
    */
   region?: "US" | "INTL";
+  /** IANA timezone, so the day rolls over at the family's midnight. */
+  timezone?: string;
   consent?: {
     policyVersion: string;
     acceptedAt: number;
@@ -193,6 +195,27 @@ export function toClientQuestion(q: Question, region: Region = "INTL"): ClientQu
   };
 }
 
-export function dayKeyOf(ts: number): string {
-  return new Date(ts).toISOString().slice(0, 10);
+/**
+ * The calendar day a timestamp falls on, in the family's own timezone.
+ *
+ * Streaks, "today's practice" and spaced review all key off this. Computing
+ * it in UTC meant the day rolled over at 7pm in New York and 11am in Sydney,
+ * so an Australian child practising after lunch could be handed two "daily"
+ * sessions and still lose their streak. The boundary has to be local midnight.
+ */
+export function dayKeyOf(ts: number, timeZone?: string): string {
+  if (!timeZone) return new Date(ts).toISOString().slice(0, 10);
+  try {
+    // en-CA formats as YYYY-MM-DD, which is the shape the rest of the app
+    // already stores and compares as a plain string.
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(ts));
+  } catch {
+    // An unknown zone must never break practice.
+    return new Date(ts).toISOString().slice(0, 10);
+  }
 }

@@ -162,9 +162,13 @@ function initFromPlacement(student: StudentProfile): void {
 
 /* -------------------------------------------------------------- practice */
 
-export function ensureSession(student: StudentProfile): PracticeSessionState {
+export function ensureSession(
+  student: StudentProfile,
+  timeZone?: string,
+  region?: Region
+): PracticeSessionState {
   const now = Date.now();
-  const dayKey = dayKeyOf(now);
+  const dayKey = dayKeyOf(now, timeZone);
   const active = student.activeSession;
   if (active && !active.completedAt && active.dayKey === dayKey && active.items.length > 0) {
     return active;
@@ -176,7 +180,7 @@ export function ensureSession(student: StudentProfile): PracticeSessionState {
       pointers: student.pointers,
       skills: student.skills,
     },
-    { now, seed: Math.floor(Math.random() * 2 ** 30), size: sessionSizeFor(student.preferences) }
+    { now, seed: Math.floor(Math.random() * 2 ** 30), size: sessionSizeFor(student.preferences), region }
   );
   const session: PracticeSessionState = {
     id: newId("ps"),
@@ -309,7 +313,8 @@ export function workedExampleFor(student: StudentProfile): WorkedExample | null 
 export function answerCurrent(
   student: StudentProfile,
   input: string,
-  usedHint: boolean
+  usedHint: boolean,
+  timeZone?: string
 ): AnswerResult | null {
   const session = student.activeSession;
   if (!session || session.completedAt) return null;
@@ -361,7 +366,7 @@ export function answerCurrent(
     }
     session.index += 1;
     if (session.index >= session.items.length) {
-      completeSession(student, session);
+      completeSession(student, session, timeZone);
       result.sessionComplete = true;
     }
   } else {
@@ -371,7 +376,11 @@ export function answerCurrent(
   return result;
 }
 
-function completeSession(student: StudentProfile, session: PracticeSessionState): void {
+function completeSession(
+  student: StudentProfile,
+  session: PracticeSessionState,
+  timeZone?: string
+): void {
   const now = Date.now();
   session.completedAt = now;
   const firstTry = session.items.filter((i) => i.correctFirstTry).length;
@@ -385,7 +394,7 @@ function completeSession(student: StudentProfile, session: PracticeSessionState)
   });
   if (student.recentSessions.length > 60) student.recentSessions.length = 60;
 
-  const yesterday = dayKeyOf(now - 24 * 60 * 60 * 1000);
+  const yesterday = dayKeyOf(now - 24 * 60 * 60 * 1000, timeZone);
   if (student.streak.lastDay === session.dayKey) {
     // Already counted today.
   } else if (student.streak.lastDay === yesterday) {
@@ -397,7 +406,7 @@ function completeSession(student: StudentProfile, session: PracticeSessionState)
 
 /* -------------------------------------------------------------- progress */
 
-export function progressSummary(student: StudentProfile) {
+export function progressSummary(student: StudentProfile, timeZone?: string) {
   const strands = Object.keys(student.strandLevels).map((sid) => {
     const level = student.strandLevels[sid];
     const chain = strandChain(sid);
@@ -454,7 +463,7 @@ export function progressSummary(student: StudentProfile) {
     // Time on task, for the parent dashboard (spec §18).
     timeSpent: {
       today: activeMinutes(
-        student.recentSessions.filter((s) => s.dayKey === dayKeyOf(Date.now()))
+        student.recentSessions.filter((s) => s.dayKey === dayKeyOf(Date.now(), timeZone))
       ),
       last7Days: activeMinutes(student.recentSessions.slice(0, 7)),
       allTime: activeMinutes(student.recentSessions),
