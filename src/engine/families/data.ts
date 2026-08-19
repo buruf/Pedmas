@@ -33,7 +33,7 @@ const CATEGORY_SETS: CategorySet[] = [
   { title: "Sports Played", labels: ["Soccer", "Hockey", "Tennis", "Running"], icon: "⭐", noun: "students" },
 ];
 
-const bars = (n: number) => "█".repeat(n);
+const bars = (n: number) => Array.from({ length: n }, () => "▮").join(" ");
 
 /* ------------------------------------------------------------- read-graph */
 /**
@@ -44,15 +44,18 @@ function renderCounts(type: string, set: CategorySet, labels: string[], symbols:
   if (type === "table") {
     return [`${set.title}`, "Item | Number", ...labels.map((l, i) => `${l} | ${symbols[i]}`)].join("\n");
   }
-  const sym = type === "picture" ? set.icon : "█";
-  return [`${set.title}`, ...labels.map((l, i) => `${l}: ${sym.repeat(symbols[i])}`)].join("\n");
+  const sym = type === "picture" ? set.icon : "▮";
+  // Units are spaced on purpose: repeated block characters run together
+  // into one solid bar, and a child cannot count what has no visible edges.
+  const row = (n: number) => Array.from({ length: n }, () => sym).join(" ");
+  return [`${set.title}`, ...labels.map((l, i) => `${l}: ${row(symbols[i])}`)].join("\n");
 }
 
 function linePlotQuestion(stage: number, rng: Rng): RawQuestion {
   const values = [1, 2, 3, 4, 5];
   const counts = values.map(() => rng.int(0, 4));
   if (counts.reduce((a, b) => a + b, 0) < 6) counts[rng.int(0, 4)] += 5;
-  const block = ["Goals Scored", ...values.map((v, i) => `${v}: ${"X".repeat(counts[i])}`)].join("\n");
+  const block = ["Goals Scored", ...values.map((v, i) => `${v}: ${Array.from({ length: counts[i] }, () => "X").join(" ")}`)].join("\n");
   const total = counts.reduce((a, b) => a + b, 0);
   const present = values.filter((_, i) => counts[i] > 0);
 
