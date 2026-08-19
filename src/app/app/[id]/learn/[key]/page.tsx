@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { Logo, Card, PrimaryButton, GhostButton } from "@/components/ui";
 import { LESSON_COMPONENTS } from "@/components/lesson/registry";
@@ -19,6 +19,7 @@ export default function LearnPage({
   params: Promise<{ id: string; key: string }>;
 }) {
   const { id, key } = use(params);
+  const [done, setDone] = useState(false);
   const isKnown = (LESSON_KEYS as readonly string[]).includes(key);
   const LessonBody = isKnown ? LESSON_COMPONENTS[key as LessonKey] : undefined;
 
@@ -44,9 +45,20 @@ export default function LearnPage({
             </span>
           </div>
           <Card>
-            {/* No onFinish: reading a lesson here changes no progress. */}
-            <LessonBody />
+            {/* Reading a lesson here records no progress, but the final step's
+                button still needs somewhere to go — without a handler it
+                renders and silently does nothing. */}
+            <LessonBody onFinish={() => setDone(true)} />
           </Card>
+
+          {done && (
+            <div className="mt-4 rounded-2xl border border-ok-600/30 bg-ok-100 px-4 py-3 pop-in">
+              <p className="font-bold text-ink-900">✓ You finished this lesson</p>
+              <p className="mt-1 text-sm text-ink-700">
+                Nothing was recorded — you can read it again whenever you like.
+              </p>
+            </div>
+          )}
           <div className="mt-5 flex flex-wrap gap-3">
             <PrimaryButton href={`/app/${id}/practice`}>Practise this now</PrimaryButton>
             <GhostButton href={`/app/${id}`}>Back to dashboard</GhostButton>

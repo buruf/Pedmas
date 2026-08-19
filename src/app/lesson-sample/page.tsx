@@ -26,7 +26,8 @@ export default function LessonSample() {
           </span>
         </div>
       </header>
-      <FractionAdditionLesson />
+      {/* Needs a handler: the last step's button calls onFinish. */}
+      <FractionAdditionLesson onFinish={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
     </div>
   );
 }

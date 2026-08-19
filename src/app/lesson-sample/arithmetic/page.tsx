@@ -57,7 +57,8 @@ export default function ArithmeticLessons() {
       </div>
 
       {/* Remount on change so each lesson starts at step 1. */}
-      <Lesson key={active} />
+      {/* Needs a handler: the last step's button calls onFinish. */}
+      <Lesson key={active} onFinish={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
     </div>
   );
 }
