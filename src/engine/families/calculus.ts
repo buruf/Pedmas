@@ -1,5 +1,5 @@
 import type { GeneratorFamily, RawQuestion, Rng, SkillRef } from "../types";
-import { inputQ, mcQ, mcChoices } from "./helpers";
+import { inputQ, mcQ, mcChoices, bigLenU, unitLong } from "./helpers";
 
 const str = (p: Record<string, unknown>, key: string, dflt: string): string =>
   typeof p[key] === "string" ? (p[key] as string) : dflt;
@@ -988,7 +988,11 @@ function appsCritical(stage: number, rng: Rng): RawQuestion {
   });
 }
 
-function appsOptimize(stage: number, rng: Rng): RawQuestion {
+function appsOptimize(stage: number, rng: Rng, params: Record<string, unknown>): RawQuestion {
+  // Only the geometry problems take a regional unit. The projectile-height
+  // questions stay metric everywhere: their −5t² is half of g in m/s², so the
+  // unit is part of the physics, not a label.
+  const B = bigLenU(params);
   if (stage === 1) {
     const half = rng.int(3, 12);
     const s = 2 * half;
@@ -1014,13 +1018,13 @@ function appsOptimize(stage: number, rng: Rng): RawQuestion {
     const p = 4 * q;
     return inputQ({
       instruction: "Optimize.",
-      prompt: `A rectangle has perimeter ${p} m. What is the largest area it can enclose, in square metres?`,
+      prompt: `A rectangle has perimeter ${p} ${B}. What is the largest area it can enclose, in square ${unitLong(B)}?`,
       answer: String(q * q),
       hint: "Among rectangles with a fixed perimeter, one shape wins.",
       steps: [
         `Width x gives length {${p}/2} − x = ${p / 2} − x; area A = x(${p / 2} − x).`,
         `A′ = ${p / 2} − 2x = 0 gives x = ${q} — a square.`,
-        `Maximum area: ${q} × ${q} = ${q * q} m².`,
+        `Maximum area: ${q} × ${q} = ${q * q} ${B}².`,
       ],
       concept: "The square maximizes area for a given perimeter.",
       verify: () => {
@@ -1074,13 +1078,13 @@ function appsOptimize(stage: number, rng: Rng): RawQuestion {
   const area = 2 * m * m;
   return inputQ({
     instruction: "Optimize.",
-    prompt: `A farmer has ${fTotal} m of fence for a rectangular pen against a wall (the wall forms one long side, so fencing covers two widths and one length). What is the largest possible area, in square metres?`,
+    prompt: `A farmer has ${fTotal} ${B} of fence for a rectangular pen against a wall (the wall forms one long side, so fencing covers two widths and one length). What is the largest possible area, in square ${unitLong(B)}?`,
     answer: String(area),
     hint: "Let width be x; then length = total − 2x. Maximize x(total − 2x).",
     steps: [
       `Width x gives length ${fTotal} − 2x; area A = x(${fTotal} − 2x).`,
       `A′ = ${fTotal} − 4x = 0 gives x = ${m}.`,
-      `A = ${m} × ${fTotal - 2 * m} = ${area} m².`,
+      `A = ${m} × ${fTotal - 2 * m} = ${area} ${B}².`,
     ],
     concept: "Optimization with a wall splits fencing unevenly on purpose.",
     verify: () => {
@@ -1103,7 +1107,7 @@ const derivativeApps: GeneratorFamily = {
   generate(skill, stage, rng): RawQuestion {
     const kind = str(skill.params, "kind", "critical");
     if (kind === "increasing") return appsIncreasing(stage, rng);
-    if (kind === "optimize") return appsOptimize(stage, rng);
+    if (kind === "optimize") return appsOptimize(stage, rng, skill.params);
     return appsCritical(stage, rng);
   },
 };

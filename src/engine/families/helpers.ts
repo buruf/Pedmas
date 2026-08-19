@@ -115,3 +115,49 @@ export function mcQ(q: {
     ...q,
   };
 }
+
+/**
+ * Region-aware unit labels.
+ *
+ * These are labels only. A rectangle 7 by 4 has area 28 whichever unit is
+ * named, and a 13-unit ladder reaches the same height, so swapping the word
+ * is safe. Anywhere a conversion factor is involved — unit conversion, scale
+ * drawings — the generator must build the right system from the start
+ * instead, because 5 cm is not 5 inches.
+ */
+export function lenU(params: Record<string, unknown>): string {
+  return params.region === "US" ? "in" : "cm";
+}
+
+/** Large lengths: ladders, buildings, fields. */
+export function bigLenU(params: Record<string, unknown>): string {
+  return params.region === "US" ? "ft" : "m";
+}
+
+/** Road distances. */
+export function distU(params: Record<string, unknown>): string {
+  return params.region === "US" ? "mi" : "km";
+}
+
+/** Speed to match distU. */
+export function speedU(params: Record<string, unknown>): string {
+  return params.region === "US" ? "mph" : "km/h";
+}
+
+/** Long form of a unit label, for instructions like "in square inches". */
+export function unitLong(u: string): string {
+  switch (u) {
+    case "in":
+      return "inches";
+    case "ft":
+      return "feet";
+    case "m":
+      return "metres";
+    case "mi":
+      return "miles";
+    case "km":
+      return "kilometres";
+    default:
+      return "centimetres";
+  }
+}

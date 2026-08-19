@@ -1,5 +1,5 @@
 import type { GeneratorFamily, RawQuestion, Rng, SkillRef } from "../types";
-import { inputQ, mcQ, mcChoices } from "./helpers";
+import { inputQ, mcQ, mcChoices, lenU, bigLenU, unitLong } from "./helpers";
 
 const str = (p: Record<string, unknown>, key: string, dflt: string): string =>
   typeof p[key] === "string" ? (p[key] as string) : dflt;
@@ -44,7 +44,9 @@ function pickTriple(rng: Rng, swap = true): [number, number, number] {
 }
 
 /* ------------------------------------------------------- right-triangle-trig */
-function rtSide(stage: number, rng: Rng): RawQuestion {
+function rtSide(stage: number, rng: Rng, params: Record<string, unknown>): RawQuestion {
+  const U = lenU(params);
+  const B = bigLenU(params);
   const [o, a, h] = pickTriple(rng);
   if (stage === 1) {
     return inputQ({
@@ -113,7 +115,7 @@ function rtSide(stage: number, rng: Rng): RawQuestion {
     const k = rng.int(2, 5);
     return inputQ({
       instruction: "Use the ratio to find the side.",
-      prompt: `In a right triangle, sin θ = {${o}/${h}} and the hypotenuse is ${h * k} cm. Find the length of the side opposite θ, in cm.`,
+      prompt: `In a right triangle, sin θ = {${o}/${h}} and the hypotenuse is ${h * k} ${U}. Find the length of the side opposite θ, in ${U}.`,
       answer: String(o * k),
       hint: `sin θ = {opposite/hypotenuse}, so opposite = hypotenuse × sin θ.`,
       steps: [
@@ -127,12 +129,12 @@ function rtSide(stage: number, rng: Rng): RawQuestion {
   const k = rng.int(1, 3);
   return inputQ({
     instruction: "Solve the problem.",
-    prompt: `A ${h * k} m ladder leans against a wall with its foot ${a * k} m from the base of the wall. How high up the wall does the ladder reach, in metres?`,
+    prompt: `A ${h * k} ${B} ladder leans against a wall with its foot ${a * k} ${B} from the base of the wall. How high up the wall does the ladder reach, in ${unitLong(B)}?`,
     answer: String(o * k),
     hint: "The ladder, wall, and ground form a right triangle.",
     steps: [
       `height^2 = ${h * k}^2 − ${a * k}^2 = ${h * h * k * k} − ${a * a * k * k} = ${o * o * k * k}.`,
-      `height = sqrt(${o * o * k * k}) = ${o * k} m.`,
+      `height = sqrt(${o * o * k * k}) = ${o * k} ${B}.`,
     ],
     concept: "Right-triangle tools solve real length problems.",
     verify: () => (o * k) ** 2 + (a * k) ** 2 === (h * k) ** 2,
@@ -140,7 +142,8 @@ function rtSide(stage: number, rng: Rng): RawQuestion {
   });
 }
 
-function rtAngle(stage: number, rng: Rng): RawQuestion {
+function rtAngle(stage: number, rng: Rng, params: Record<string, unknown>): RawQuestion {
+  const B = bigLenU(params);
   if (stage === 1) {
     const which = rng.pick([
       ["opposite side to the hypotenuse", "sine", ["cosine", "tangent"]],
@@ -207,7 +210,7 @@ function rtAngle(stage: number, rng: Rng): RawQuestion {
   const ans = Math.round(Math.atan(o / a) / rad(1));
   return inputQ({
     instruction: "Solve the problem. Round to the nearest degree.",
-    prompt: `A ramp rises ${o} m over a horizontal distance of ${a} m. What angle does it make with the ground, in degrees?`,
+    prompt: `A ramp rises ${o} ${B} over a horizontal distance of ${a} ${B}. What angle does it make with the ground, in degrees?`,
     answer: String(ans),
     hint: "Rise over run is the tangent of the angle.",
     steps: [
@@ -232,7 +235,7 @@ const rightTriangleTrig: GeneratorFamily = {
   generate(skill, stage, rng): RawQuestion {
     let find = str(skill.params, "find", "mixed");
     if (find === "mixed") find = rng.pick(["side", "angle"]);
-    return find === "angle" ? rtAngle(stage, rng) : rtSide(stage, rng);
+    return find === "angle" ? rtAngle(stage, rng, skill.params) : rtSide(stage, rng, skill.params);
   },
 };
 
@@ -857,16 +860,17 @@ const angleApps: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["45° sightlines", "Exact ratios", "Angles of elevation", "Angles of depression", "Find the angle"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const B = bigLenU(skill.params);
     if (stage === 1) {
       const d = rng.int(4, 12) * 5;
       return inputQ({
         instruction: "Solve the problem.",
-        prompt: `From a point ${d} m from the base of a tower, the angle of elevation of the top is 45°. How tall is the tower, in metres?`,
+        prompt: `From a point ${d} ${B} from the base of a tower, the angle of elevation of the top is 45°. How tall is the tower, in ${unitLong(B)}?`,
         answer: String(d),
         hint: "tan 45° = 1, so height and distance match.",
         steps: [
           `tan 45° = {height/${d}}.`,
-          `tan 45° = 1, so height = ${d} m.`,
+          `tan 45° = 1, so height = ${d} ${B}.`,
         ],
         concept: "A 45° elevation makes an isosceles right triangle.",
         representation: "word",
@@ -878,12 +882,12 @@ const angleApps: GeneratorFamily = {
       const k = rng.int(1, 3);
       return inputQ({
         instruction: "Solve the problem.",
-        prompt: `From a point ${a * k} m from the base of a flagpole, the angle of elevation θ of the top satisfies tan θ = {${o}/${a}}. How tall is the flagpole, in metres?`,
+        prompt: `From a point ${a * k} ${B} from the base of a flagpole, the angle of elevation θ of the top satisfies tan θ = {${o}/${a}}. How tall is the flagpole, in ${unitLong(B)}?`,
         answer: String(o * k),
         hint: `height = distance × tan θ.`,
         steps: [
           `tan θ = {height/${a * k}}.`,
-          `height = ${a * k} × {${o}/${a}} = ${o * k} m.`,
+          `height = ${a * k} × {${o}/${a}} = ${o * k} ${B}.`,
         ],
         concept: "Tangent links height to horizontal distance.",
         representation: "word",
@@ -897,14 +901,14 @@ const angleApps: GeneratorFamily = {
       const ans = (Math.round(d * Math.tan(rad(ang)) * 10) / 10).toFixed(1);
       return inputQ({
         instruction: "Solve the problem. Round to the nearest tenth.",
-        prompt: `From a point ${d} m from the base of a building, the angle of elevation of the roof is ${ang}°. How tall is the building, in metres?`,
+        prompt: `From a point ${d} ${B} from the base of a building, the angle of elevation of the roof is ${ang}°. How tall is the building, in ${unitLong(B)}?`,
         answer: ans,
         answerFormat: "decimal",
         answerHint: "e.g. 34.6",
         hint: `height = ${d} × tan ${ang}°.`,
         steps: [
           `tan ${ang}° = {height/${d}}.`,
-          `height = ${d} × tan ${ang}° ≈ ${ans} m.`,
+          `height = ${d} × tan ${ang}° ≈ ${ans} ${B}.`,
         ],
         concept: "The tangent ratio converts an angle and distance into a height.",
         representation: "word",
@@ -918,14 +922,14 @@ const angleApps: GeneratorFamily = {
       const ans = (Math.round((h / Math.tan(rad(ang))) * 10) / 10).toFixed(1);
       return inputQ({
         instruction: "Solve the problem. Round to the nearest tenth.",
-        prompt: `From the top of a ${h} m cliff, the angle of depression of a boat is ${ang}°. How far is the boat from the base of the cliff, in metres?`,
+        prompt: `From the top of a ${h} ${B} cliff, the angle of depression of a boat is ${ang}°. How far is the boat from the base of the cliff, in ${unitLong(B)}?`,
         answer: ans,
         answerFormat: "decimal",
         answerHint: "e.g. 128.7",
         hint: "The angle of depression equals the angle of elevation from the boat.",
         steps: [
           `From the boat, the cliff top is at elevation ${ang}°: tan ${ang}° = {${h}/distance}.`,
-          `distance = ${h} ÷ tan ${ang}° ≈ ${ans} m.`,
+          `distance = ${h} ÷ tan ${ang}° ≈ ${ans} ${B}.`,
         ],
         concept: "Depression from the top equals elevation from the bottom.",
         representation: "word",
@@ -937,7 +941,7 @@ const angleApps: GeneratorFamily = {
     const ans = Math.round(Math.atan(h / d) / rad(1));
     return inputQ({
       instruction: "Solve the problem. Round to the nearest degree.",
-      prompt: `A ${h} m tree stands ${d} m away from an observer at ground level. What is the angle of elevation of the treetop, in degrees?`,
+      prompt: `A ${h} ${B} tree stands ${d} ${B} away from an observer at ground level. What is the angle of elevation of the treetop, in degrees?`,
       answer: String(ans),
       hint: `tan θ = {${h}/${d}}; use inverse tangent.`,
       steps: [

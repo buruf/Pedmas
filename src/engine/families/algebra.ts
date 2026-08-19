@@ -1,5 +1,5 @@
 import type { GeneratorFamily, RawQuestion, Rng, SkillRef } from "../types";
-import { inputQ, mcQ, mcChoices, pickName } from "./helpers";
+import { inputQ, mcQ, mcChoices, pickName, distU, unitLong } from "./helpers";
 import { gcd } from "../num";
 
 const numP = (p: Record<string, unknown>, key: string, dflt: number): number =>
@@ -733,19 +733,21 @@ const twoStepEq: GeneratorFamily = {
         verify: () => b - a * xx === c,
       });
     }
+    const DL = unitLong(distU(skill.params));
+    const DS = distU(skill.params) === "mi" ? "mile" : "kilometre";
     const base = rng.int(2, 6);
     const per = rng.int(2, 5);
     const km = rng.int(3, 12);
     const total = base + per * km;
     return inputQ({
       instruction: "Write and solve the equation.",
-      prompt: `A taxi charges a $${base} flat fee plus $${per} per kilometre. A ride costs $${total}. How many kilometres was the ride?`,
+      prompt: `A taxi charges a ${base} flat fee plus ${per} per ${DS}. A ride costs ${total}. How many ${DL} was the ride?`,
       answer: String(km),
       hint: `The equation is ${per}x + ${base} = ${total}.`,
       steps: [
         `${per}x + ${base} = ${total}.`,
         `Subtract the flat fee: ${per}x = ${total - base}.`,
-        `Divide by ${per}: x = ${km} kilometres.`,
+        `Divide by ${per}: x = ${km} ${DL}.`,
       ],
       concept: "Two-step equations model rate-plus-fee situations.",
       representation: "word",

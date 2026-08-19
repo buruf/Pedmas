@@ -1,5 +1,5 @@
 import type { GeneratorFamily, RawQuestion, Rng } from "../types";
-import { inputQ, mcQ, mcChoices, pickName, pickObject } from "./helpers";
+import { inputQ, mcQ, mcChoices, pickName, pickObject, distU } from "./helpers";
 
 function gcd(a: number, b: number): number {
   a = Math.abs(a);
@@ -405,18 +405,19 @@ const proportionSolve: GeneratorFamily = {
       const [a, b] = simplestPair(rng, 6);
       const k1 = rng.int(1, 3);
       const k2 = k1 + rng.int(1, 4);
+      const HD = distU(skill.params);
       const km1 = a * k1;
       const h1 = b * k1;
       const km2 = a * k2;
       const h2 = b * k2;
       return inputQ({
         instruction: "Solve with a proportion.",
-        prompt: `A hiker walks ${km1} km in ${h1} hours. At the same pace, how many km can the hiker walk in ${h2} hours?`,
+        prompt: `A hiker walks ${km1} ${HD} in ${h1} hours. At the same pace, how many ${HD} can the hiker walk in ${h2} hours?`,
         answer: String(km2),
-        answerHint: "km, e.g. 15",
+        answerHint: `${HD}, e.g. 15`,
         hint: `Set up {${km1}/${h1}} = {?/${h2}} and cross-multiply.`,
         steps: [
-          `Same pace means the km-to-hours ratio stays fixed: {${km1}/${h1}} = {x/${h2}}.`,
+          `Same pace means the ${HD}-to-hours ratio stays fixed: {${km1}/${h1}} = {x/${h2}}.`,
           `Cross-multiply: ${h1} × x = ${km1} × ${h2} = ${km1 * h2}.`,
           `x = ${km1 * h2} ÷ ${h1} = ${km2}.`,
         ],

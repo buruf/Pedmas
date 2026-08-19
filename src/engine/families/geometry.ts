@@ -1,39 +1,5 @@
 import type { GeneratorFamily, RawQuestion, Rng, SkillRef } from "../types";
-import { inputQ, mcQ, mcChoices, nearNumbers, pickName } from "./helpers";
-
-/**
- * Length unit for the region.
- *
- * Geometry only ever *names* a unit — a rectangle 7 by 4 has area 28 in both
- * systems — so this is a label, not a conversion. That is why it is safe here
- * and emphatically not safe in unit-conversion, where the factors matter.
- */
-function lenU(params: Record<string, unknown>): string {
-  return params.region === "US" ? "in" : "cm";
-}
-
-/**
- * Large-length unit: metres internationally, feet in the US. Used for real
- * objects — ladders, fields, poles — where centimetres would be absurd. Like
- * the small unit this is a label only; a 5-unit ladder is 5 either way.
- */
-function bigLenU(params: Record<string, unknown>): string {
-  return params.region === "US" ? "ft" : "m";
-}
-
-/** Long form of a unit label, for instructions like "in square inches". */
-function unitLong(u: string): string {
-  switch (u) {
-    case "in":
-      return "inches";
-    case "ft":
-      return "feet";
-    case "m":
-      return "metres";
-    default:
-      return "centimetres";
-  }
-}
+import { inputQ, mcQ, mcChoices, nearNumbers, pickName, lenU, bigLenU, distU, unitLong } from "./helpers";
 
 const str = (p: Record<string, unknown>, key: string, dflt: string): string =>
   typeof p[key] === "string" ? (p[key] as string) : dflt;
@@ -1329,7 +1295,8 @@ function genCoordQuadrant(stage: number, rng: Rng): RawQuestion {
   });
 }
 
-function genCoordDistance(stage: number, rng: Rng): RawQuestion {
+function genCoordDistance(stage: number, rng: Rng, params: Record<string, unknown>): RawQuestion {
+  const D = distU(params);
   if (stage === 1) return genCoordIdentify(5, rng);
   if (stage === 2 || stage === 3) {
     const [dx, dy, c] = rng.pick(TRIPLES);
@@ -1371,12 +1338,12 @@ function genCoordDistance(stage: number, rng: Rng): RawQuestion {
   const [dx, dy, c] = rng.pick(TRIPLES);
   return inputQ({
     instruction: "Solve the problem.",
-    prompt: `A ship sails ${dx} km east and then ${dy} km north. How far is it from its starting point, in km?`,
+    prompt: `A ship sails ${dx} ${D} east and then ${dy} ${D} north. How far is it from its starting point, in ${D}?`,
     answer: String(c),
     hint: "East and north are at right angles — draw the triangle.",
     steps: [
       `The path forms a right triangle with legs ${dx} and ${dy}.`,
-      `Distance = sqrt(${dx}^2 + ${dy}^2) = sqrt(${c * c}) = ${c} km.`,
+      `Distance = sqrt(${dx}^2 + ${dy}^2) = sqrt(${c * c}) = ${c} ${D}.`,
     ],
     concept: "Straight-line distance is found with the Pythagorean theorem.",
     representation: "word",
@@ -1484,7 +1451,7 @@ const coordinatePlane: GeneratorFamily = {
       kind === "mixed" ? rng.pick(["identify", "quadrant", "distance", "midpoint"] as const) : kind;
     if (k === "identify") return genCoordIdentify(stage, rng);
     if (k === "quadrant") return genCoordQuadrant(stage, rng);
-    if (k === "distance") return genCoordDistance(stage, rng);
+    if (k === "distance") return genCoordDistance(stage, rng, skill.params);
     return genCoordMidpoint(stage, rng);
   },
 };

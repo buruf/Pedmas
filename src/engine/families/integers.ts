@@ -1,6 +1,23 @@
 import type { GeneratorFamily, RawQuestion, Rng, SkillRef } from "../types";
 import { inputQ, mcQ, mcChoices, pickName } from "./helpers";
 
+/**
+ * Temperature scale for the region.
+ *
+ * Below-zero temperature is the canonical model for negative numbers, so the
+ * context stays — only the scale changes. The values in use (roughly -15 to
+ * 15) read as an ordinary cold snap in either scale, which is the point: the
+ * child needs somewhere negatives genuinely occur.
+ */
+function tempUnit(params: Record<string, unknown>): string {
+  return params.region === "US" ? "°F" : "°C";
+}
+
+/** Everyday length unit for depths, elevations and object sizes. */
+function lenLong(params: Record<string, unknown>): string {
+  return params.region === "US" ? "feet" : "metres";
+}
+
 const str = (p: Record<string, unknown>, key: string, dflt: string): string =>
   typeof p[key] === "string" ? (p[key] as string) : dflt;
 
@@ -28,6 +45,8 @@ const integerOps: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["One negative, small numbers", "Both signs", "Larger numbers", "Missing numbers", "Story problems"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const T = tempUnit(skill.params);
+    const LU = lenLong(skill.params);
     const opParam = str(skill.params, "op", "mixed");
     const op =
       opParam === "mixed"
@@ -113,11 +132,11 @@ const integerOps: GeneratorFamily = {
         const final = rises ? t0 + drop : t0 - drop;
         return inputQ({
           instruction: "Solve the problem.",
-          prompt: `The temperature is ${neg(t0)}°C. It ${rises ? "rises" : "falls"} ${drop}°C. What is the new temperature?`,
+          prompt: `The temperature is ${neg(t0)}${T}. It ${rises ? "rises" : "falls"} ${drop}${T}. What is the new temperature?`,
           answer: String(final),
           answerHint: "e.g. -7",
           hint: rises ? "Rising means adding." : "Falling means subtracting.",
-          steps: [`${neg(t0)} ${rises ? "+" : "−"} ${drop} = ${neg(final)}.`, `The new temperature is ${neg(final)}°C.`],
+          steps: [`${neg(t0)} ${rises ? "+" : "−"} ${drop} = ${neg(final)}.`, `The new temperature is ${neg(final)}${T}.`],
           concept: "Rises add and falls subtract on the thermometer's number line.",
           representation: "word",
           verify: () => (rises ? final - drop === t0 : final + drop === t0),
@@ -129,11 +148,11 @@ const integerOps: GeneratorFamily = {
         const total = -perHour * hours;
         return inputQ({
           instruction: "Solve the problem.",
-          prompt: `The temperature falls ${perHour}°C every hour for ${hours} hours. What is the total change in temperature?`,
+          prompt: `The temperature falls ${perHour}${T} every hour for ${hours} hours. What is the total change in temperature?`,
           answer: String(total),
           answerHint: "e.g. -12",
           hint: `Each hour is a change of −${perHour}. Multiply by ${hours}.`,
-          steps: [`Each hour changes the temperature by −${perHour}°C.`, `${wrap(-perHour)} × ${hours} = ${neg(total)}.`],
+          steps: [`Each hour changes the temperature by −${perHour}${T}.`, `${wrap(-perHour)} × ${hours} = ${neg(total)}.`],
           concept: "Repeated negative changes multiply into a bigger negative.",
           representation: "word",
           verify: () => total / hours === -perHour,
@@ -144,11 +163,11 @@ const integerOps: GeneratorFamily = {
       const depth = -stages * per;
       return inputQ({
         instruction: "Solve the problem.",
-        prompt: `${name} dives to ${neg(depth)} metres in ${stages} equal stages. How many metres is each stage?`,
+        prompt: `${name} dives to ${neg(depth)} ${LU} in ${stages} equal stages. How many ${LU} is each stage?`,
         answer: String(-per),
         answerHint: "e.g. -6",
         hint: `Divide ${neg(depth)} by ${stages}.`,
-        steps: [`${neg(depth)} ÷ ${stages} = ${neg(-per)}.`, `Each stage is ${per} metres down, written ${neg(-per)}.`],
+        steps: [`${neg(depth)} ÷ ${stages} = ${neg(-per)}.`, `Each stage is ${per} ${LU} down, written ${neg(-per)}.`],
         concept: "Dividing a negative by a positive keeps the negative sign.",
         representation: "word",
         verify: () => -per * stages === depth,
@@ -276,12 +295,13 @@ const absValue: GeneratorFamily = {
     }
     const name = pickName(rng);
     const depth = -rng.int(5, 60);
+    const LU = lenLong(skill.params);
     return inputQ({
       instruction: "Solve the problem.",
-      prompt: `${name} is scuba diving at an elevation of ${neg(depth)} metres. How many metres from sea level is ${name}?`,
+      prompt: `${name} is scuba diving at an elevation of ${neg(depth)} ${LU}. How many ${LU} from sea level is ${name}?`,
       answer: String(-depth),
       hint: "Distance is always positive — take the absolute value.",
-      steps: [`Sea level is 0. The elevation is ${neg(depth)}.`, `|${neg(depth)}| = ${-depth} metres from sea level.`],
+      steps: [`Sea level is 0. The elevation is ${neg(depth)}.`, `|${neg(depth)}| = ${-depth} ${LU} from sea level.`],
       concept: "Distances are absolute values of positions.",
       representation: "word",
       verify: () => Math.abs(depth) === -depth,
@@ -302,6 +322,7 @@ const intCompare: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Compare two integers", "Order three integers", "Compare rationals", "Order mixed numbers", "In context"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const T = tempUnit(skill.params);
     const rational = skill.params.rational === true;
     if (stage === 1) {
       let a = rng.int(-15, 15);
@@ -437,7 +458,7 @@ const intCompare: GeneratorFamily = {
     const ans = colder === t1 ? cityA : cityB;
     return mcQ({
       instruction: "Solve the problem.",
-      prompt: `Overnight, ${cityA} reached ${neg(t1)}°C and ${cityB} reached ${neg(t2)}°C. Which city was colder?`,
+      prompt: `Overnight, ${cityA} reached ${neg(t1)}${T} and ${cityB} reached ${neg(t2)}${T}. Which city was colder?`,
       choices: rng.shuffle([cityA, cityB, "They were equally cold"]),
       answer: ans,
       hint: "Colder means the lower number — farther below zero.",
@@ -890,11 +911,14 @@ const roots: GeneratorFamily = {
     }
     const n = rng.int(3, cube ? 9 : 12);
     const val = n ** pow;
+    const us = skill.params.region === "US";
+    const smallU = us ? "inches" : "centimetres";
+    const bigU = us ? "feet" : "metres";
     return inputQ({
       instruction: "Solve the problem.",
       prompt: cube
-        ? `A cube-shaped box has a volume of ${val} cubic centimetres. How long is each edge, in centimetres?`
-        : `A square garden has an area of ${val} square metres. How long is each side, in metres?`,
+        ? `A cube-shaped box has a volume of ${val} cubic ${smallU}. How long is each edge, in ${smallU}?`
+        : `A square garden has an area of ${val} square ${bigU}. How long is each side, in ${bigU}?`,
       answer: String(n),
       hint: cube ? "Edge × edge × edge = volume, so take the cube root." : "Side × side = area, so take the square root.",
       steps: [

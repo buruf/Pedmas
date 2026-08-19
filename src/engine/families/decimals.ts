@@ -1,5 +1,5 @@
 import type { GeneratorFamily, RawQuestion } from "../types";
-import { inputQ, mcQ, mcChoices, pickName } from "./helpers";
+import { inputQ, mcQ, mcChoices, pickName, distU, unitLong } from "./helpers";
 
 const str = (p: Record<string, unknown>, key: string, dflt: string): string =>
   typeof p[key] === "string" ? (p[key] as string) : dflt;
@@ -339,7 +339,8 @@ const decAddSub: GeneratorFamily = {
     if (stage === 5) {
       const name = pickName(rng);
       const money = rng.chance(0.5);
-      const a2 = rng.int(150, 2999); // cents or hundredths of km
+      const D = distU(skill.params);
+      const a2 = rng.int(150, 2999); // cents or hundredths of a distance unit
       const b2 = rng.int(105, op === "sub" ? a2 - 1 : 2999);
       const r2 = op === "add" ? a2 + b2 : a2 - b2;
       const prompt = money
@@ -347,8 +348,8 @@ const decAddSub: GeneratorFamily = {
           ? `${name} buys a book for ${moneyDisp(a2)} and a pen for ${moneyDisp(b2)}. How much is that in total?`
           : `${name} has ${moneyDisp(a2)} and spends ${moneyDisp(b2)}. How much is left?`
         : op === "add"
-          ? `${name} ran ${fmtU(a2, 2)} km on Monday and ${fmtU(b2, 2)} km on Tuesday. How far did ${name} run in total?`
-          : `A trail is ${fmtU(a2, 2)} km long. ${name} has walked ${fmtU(b2, 2)} km. How much further is it?`;
+          ? `${name} ran ${fmtU(a2, 2)} ${D} on Monday and ${fmtU(b2, 2)} ${D} on Tuesday. How far did ${name} run in total?`
+          : `A trail is ${fmtU(a2, 2)} ${D} long. ${name} has walked ${fmtU(b2, 2)} ${D}. How much further is it?`;
       return inputQ({
         instruction: "Solve the problem.",
         prompt,
@@ -359,7 +360,7 @@ const decAddSub: GeneratorFamily = {
         steps: [
           `Line up the decimal points: ${dispU(a2, 2)} ${sym} ${dispU(b2, 2)}.`,
           `Work in hundredths: ${a2} ${sym} ${b2} = ${r2}.`,
-          `That is ${money ? moneyDisp(r2) : fmtU(r2, 2) + " km"}.`,
+          `That is ${money ? moneyDisp(r2) : fmtU(r2, 2) + " " + D}.`,
         ],
         concept: "Decimal points must line up so you add like places to like places.",
         representation: "word",
@@ -520,21 +521,22 @@ const decMul: GeneratorFamily = {
         verify: () => toUnits(moneyAns(total), 2) === price * qty,
       });
     }
-    let speed = rng.int(101, 349); // tenths of km/h, i.e. 10.1–34.9 km/h
+    const D2 = distU(skill.params);
+    let speed = rng.int(101, 349); // tenths of a unit per hour, i.e. 10.1–34.9
     if (speed % 10 === 0) speed += 1;
     const hours = rng.int(2, 6);
     const dist = speed * hours;
     return inputQ({
       instruction: "Solve the problem.",
-      prompt: `A cyclist rides at ${fmtU(speed, 1)} km per hour for ${hours} hours. How far does the cyclist ride?`,
+      prompt: `A cyclist rides at ${fmtU(speed, 1)} ${unitLong(D2)} per hour for ${hours} hours. How far does the cyclist ride?`,
       answer: fmtU(dist, 1),
       answerFormat: "decimal",
-      answerHint: "kilometres, e.g. 45.5",
+      answerHint: `${unitLong(D2)}, e.g. 45.5`,
       hint: "Distance = speed × time.",
       steps: [
         `Distance = ${fmtU(speed, 1)} × ${hours}.`,
         `Whole-number product: ${speed} × ${hours} = ${dist}; restore 1 decimal place.`,
-        `The cyclist rides ${fmtU(dist, 1)} km.`,
+        `The cyclist rides ${fmtU(dist, 1)} ${D2}.`,
       ],
       concept: "Rates multiply by time to give a total.",
       representation: "word",
