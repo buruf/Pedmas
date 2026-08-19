@@ -12,6 +12,15 @@ function lenU(params: Record<string, unknown>): string {
   return params.region === "US" ? "in" : "cm";
 }
 
+/**
+ * Large-length unit: metres internationally, feet in the US. Used for real
+ * objects — ladders, fields, poles — where centimetres would be absurd. Like
+ * the small unit this is a label only; a 5-unit ladder is 5 either way.
+ */
+function bigLenU(params: Record<string, unknown>): string {
+  return params.region === "US" ? "ft" : "m";
+}
+
 /** Long form of a unit label, for instructions like "in square inches". */
 function unitLong(u: string): string {
   switch (u) {
@@ -1485,6 +1494,7 @@ const pythagorean: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Squares of the legs", "Find the hypotenuse", "Find a leg", "Exact answers", "Real problems"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const M = bigLenU(skill.params);
     const U = lenU(skill.params);
     if (stage === 1) {
       const [a, b] = rng.pick(TRIPLES);
@@ -1560,13 +1570,13 @@ const pythagorean: GeneratorFamily = {
     return inputQ({
       instruction: "Solve the problem.",
       prompt: ladder
-        ? `A ladder leans against a wall. Its foot is ${a} m from the wall and its top reaches ${b} m up the wall. How long is the ladder in m?`
-        : `A rectangular field is ${a} m by ${b} m. How long is the diagonal path across it, in m?`,
+        ? `A ladder leans against a wall. Its foot is ${a} ${M} from the wall and its top reaches ${b} ${M} up the wall. How long is the ladder in ${M}?`
+        : `A rectangular field is ${a} ${M} by ${b} ${M}. How long is the diagonal path across it, in ${M}?`,
       answer: String(c),
       hint: "Sketch the right triangle: the answer is its hypotenuse.",
       steps: [
         `The two given lengths are the legs of a right triangle.`,
-        `c^2 = ${a}^2 + ${b}^2 = ${a * a + b * b}, so c = ${c} m.`,
+        `c^2 = ${a}^2 + ${b}^2 = ${a * a + b * b}, so c = ${c} ${M}.`,
       ],
       concept: "Right angles in real situations invite the Pythagorean theorem.",
       representation: "word",
@@ -1702,6 +1712,7 @@ const similarity: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Enlargements", "Scale factors", "Matching sides", "Area and scale", "Indirect measurement"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const M = bigLenU(skill.params);
     const U = lenU(skill.params);
     if (stage === 1) {
       const k = rng.int(2, 4);
@@ -1768,12 +1779,12 @@ const similarity: GeneratorFamily = {
     const k = rng.int(2, 5);
     return inputQ({
       instruction: "Use similar triangles.",
-      prompt: `A ${h} m pole casts a ${s} m shadow. At the same time, a tree casts a ${k * s} m shadow. How tall is the tree in m?`,
+      prompt: `A ${h} ${M} pole casts a ${s} ${M} shadow. At the same time, a tree casts a ${k * s} ${M} shadow. How tall is the tree in ${M}?`,
       answer: String(k * h),
       hint: "The sun makes both triangles similar: same ratio of height to shadow.",
       steps: [
         `The tree's shadow is ${k * s} ÷ ${s} = ${k} times the pole's shadow.`,
-        `So the tree is ${k} times the pole's height: ${h} × ${k} = ${k * h} m.`,
+        `So the tree is ${k} times the pole's height: ${h} × ${k} = ${k * h} ${M}.`,
       ],
       concept: "Similar triangles let you measure heights from shadows.",
       representation: "word",
@@ -1787,6 +1798,7 @@ const circleMeasure: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Radius and diameter", "Circumference with π", "Area with π", "Using π ≈ 3.14", "Circle problems"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const M = bigLenU(skill.params);
     const U = lenU(skill.params);
     if (stage === 1) {
       const r = rng.int(2, 12);
@@ -1890,11 +1902,11 @@ const circleMeasure: GeneratorFamily = {
     const a = round2(3.14 * r * r);
     return inputQ({
       instruction: "Solve the problem. Use π ≈ 3.14.",
-      prompt: `A circular garden has a radius of ${r} m. What area of ground does it cover, in m^2?`,
+      prompt: `A circular garden has a radius of ${r} ${M}. What area of ground does it cover, in ${M}^2?`,
       answer: String(a),
       answerFormat: "decimal",
       hint: "Area = π × r^2.",
-      steps: [`r^2 = ${r * r}.`, `A ≈ 3.14 × ${r * r} = ${a} m^2.`],
+      steps: [`r^2 = ${r * r}.`, `A ≈ 3.14 × ${r * r} = ${a} ${M}^2.`],
       concept: "Circle area problems use πr^2 with the radius, not the diameter.",
       representation: "word",
       verify: () => round2(3.14 * r * r) === a,

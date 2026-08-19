@@ -90,3 +90,42 @@ describe("geometry units", () => {
     }
   });
 });
+
+describe("scale drawings and rates", () => {
+  it("keeps a scale drawing in one system at every stage", () => {
+    // The earlier attempt produced "1 in = 4 m", mixing systems, which is
+    // worse than being consistently metric.
+    const skill = allSkills().find((s) => s.family === "scale-drawings")!;
+    for (let stage = 1; stage <= 5; stage++) {
+      const q = generateQuestion(skill, stage, { seed: 9090 + stage, region: "US" });
+      const text = `${q.prompt} ${q.steps.join(" ")}`;
+      expect(text, `stage ${stage}`).not.toMatch(/\d+\s*(cm|km|\bm\b|metres|centimetres)/);
+      expect(text, `stage ${stage}`).toMatch(/\b(in|ft|miles|feet|inch)\b/);
+    }
+  });
+
+  it("converts the ratio scale exactly in both systems", () => {
+    // Stage 3 divides drawing units into real ones: 100 for cm to m, 12 for
+    // inches to feet. A ratio that is not a multiple of that gives a fraction.
+    const skill = allSkills().find((s) => s.family === "scale-drawings")!;
+    for (const region of ["US", "INTL"] as const) {
+      for (let i = 0; i < 15; i++) {
+        const q = generateQuestion(skill, 3, { seed: 2200 + i * 7919, region });
+        expect(Number(q.answer), `${region}: ${q.prompt}`).toBe(Math.round(Number(q.answer)));
+      }
+    }
+  });
+
+  it("measures speed in mph for the US", () => {
+    const skill = allSkills().find((s) => s.family === "unit-rate")!;
+    const us: string[] = [];
+    const intl: string[] = [];
+    for (let stage = 1; stage <= 5; stage++) {
+      us.push(generateQuestion(skill, stage, { seed: 4141 + stage, region: "US" }).prompt);
+      intl.push(generateQuestion(skill, stage, { seed: 4141 + stage, region: "INTL" }).prompt);
+    }
+    expect(us.join(" ")).toMatch(/miles/);
+    expect(us.join(" ")).not.toMatch(/\bkm\b/);
+    expect(intl.join(" ")).toMatch(/\bkm\b/);
+  });
+});

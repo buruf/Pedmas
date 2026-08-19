@@ -262,6 +262,11 @@ const unitRate: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Price per item", "Speed", "Unit price with cents", "Better buy", "Use the rate"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    // Speed is distance over time in any system, so the distance unit is a
+    // label. Americans measure road distance in miles and speed in mph.
+    const us = skill.params.region === "US";
+    const DIST = us ? "miles" : "km";
+    const SPEED = us ? "mph" : "km/h";
     if (stage === 1) {
       const per = rng.int(2, 9);
       const count = rng.int(3, 8);
@@ -288,13 +293,13 @@ const unitRate: GeneratorFamily = {
       const dist = speed * hours;
       return inputQ({
         instruction: "Find the unit rate.",
-        prompt: `A train travels ${dist} km in ${hours} hours at a steady speed. How fast is it going, in km per hour?`,
+        prompt: `A train travels ${dist} ${DIST} in ${hours} hours at a steady speed. How fast is it going, in ${DIST} per hour?`,
         answer: String(speed),
-        answerHint: "km per hour, e.g. 80",
+        answerHint: `${DIST} per hour, e.g. 80`,
         hint: "Speed is distance for ONE hour: divide distance by time.",
         steps: [
           `${dist} ÷ ${hours} = ${speed}.`,
-          `The train covers ${speed} km each hour, so its speed is ${speed} km/h.`,
+          `The train covers ${speed} ${DIST} each hour, so its speed is ${speed} ${SPEED}.`,
         ],
         concept: "Speed is a unit rate: distance per one unit of time.",
         representation: "word",
@@ -376,13 +381,13 @@ const unitRate: GeneratorFamily = {
     const dist = speed * hours;
     return inputQ({
       instruction: "Use the unit rate.",
-      prompt: `A car travels at a steady ${speed} km per hour. How far does it go in ${hours} hours?`,
+      prompt: `A car travels at a steady ${speed} ${DIST} per hour. How far does it go in ${hours} hours?`,
       answer: String(dist),
-      answerHint: "km, e.g. 240",
+      answerHint: `${DIST}, e.g. 240`,
       hint: "Distance = speed × time.",
       steps: [
-        `${speed} km each hour, for ${hours} hours.`,
-        `${speed} × ${hours} = ${dist} km.`,
+        `${speed} ${DIST} each hour, for ${hours} hours.`,
+        `${speed} × ${hours} = ${dist} ${DIST}.`,
       ],
       concept: "Rates predict totals: rate × amount of time.",
       representation: "word",
@@ -477,22 +482,64 @@ const proportionSolve: GeneratorFamily = {
 };
 
 /* ------------------------------------------------------------ scale-drawings */
+/**
+ * Units for scale drawings.
+ *
+ * Most stages only *name* a unit, so the label can change freely. Stage 3 is
+ * different: it converts drawing units into real ones, and that divisor is
+ * 100 for centimetres-to-metres but 12 for inches-to-feet. The ratios are
+ * chosen as multiples of that divisor so the answer stays exact in either
+ * system — which is why this needs a real variant rather than a relabel.
+ */
+interface MapUnits {
+  draw: string;
+  drawLong: string;
+  far: string;
+  real: string;
+  realLong: string;
+  ratios: readonly number[];
+  perReal: number;
+}
+
+function mapUnits(params: Record<string, unknown>): MapUnits {
+  return params.region === "US"
+    ? {
+        draw: "in",
+        drawLong: "inch",
+        far: "miles",
+        real: "ft",
+        realLong: "feet",
+        ratios: [12, 24, 36],
+        perReal: 12,
+      }
+    : {
+        draw: "cm",
+        drawLong: "centimetre",
+        far: "km",
+        real: "m",
+        realLong: "metres",
+        ratios: [100, 200, 500],
+        perReal: 100,
+      };
+}
+
 const scaleDrawings: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Drawing to real life", "Real life to drawing", "Scale as a ratio", "Find the scale", "Decimal measurements"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const MU = mapUnits(skill.params);
     if (stage === 1) {
       const k = rng.pick([2, 3, 4, 5, 10] as const);
       const L = rng.int(2, 12);
       return inputQ({
         instruction: "Use the scale.",
-        prompt: `A map uses the scale 1 cm = ${k} km. A road measures ${L} cm on the map. How long is the real road, in km?`,
+        prompt: `A map uses the scale 1 ${MU.draw} = ${k} ${MU.far}. A road measures ${L} ${MU.draw} on the map. How long is the real road, in ${MU.far}?`,
         answer: String(L * k),
-        answerHint: "km, e.g. 20",
-        hint: `Every map centimetre stands for ${k} real km.`,
+        answerHint: `${MU.far}, e.g. 20`,
+        hint: `Every map ${MU.drawLong} stands for ${k} real ${MU.far}.`,
         steps: [
-          `${L} cm on the map is ${L} groups of ${k} km.`,
-          `${L} × ${k} = ${L * k} km.`,
+          `${L} ${MU.draw} on the map is ${L} groups of ${k} ${MU.far}.`,
+          `${L} × ${k} = ${L * k} ${MU.far}.`,
         ],
         concept: "A scale converts drawing lengths into real lengths by multiplying.",
         representation: "word",
@@ -505,13 +552,13 @@ const scaleDrawings: GeneratorFamily = {
       const real = L * k;
       return inputQ({
         instruction: "Use the scale.",
-        prompt: `A blueprint uses the scale 1 cm = ${k} m. A wall is really ${real} m long. How long should it be on the blueprint, in cm?`,
+        prompt: `A blueprint uses the scale 1 ${MU.draw} = ${k} ${MU.real}. A wall is really ${real} ${MU.real} long. How long should it be on the blueprint, in ${MU.draw}?`,
         answer: String(L),
-        answerHint: "cm, e.g. 6",
+        answerHint: `${MU.draw}, e.g. 6`,
         hint: `Going from real life to the drawing means dividing by ${k}.`,
         steps: [
-          `Each blueprint cm stands for ${k} m.`,
-          `${real} ÷ ${k} = ${L} cm.`,
+          `Each blueprint ${MU.draw} stands for ${k} ${MU.real}.`,
+          `${real} ÷ ${k} = ${L} ${MU.draw}.`,
         ],
         concept: "Real to drawing divides; drawing to real multiplies.",
         representation: "word",
@@ -519,23 +566,25 @@ const scaleDrawings: GeneratorFamily = {
       });
     }
     if (stage === 3) {
-      const n = rng.pick([100, 200, 500] as const);
+      // The ratio is a multiple of the draw-per-real factor, so the division
+      // below is exact in whichever system is in use.
+      const n = rng.pick(MU.ratios);
       const L = rng.int(2, 9);
-      const realCm = L * n;
-      const realM = realCm / 100; // n is a multiple of 100, so this is exact
+      const realDraw = L * n;
+      const realBig = realDraw / MU.perReal;
       return inputQ({
         instruction: "Use the ratio scale.",
-        prompt: `A model is built at a scale of 1:${n}. The model is ${L} cm tall. How tall is the real object, in metres?`,
-        answer: String(realM),
-        answerHint: "metres, e.g. 8",
-        hint: `1:${n} means real lengths are ${n} times the model's. Then convert cm to m.`,
+        prompt: `A model is built at a scale of 1:${n}. The model is ${L} ${MU.draw} tall. How tall is the real object, in ${MU.realLong}?`,
+        answer: String(realBig),
+        answerHint: `${MU.realLong}, e.g. 8`,
+        hint: `1:${n} means real lengths are ${n} times the model's. Then convert ${MU.draw} to ${MU.real}.`,
         steps: [
-          `Real height: ${L} × ${n} = ${realCm} cm.`,
-          `Convert: ${realCm} cm ÷ 100 = ${realM} m.`,
+          `Real height: ${L} × ${n} = ${realDraw} ${MU.draw}.`,
+          `Convert: ${realDraw} ${MU.draw} ÷ ${MU.perReal} = ${realBig} ${MU.real}.`,
         ],
         concept: "A 1:n scale multiplies by n — units convert afterwards.",
         representation: "word",
-        verify: () => realM * 100 === L * n,
+        verify: () => realBig * MU.perReal === L * n,
       });
     }
     if (stage === 4) {
@@ -544,14 +593,14 @@ const scaleDrawings: GeneratorFamily = {
       const real = L * k;
       return inputQ({
         instruction: "Find the scale.",
-        prompt: `On a drawing, a ${real} m boat is shown ${L} cm long. The scale is 1 cm = ? m.`,
+        prompt: `On a drawing, a ${real} ${MU.real} boat is shown ${L} ${MU.draw} long. The scale is 1 ${MU.draw} = ? ${MU.real}.`,
         answer: String(k),
         answerHint: "e.g. 4",
-        hint: `How many real metres does each drawing centimetre cover?`,
+        hint: `How many real ${MU.realLong} does each drawing ${MU.drawLong} cover?`,
         steps: [
-          `${L} cm stands for ${real} m.`,
-          `Each cm: ${real} ÷ ${L} = ${k} m.`,
-          `So the scale is 1 cm = ${k} m.`,
+          `${L} ${MU.draw} stands for ${real} ${MU.real}.`,
+          `Each ${MU.draw}: ${real} ÷ ${L} = ${k} ${MU.real}.`,
+          `So the scale is 1 ${MU.draw} = ${k} ${MU.real}.`,
         ],
         concept: "The scale is the real length divided by the drawing length.",
         representation: "word",
@@ -559,19 +608,19 @@ const scaleDrawings: GeneratorFamily = {
       });
     }
     const k = rng.pick([2, 3, 4, 6, 8] as const);
-    const halves = 2 * rng.int(1, 5) + 1; // odd halves -> x.5 cm
-    const drawU = halves * 5; // tenths of cm, e.g. 3.5 cm = 35 tenths
-    const realU = drawU * k; // tenths of m
+    const halves = 2 * rng.int(1, 5) + 1;
+    const drawU = halves * 5;
+    const realU = drawU * k;
     return inputQ({
       instruction: "Use the scale.",
-      prompt: `A garden plan uses 1 cm = ${k} m. A path measures ${fmtU(drawU, 1)} cm on the plan. How long is the real path, in metres?`,
+      prompt: `A garden plan uses 1 ${MU.draw} = ${k} ${MU.real}. A path measures ${fmtU(drawU, 1)} ${MU.draw} on the plan. How long is the real path, in ${MU.realLong}?`,
       answer: fmtU(realU, 1),
       answerFormat: "decimal",
-      answerHint: "metres, e.g. 10.5",
-      hint: `Multiply ${fmtU(drawU, 1)} by ${k} — the half centimetre scales too.`,
+      answerHint: `${MU.realLong}, e.g. 10.5`,
+      hint: `Multiply ${fmtU(drawU, 1)} by ${k} — the half ${MU.drawLong} scales too.`,
       steps: [
         `${fmtU(drawU, 1)} × ${k}: whole part ${Math.floor(drawU / 10)} × ${k} = ${Math.floor(drawU / 10) * k}, half part 0.5 × ${k} = ${fmtU(5 * k, 1)}.`,
-        `Together: ${fmtU(realU, 1)} m.`,
+        `Together: ${fmtU(realU, 1)} ${MU.real}.`,
       ],
       concept: "Scales apply to every bit of a measurement, including fractions.",
       representation: "word",
