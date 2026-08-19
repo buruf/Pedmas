@@ -2,6 +2,7 @@ import type { PlacementReportRow, PlacementState } from "@/engine/placement";
 import type { SkillState } from "@/engine/mastery";
 import type { Question } from "@/engine/types";
 import type { QuestionPurpose } from "@/engine/practice";
+import { localise, type Region } from "./region";
 
 export type Role = "PARENT" | "STUDENT" | "ADMIN";
 
@@ -34,6 +35,12 @@ export interface Account {
    * the policy version so a material change can require fresh consent, which
    * is the point of collecting it at all.
    */
+  /**
+   * Which teaching variant this family sees. Detected from the request
+   * on first sight, then editable — an American family abroad should not be
+   * switched by their holiday.
+   */
+  region?: "US" | "INTL";
   consent?: {
     policyVersion: string;
     acceptedAt: number;
@@ -162,19 +169,25 @@ export interface ClientQuestion {
   representation: string;
 }
 
-export function toClientQuestion(q: Question): ClientQuestion {
+/**
+ * Serialise a question for the client, rewritten for the family's region.
+ * Done here so every caller gets it — a question that slips past would show
+ * British spelling to an American child mid-session.
+ */
+export function toClientQuestion(q: Question, region: Region = "INTL"): ClientQuestion {
+  const t = (v: string) => localise(v, region);
   return {
     id: q.id,
     kind: q.kind,
-    instruction: q.instruction,
-    prompt: q.prompt,
-    choices: q.choices,
+    instruction: t(q.instruction),
+    prompt: t(q.prompt),
+    choices: q.choices?.map(t),
     answerFormat: q.answerFormat,
-    answerHint: q.answerHint,
-    hint: q.hint,
-    topicName: q.topicName,
-    microSkill: q.microSkill,
-    strandName: q.strandName,
+    answerHint: q.answerHint ? t(q.answerHint) : undefined,
+    hint: t(q.hint),
+    topicName: t(q.topicName),
+    microSkill: t(q.microSkill),
+    strandName: t(q.strandName),
     stage: q.stage,
     representation: q.representation,
   };

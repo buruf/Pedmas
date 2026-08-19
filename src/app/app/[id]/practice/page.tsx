@@ -6,6 +6,8 @@ import { Logo, Card, PrimaryButton, ProgressBar } from "@/components/ui";
 import { QuestionView, FeedbackPanel } from "@/components/QuestionView";
 import { WorkedExample, type WorkedExampleData } from "@/components/WorkedExample";
 import { LESSON_COMPONENTS } from "@/components/lesson/registry";
+import { RegionText } from "@/components/lesson/RegionText";
+import type { Region } from "@/lib/region";
 import { api, ApiError } from "@/lib/client";
 import type { LessonKey } from "@/lib/lessons";
 import { styleForGrade } from "@/lib/ageBand";
@@ -13,6 +15,8 @@ import type { ClientQuestion } from "@/lib/model";
 
 interface PracticePayload {
   grade: number;
+  /** Which teaching variant this family reads (spelling and terminology). */
+  region?: Region;
   total: number;
   index: number;
   complete: boolean;
@@ -180,7 +184,9 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
           </button>
         </div>
         <Card>
-          <LessonBody onFinish={finish} />
+          <RegionText region={state?.region ?? "INTL"}>
+            <LessonBody onFinish={finish} />
+          </RegionText>
         </Card>
       </Shell>
     );

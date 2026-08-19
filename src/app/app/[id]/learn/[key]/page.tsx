@@ -1,10 +1,13 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { Logo, Card, PrimaryButton, GhostButton } from "@/components/ui";
 import { LESSON_COMPONENTS } from "@/components/lesson/registry";
+import { RegionText } from "@/components/lesson/RegionText";
 import { LESSON_TITLES, LESSON_KEYS, type LessonKey } from "@/lib/lessons";
+import type { Region } from "@/lib/region";
+import { api } from "@/lib/client";
 
 /**
  * A lesson opened on its own, from the "Learn" button on the dashboard.
@@ -20,6 +23,14 @@ export default function LearnPage({
 }) {
   const { id, key } = use(params);
   const [done, setDone] = useState(false);
+  const [region, setRegion] = useState<Region>("INTL");
+
+  // Ask the server which variant this family reads.
+  useEffect(() => {
+    api<{ region?: Region }>("/api/auth/me")
+      .then((m) => setRegion(m.region ?? "INTL"))
+      .catch(() => undefined);
+  }, []);
   const isKnown = (LESSON_KEYS as readonly string[]).includes(key);
   const LessonBody = isKnown ? LESSON_COMPONENTS[key as LessonKey] : undefined;
 
@@ -48,7 +59,9 @@ export default function LearnPage({
             {/* Reading a lesson here records no progress, but the final step's
                 button still needs somewhere to go — without a handler it
                 renders and silently does nothing. */}
-            <LessonBody onFinish={() => setDone(true)} />
+            <RegionText region={region}>
+              <LessonBody onFinish={() => setDone(true)} />
+            </RegionText>
           </Card>
 
           {done && (

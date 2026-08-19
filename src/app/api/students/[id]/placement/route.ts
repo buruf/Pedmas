@@ -7,6 +7,7 @@ import {
   saveStudent,
   studentFor,
 } from "@/lib/students";
+import { ensureAccountRegion } from "@/lib/regionServer";
 import { sendMail } from "@/lib/email/send";
 import { placementReportMail } from "@/lib/email/templates";
 import { appUrl } from "@/lib/billing/stripe";
@@ -28,7 +29,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (student.placement!.done) {
     return NextResponse.json({ done: true, report: student.placementReport ?? [] });
   }
-  const current = placementCurrent(student);
+  const region = await ensureAccountRegion(account);
+  const current = placementCurrent(student, region);
   await saveStudent(student);
   return NextResponse.json({ done: false, current });
 }

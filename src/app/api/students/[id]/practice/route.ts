@@ -10,6 +10,7 @@ import {
   studentFor,
 } from "@/lib/students";
 import { toClientQuestion } from "@/lib/model";
+import { ensureAccountRegion } from "@/lib/regionServer";
 import { entitlementFor, lockMessage } from "@/lib/billing/entitlement";
 
 /** 402 with the reason, so the client can show the right upgrade prompt. */
@@ -32,6 +33,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (!student.placedAt) return bad("Placement comes first.", 409);
   const gate = locked(account);
   if (gate) return gate;
+  const region = await ensureAccountRegion(account);
   const session = ensureSession(student);
   // Start the clock on whichever question is now in front of the student.
   markServed(student);
@@ -39,6 +41,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const item = session.items[session.index];
   return NextResponse.json({
     sessionId: session.id,
+    region,
     // Drives age-appropriate presentation on the practice screen (spec §25).
     grade: student.grade,
     total: session.items.length,
@@ -51,7 +54,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     },
     current: item
       ? {
-          question: toClientQuestion(item.question),
+          question: toClientQuestion(item.question, region),
           purpose: item.purpose,
           attempts: item.attempts,
           lesson: lessonForCurrent(student),

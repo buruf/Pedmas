@@ -19,6 +19,7 @@ import { assumedMastered, newSkillState, recordAttempt, skillProgress } from "@/
 import { isCorrect, dedupKey } from "@/engine/validate";
 import { stageLabelFor, generateQuestion } from "@/engine/generate";
 import { lessonKeyForSkill, LESSON_TITLES, type LessonKey } from "./lessons";
+import type { Region } from "./region";
 
 const TABLE = "students";
 
@@ -105,12 +106,12 @@ export function beginPlacement(student: StudentProfile): void {
   student.placementReport = undefined;
 }
 
-export function placementCurrent(student: StudentProfile) {
+export function placementCurrent(student: StudentProfile, region: Region = "INTL") {
   if (!student.placement || student.placement.done) return null;
   const next = nextPlacementQuestion(student.placement);
   if (!next) return null;
   return {
-    question: toClientQuestion(next.question),
+    question: toClientQuestion(next.question, region),
     strandName: next.strandName,
     progress: next.progress,
   };
