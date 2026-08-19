@@ -59,3 +59,34 @@ describe("regional units", () => {
     expect(`${us.prompt} ${us.choices?.join(" ")}`).toMatch(/inch|feet|yard|mile|ounce|pound|cup|gallon/);
   });
 });
+
+describe("geometry units", () => {
+  const geo = ["perimeter-area", "volume-surface", "circle-measure", "pythagorean", "similarity"];
+
+  it("labels figures in the region's unit without changing the numbers", () => {
+    for (const family of geo) {
+      const skill = allSkills().find((s) => s.family === family)!;
+      for (let stage = 1; stage <= 5; stage++) {
+        const us = generateQuestion(skill, stage, { seed: 5150 + stage, region: "US" });
+        const intl = generateQuestion(skill, stage, { seed: 5150 + stage, region: "INTL" });
+        // Same figure, same arithmetic — only the label moves.
+        expect(us.answer, `${family} stage ${stage}`).toBe(intl.answer);
+        expect(`${us.prompt} ${us.steps.join(" ")}`, `${family} stage ${stage}`).not.toMatch(/\bcm\b/);
+      }
+    }
+  });
+
+  it("never leaks an un-interpolated template into a question", () => {
+    // A plain-quoted string containing ${U} prints the source to the child.
+    for (const family of geo) {
+      const skill = allSkills().find((s) => s.family === family)!;
+      for (let stage = 1; stage <= 5; stage++) {
+        for (const region of ["US", "INTL"] as const) {
+          const q = generateQuestion(skill, stage, { seed: 7000 + stage, region });
+          const text = [q.prompt, q.instruction, ...(q.choices ?? []), ...q.steps].join(" ");
+          expect(text, `${family} stage ${stage}`).not.toContain("${");
+        }
+      }
+    }
+  });
+});

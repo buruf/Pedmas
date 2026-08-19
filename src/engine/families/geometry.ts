@@ -1,6 +1,31 @@
 import type { GeneratorFamily, RawQuestion, Rng, SkillRef } from "../types";
 import { inputQ, mcQ, mcChoices, nearNumbers, pickName } from "./helpers";
 
+/**
+ * Length unit for the region.
+ *
+ * Geometry only ever *names* a unit — a rectangle 7 by 4 has area 28 in both
+ * systems — so this is a label, not a conversion. That is why it is safe here
+ * and emphatically not safe in unit-conversion, where the factors matter.
+ */
+function lenU(params: Record<string, unknown>): string {
+  return params.region === "US" ? "in" : "cm";
+}
+
+/** Long form of a unit label, for instructions like "in square inches". */
+function unitLong(u: string): string {
+  switch (u) {
+    case "in":
+      return "inches";
+    case "ft":
+      return "feet";
+    case "m":
+      return "metres";
+    default:
+      return "centimetres";
+  }
+}
+
 const str = (p: Record<string, unknown>, key: string, dflt: string): string =>
   typeof p[key] === "string" ? (p[key] as string) : dflt;
 
@@ -43,6 +68,7 @@ const shapes2d: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Sides and corners", "Name the shape", "Classify triangles", "Classify quadrilaterals", "Polygon angle sums"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
     if (stage === 1) {
       const p = rng.pick(polygonsForStage(1));
       const askSides = rng.chance(0.5);
@@ -98,15 +124,15 @@ const shapes2d: GeneratorFamily = {
       const eqCount = (sides[0] === sides[1] ? 1 : 0) + (sides[1] === sides[2] ? 1 : 0) + (sides[0] === sides[2] ? 1 : 0);
       return mcQ({
         instruction: "Classify the triangle by its sides.",
-        prompt: `A triangle has sides of ${sides[0]} cm, ${sides[1]} cm, and ${sides[2]} cm. What kind of triangle is it?`,
+        prompt: `A triangle has sides of ${sides[0]} ${U}, ${sides[1]} ${U}, and ${sides[2]} ${U}. What kind of triangle is it?`,
         choices: rng.shuffle(["equilateral", "isosceles", "scalene"]),
         answer: type,
         hint: "Count how many sides are equal: all three, exactly two, or none.",
         steps: [
           type === "equilateral"
-            ? `All three sides are ${sides[0]} cm — all equal.`
+            ? `All three sides are ${sides[0]} ${U} — all equal.`
             : type === "isosceles"
-              ? `Two sides are ${sides[0]} cm and one is ${sides[2]} cm — exactly two equal.`
+              ? `Two sides are ${sides[0]} ${U} and one is ${sides[2]} ${U} — exactly two equal.`
               : `${sides[0]}, ${sides[1]}, ${sides[2]} are all different — no equal sides.`,
           `That makes the triangle ${type}.`,
         ],
@@ -725,7 +751,7 @@ function rectArea(rng: Rng, u: string, mc: boolean): RawQuestion {
   if (mc) {
     const wrongs = [String(2 * (l + w)), String(l + w), String(a + l)];
     return mcQ({
-      instruction: `Find the area in square ${u === "cm" ? "centimetres" : "metres"}.`,
+      instruction: `Find the area in square ${unitLong(u)}.`,
       prompt: `A rectangle is ${l} ${u} long and ${w} ${u} wide. What is its area in ${u}^2?`,
       choices: mcChoices(rng, String(a), rng.shuffle(wrongs)),
       answer: String(a),
@@ -795,8 +821,9 @@ const perimeterArea: GeneratorFamily = {
     return ["Perimeter of rectangles", "Area of rectangles", "Squares", "Missing sides", "Composite figures"][st - 1];
   },
   generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
     const shape = str(skill.params, "shape", "rect");
-    const u = rng.pick(["cm", "m"] as const);
+    const u = rng.pick([U, U] as const);
     if (shape === "tri") {
       if (stage === 1) {
         const a = rng.int(5, 12);
@@ -941,16 +968,17 @@ const volumeSurface: GeneratorFamily = {
     return ["Counting unit cubes", "Boxes (l × w × h)", "Cubes", "Missing dimensions", "Solve problems"][st - 1];
   },
   generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
     const kind = str(skill.params, "kind", "volume");
     if (kind === "surface") {
       if (stage === 1) {
         const e = rng.int(2, 9);
         return inputQ({
           instruction: "Think about one face of the cube.",
-          prompt: `A cube has edges of ${e} cm. What is the area of one face in cm^2?`,
+          prompt: `A cube has edges of ${e} ${U}. What is the area of one face in square ${unitLong(U)}?`,
           answer: String(e * e),
           hint: "Each face is a square with sides equal to the edge.",
-          steps: [`Each face is a ${e} × ${e} square.`, `${e} × ${e} = ${e * e} cm^2.`],
+          steps: [`Each face is a ${e} × ${e} square.`, `${e} × ${e} = ${e * e} ${U}^2.`],
           concept: "A cube's faces are squares built on its edge length.",
           verify: () => (e * e) / e === e,
         });
@@ -960,10 +988,10 @@ const volumeSurface: GeneratorFamily = {
         const sa = 6 * e * e;
         return inputQ({
           instruction: "Surface area adds up every face.",
-          prompt: `A cube has edges of ${e} cm. What is its total surface area in cm^2?`,
+          prompt: `A cube has edges of ${e} ${U}. What is its total surface area in square ${unitLong(U)}?`,
           answer: String(sa),
           hint: "A cube has 6 identical square faces.",
-          steps: [`One face: ${e} × ${e} = ${e * e} cm^2.`, `Six faces: 6 × ${e * e} = ${sa} cm^2.`],
+          steps: [`One face: ${e} × ${e} = ${e * e} ${U}^2.`, `Six faces: 6 × ${e * e} = ${sa} ${U}^2.`],
           concept: "Cube surface area is six times one face's area.",
           verify: () => sa / 6 === e * e,
         });
@@ -975,14 +1003,14 @@ const volumeSurface: GeneratorFamily = {
         const sa = 2 * (l * w + l * h + w * h);
         return inputQ({
           instruction: "Surface area adds up every face.",
-          prompt: `A box is ${l} cm long, ${w} cm wide, and ${h} cm tall. What is its total surface area in cm^2?`,
+          prompt: `A box is ${l} ${U} long, ${w} ${U} wide, and ${h} ${U} tall. What is its total surface area in square ${unitLong(U)}?`,
           answer: String(sa),
           hint: "The box has three different pairs of matching faces.",
           steps: [
-            `Top and bottom: 2 × (${l} × ${w}) = ${2 * l * w} cm^2.`,
-            `Front and back: 2 × (${l} × ${h}) = ${2 * l * h} cm^2.`,
-            `The two sides: 2 × (${w} × ${h}) = ${2 * w * h} cm^2.`,
-            `Total: ${2 * l * w} + ${2 * l * h} + ${2 * w * h} = ${sa} cm^2.`,
+            `Top and bottom: 2 × (${l} × ${w}) = ${2 * l * w} ${U}^2.`,
+            `Front and back: 2 × (${l} × ${h}) = ${2 * l * h} ${U}^2.`,
+            `The two sides: 2 × (${w} × ${h}) = ${2 * w * h} ${U}^2.`,
+            `Total: ${2 * l * w} + ${2 * l * h} + ${2 * w * h} = ${sa} ${U}^2.`,
           ],
           concept: "A box's faces come in three equal pairs.",
           verify: () => 2 * l * w + 2 * l * h + 2 * w * h === sa,
@@ -993,12 +1021,12 @@ const volumeSurface: GeneratorFamily = {
         const sa = 6 * e * e;
         return inputQ({
           instruction: "Work backwards from the surface area.",
-          prompt: `A cube has a total surface area of ${sa} cm^2. How long is each edge in cm?`,
+          prompt: `A cube has a total surface area of ${sa} ${U}^2. How long is each edge in ${unitLong(U)}?`,
           answer: String(e),
           hint: "Divide by 6 to get one face, then find the square's side.",
           steps: [
-            `One face: ${sa} ÷ 6 = ${e * e} cm^2.`,
-            `A square face of ${e * e} cm^2 has sides of ${e} cm, since ${e} × ${e} = ${e * e}.`,
+            `One face: ${sa} ÷ 6 = ${e * e} ${U}^2.`,
+            `A square face of ${e * e} ${U}^2 has sides of ${e} ${U}, since ${e} × ${e} = ${e * e}.`,
           ],
           concept: "Undo surface area: divide by 6, then find the square root.",
           verify: () => 6 * e * e === sa,
@@ -1012,13 +1040,13 @@ const volumeSurface: GeneratorFamily = {
       const wrongs = [String(l * w * h), String(l * w + l * h + w * h), String(2 * (l * w + l * h))];
       return mcQ({
         instruction: "Choose the surface area.",
-        prompt: `A gift box is ${l} cm by ${w} cm by ${h} cm. How many cm^2 of paper exactly cover all its faces?`,
+        prompt: `A gift box is ${l} ${U} by ${w} ${U} by ${h} ${U}. How many ${U}^2 of paper exactly cover all its faces?`,
         choices: mcChoices(rng, ans, rng.shuffle(wrongs)),
         answer: ans,
         hint: "Cover all six faces — three matching pairs. Volume is a different measure.",
         steps: [
           `Pairs of faces: ${l}×${w}, ${l}×${h}, and ${w}×${h}, each twice.`,
-          `2 × (${l * w} + ${l * h} + ${w * h}) = ${sa} cm^2.`,
+          `2 × (${l * w} + ${l * h} + ${w * h}) = ${sa} ${U}^2.`,
           `Careful: ${l * w * h} would be the volume, not the surface area.`,
         ],
         concept: "Surface area covers the outside; volume fills the inside.",
@@ -1047,11 +1075,11 @@ const volumeSurface: GeneratorFamily = {
       const h = rng.int(2, 9);
       const v = l * w * h;
       return inputQ({
-        instruction: "Find the volume in cm^3.",
-        prompt: `A box is ${l} cm long, ${w} cm wide, and ${h} cm tall. What is its volume?`,
+        instruction: `Find the volume in cubic ${unitLong(U)}.`,
+        prompt: `A box is ${l} ${U} long, ${w} ${U} wide, and ${h} ${U} tall. What is its volume?`,
         answer: String(v),
         hint: "Volume = length × width × height.",
-        steps: [`${l} × ${w} = ${l * w}.`, `${l * w} × ${h} = ${v} cm^3.`],
+        steps: [`${l} × ${w} = ${l * w}.`, `${l * w} × ${h} = ${v} ${U}^3.`],
         concept: "Box volume multiplies all three dimensions.",
         verify: () => l * (w * h) === v,
       });
@@ -1060,11 +1088,11 @@ const volumeSurface: GeneratorFamily = {
       const e = rng.int(2, 9);
       const v = e * e * e;
       return inputQ({
-        instruction: "Find the volume in cm^3.",
-        prompt: `A cube has edges of ${e} cm. What is its volume?`,
+        instruction: `Find the volume in cubic ${unitLong(U)}.`,
+        prompt: `A cube has edges of ${e} ${U}. What is its volume?`,
         answer: String(v),
         hint: "A cube's length, width, and height are all the same.",
-        steps: [`${e} × ${e} = ${e * e}.`, `${e * e} × ${e} = ${v} cm^3.`],
+        steps: [`${e} × ${e} = ${e * e}.`, `${e * e} × ${e} = ${v} ${U}^3.`],
         concept: "Cube volume is the edge length used three times.",
         verify: () => v / e === e * e,
       });
@@ -1076,10 +1104,10 @@ const volumeSurface: GeneratorFamily = {
       const v = l * w * h;
       return inputQ({
         instruction: "Work backwards from the volume.",
-        prompt: `A box has a volume of ${v} cm^3. Its base is ${l} cm by ${w} cm. How tall is it in cm?`,
+        prompt: `A box has a volume of ${v} ${U}^3. Its base is ${l} ${U} by ${w} ${U}. How tall is it in ${unitLong(U)}?`,
         answer: String(h),
         hint: "Height = volume ÷ base area.",
-        steps: [`Base area: ${l} × ${w} = ${l * w} cm^2.`, `${v} ÷ ${l * w} = ${h} cm.`, `Check: ${l * w} × ${h} = ${v}. ✓`],
+        steps: [`Base area: ${l} × ${w} = ${l * w} ${U}^2.`, `${v} ÷ ${l * w} = ${h} ${U}.`, `Check: ${l * w} × ${h} = ${v}. ✓`],
         concept: "Division undoes the volume formula.",
         verify: () => l * w * h === v,
       });
@@ -1090,10 +1118,10 @@ const volumeSurface: GeneratorFamily = {
     const v = l * w * h;
     return inputQ({
       instruction: "Solve the problem.",
-      prompt: `A fish tank is ${l} cm long, ${w} cm wide, and filled with water to a depth of ${h} cm. How many cm^3 of water does it hold?`,
+      prompt: `A fish tank is ${l} ${U} long, ${w} ${U} wide, and filled with water to a depth of ${h} ${U}. How many ${U}^3 of water does it hold?`,
       answer: String(v),
       hint: "The water forms a box: length × width × depth.",
-      steps: [`${l} × ${w} = ${l * w} cm^2 of base.`, `${l * w} × ${h} = ${v} cm^3 of water.`],
+      steps: [`${l} × ${w} = ${l * w} ${U}^2 of base.`, `${l * w} × ${h} = ${v} ${U}^3 of water.`],
       concept: "Real volumes are found with the same box formula.",
       representation: "word",
       verify: () => v / h === l * w,
@@ -1457,6 +1485,7 @@ const pythagorean: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Squares of the legs", "Find the hypotenuse", "Find a leg", "Exact answers", "Real problems"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
     if (stage === 1) {
       const [a, b] = rng.pick(TRIPLES);
       const ans = a * a + b * b;
@@ -1478,12 +1507,12 @@ const pythagorean: GeneratorFamily = {
       const [a, b, c] = rng.pick(TRIPLES);
       return inputQ({
         instruction: "Find the hypotenuse.",
-        prompt: `A right triangle has legs of ${a} cm and ${b} cm. How long is the hypotenuse in cm?`,
+        prompt: `A right triangle has legs of ${a} ${U} and ${b} ${U}. How long is the hypotenuse in ${unitLong(U)}?`,
         answer: String(c),
         hint: "c^2 = a^2 + b^2. Then take the square root.",
         steps: [
           `c^2 = ${a}^2 + ${b}^2 = ${a * a} + ${b * b} = ${c * c}.`,
-          `c = sqrt(${c * c}) = ${c} cm.`,
+          `c = sqrt(${c * c}) = ${c} ${U}.`,
         ],
         concept: "The hypotenuse comes from adding the legs' squares, not the legs.",
         verify: () => a * a + b * b === c * c,
@@ -1495,12 +1524,12 @@ const pythagorean: GeneratorFamily = {
       const missing = known === a ? b : a;
       return inputQ({
         instruction: "Find the missing leg.",
-        prompt: `A right triangle has a hypotenuse of ${c} cm and one leg of ${known} cm. How long is the other leg in cm?`,
+        prompt: `A right triangle has a hypotenuse of ${c} ${U} and one leg of ${known} ${U}. How long is the other leg in ${unitLong(U)}?`,
         answer: String(missing),
         hint: "Subtract the known leg's square from the hypotenuse's square.",
         steps: [
           `leg^2 = ${c}^2 − ${known}^2 = ${c * c} − ${known * known} = ${missing * missing}.`,
-          `leg = sqrt(${missing * missing}) = ${missing} cm.`,
+          `leg = sqrt(${missing * missing}) = ${missing} ${U}.`,
         ],
         concept: "Rearranged, the theorem finds a leg by subtracting squares.",
         verify: () => known * known + missing * missing === c * c,
@@ -1673,15 +1702,16 @@ const similarity: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Enlargements", "Scale factors", "Matching sides", "Area and scale", "Indirect measurement"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
     if (stage === 1) {
       const k = rng.int(2, 4);
       const side = rng.int(3, 9);
       return inputQ({
         instruction: "Enlarge the figure.",
-        prompt: `A photo has a side of ${side} cm. It is enlarged by a scale factor of ${k}. How long is that side in the enlargement, in cm?`,
+        prompt: `A photo has a side of ${side} ${U}. It is enlarged by a scale factor of ${k}. How long is that side in the enlargement, in ${unitLong(U)}?`,
         answer: String(k * side),
         hint: `Multiply the side by the scale factor.`,
-        steps: [`${side} × ${k} = ${k * side} cm.`, `Every length in the enlargement is ${k} times as long.`],
+        steps: [`${side} × ${k} = ${k * side} ${U}.`, `Every length in the enlargement is ${k} times as long.`],
         concept: "A scale factor multiplies every length by the same amount.",
         verify: () => (k * side) / side === k,
       });
@@ -1691,7 +1721,7 @@ const similarity: GeneratorFamily = {
       const side = rng.int(3, 9);
       return inputQ({
         instruction: "Find the scale factor.",
-        prompt: `Two similar figures match a side of ${side} cm to a side of ${k * side} cm. What is the scale factor from the small figure to the large one?`,
+        prompt: `Two similar figures match a side of ${side} ${U} to a side of ${k * side} ${U}. What is the scale factor from the small figure to the large one?`,
         answer: String(k),
         hint: "Divide the new length by the original length.",
         steps: [`${k * side} ÷ ${side} = ${k}.`, `Every pair of matching sides has this same ratio.`],
@@ -1706,12 +1736,12 @@ const similarity: GeneratorFamily = {
       while (b === a) b = rng.int(3, 9);
       return inputQ({
         instruction: "Triangles ABC and DEF are similar.",
-        prompt: `Side AB = ${a} cm matches side DE = ${k * a} cm. Side BC = ${b} cm matches side EF. How long is EF in cm?`,
+        prompt: `Side AB = ${a} ${U} matches side DE = ${k * a} ${U}. Side BC = ${b} ${U} matches side EF. How long is EF in ${unitLong(U)}?`,
         answer: String(k * b),
         hint: `First find the scale factor from AB to DE.`,
         steps: [
           `Scale factor: ${k * a} ÷ ${a} = ${k}.`,
-          `EF = ${b} × ${k} = ${k * b} cm.`,
+          `EF = ${b} × ${k} = ${k * b} ${U}.`,
           `Check the proportion: {${a}/${k * a}} = {${b}/${k * b}}. ✓`,
         ],
         concept: "Matching sides of similar triangles are in the same ratio.",
@@ -1757,19 +1787,20 @@ const circleMeasure: GeneratorFamily = {
   stageLabel: (s, st) =>
     ["Radius and diameter", "Circumference with π", "Area with π", "Using π ≈ 3.14", "Circle problems"][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
     if (stage === 1) {
       const r = rng.int(2, 12);
       const giveRadius = rng.chance(0.5);
       return inputQ({
         instruction: "The diameter crosses the whole circle through the centre.",
         prompt: giveRadius
-          ? `A circle has a radius of ${r} cm. What is its diameter in cm?`
-          : `A circle has a diameter of ${2 * r} cm. What is its radius in cm?`,
+          ? `A circle has a radius of ${r} ${U}. What is its diameter in ${unitLong(U)}?`
+          : `A circle has a diameter of ${2 * r} ${U}. What is its radius in ${unitLong(U)}?`,
         answer: String(giveRadius ? 2 * r : r),
         hint: "The diameter is twice the radius.",
         steps: giveRadius
-          ? [`Diameter = 2 × radius = 2 × ${r} = ${2 * r} cm.`]
-          : [`Radius = diameter ÷ 2 = ${2 * r} ÷ 2 = ${r} cm.`],
+          ? [`Diameter = 2 × radius = 2 × ${r} = ${2 * r} ${U}.`]
+          : [`Radius = diameter ÷ 2 = ${2 * r} ÷ 2 = ${r} ${U}.`],
         concept: "Diameter = 2 × radius, always.",
         verify: () => (2 * r) / 2 === r,
       });
@@ -1780,13 +1811,13 @@ const circleMeasure: GeneratorFamily = {
       const wrongs = [`${r}π`, `${r * r}π`, `${4 * r}π`, `${2 * r}`];
       return mcQ({
         instruction: "Give the exact circumference.",
-        prompt: `A circle has a radius of ${r} cm. What is its circumference, in terms of π?`,
+        prompt: `A circle has a radius of ${r} ${U}. What is its circumference, in terms of π?`,
         choices: mcChoices(rng, ans, rng.shuffle(wrongs)),
         answer: ans,
         hint: "Circumference = 2πr.",
         steps: [
           `C = 2 × π × r = 2 × π × ${r}.`,
-          `C = ${2 * r}π cm — exactly, with no rounding.`,
+          `C = ${2 * r}π ${U} — exactly, with no rounding.`,
         ],
         concept: "Answers in terms of π stay exact.",
         verify: () => 2 * r === r + r,
@@ -1798,13 +1829,13 @@ const circleMeasure: GeneratorFamily = {
       const wrongs = [`${2 * r}π`, `${4 * r * r}π`, `${2 * r * r}π`, `${r}π`];
       return mcQ({
         instruction: "Give the exact area.",
-        prompt: `A circle has a radius of ${r} cm. What is its area, in terms of π?`,
+        prompt: `A circle has a radius of ${r} ${U}. What is its area, in terms of π?`,
         choices: mcChoices(rng, ans, rng.shuffle(wrongs)),
         answer: ans,
         hint: "Area = πr^2 — square the radius first.",
         steps: [
           `A = π × r^2 = π × ${r}^2 = π × ${r * r}.`,
-          `A = ${r * r}π cm^2. (${2 * r}π would be the circumference.)`,
+          `A = ${r * r}π ${U}^2. (${2 * r}π would be the circumference.)`,
         ],
         concept: "Area uses the radius squared; circumference uses the radius doubled.",
         verify: () => r * r === r ** 2,
@@ -1817,11 +1848,11 @@ const circleMeasure: GeneratorFamily = {
         const c = round2(3.14 * d);
         return inputQ({
           instruction: "Use π ≈ 3.14.",
-          prompt: `A circle has a diameter of ${d} cm. What is its circumference in cm?`,
+          prompt: `A circle has a diameter of ${d} ${U}. What is its circumference in ${unitLong(U)}?`,
           answer: String(c),
           answerFormat: "decimal",
           hint: "Circumference = π × diameter.",
-          steps: [`C = π × d ≈ 3.14 × ${d}.`, `C ≈ ${c} cm.`],
+          steps: [`C = π × d ≈ 3.14 × ${d}.`, `C ≈ ${c} ${U}.`],
           concept: "The circumference is about 3.14 diameters long.",
           verify: () => round2((3.14 * d * 100) / 100) === c,
         });
@@ -1830,11 +1861,11 @@ const circleMeasure: GeneratorFamily = {
       const a = round2(3.14 * r * r);
       return inputQ({
         instruction: "Use π ≈ 3.14.",
-        prompt: `A circle has a radius of ${r} cm. What is its area in cm^2?`,
+        prompt: `A circle has a radius of ${r} ${U}. What is its area in square ${unitLong(U)}?`,
         answer: String(a),
         answerFormat: "decimal",
         hint: "Area = π × radius × radius.",
-        steps: [`r^2 = ${r} × ${r} = ${r * r}.`, `A ≈ 3.14 × ${r * r} = ${a} cm^2.`],
+        steps: [`r^2 = ${r} × ${r} = ${r * r}.`, `A ≈ 3.14 × ${r * r} = ${a} ${U}^2.`],
         concept: "Square the radius before multiplying by π.",
         verify: () => round2(3.14 * r ** 2) === a,
       });
@@ -1845,11 +1876,11 @@ const circleMeasure: GeneratorFamily = {
       const c = round2(3.14 * d);
       return inputQ({
         instruction: "Solve the problem. Use π ≈ 3.14.",
-        prompt: `A wheel has a diameter of ${d} cm. How far does it roll in one complete turn, in cm?`,
+        prompt: `A wheel has a diameter of ${d} ${U}. How far does it roll in one complete turn, in ${unitLong(U)}?`,
         answer: String(c),
         answerFormat: "decimal",
         hint: "One turn rolls out exactly one circumference.",
-        steps: [`One turn covers the circumference: C = π × d.`, `C ≈ 3.14 × ${d} = ${c} cm.`],
+        steps: [`One turn covers the circumference: C = π × d.`, `C ≈ 3.14 × ${d} = ${c} ${U}.`],
         concept: "A rolling wheel travels its circumference each turn.",
         representation: "word",
         verify: () => round2(3.14 * d) === c,
