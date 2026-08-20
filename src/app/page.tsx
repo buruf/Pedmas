@@ -28,6 +28,7 @@ export default function HomePage() {
           <Logo />
           <nav className="hidden items-center gap-6 text-sm font-medium text-ink-700 sm:flex">
             <a href="#how" className="hover:text-brand-700">How It Works</a>
+            <Link href="/sample-lesson" className="hover:text-brand-700">Sample Lesson</Link>
             <Link href="/curriculum" className="hover:text-brand-700">Curriculum</Link>
             <a href="#adapts" className="hover:text-brand-700">About</a>
           </nav>
@@ -65,9 +66,11 @@ export default function HomePage() {
                   <GhostButton href="/curriculum">Explore Mathematics</GhostButton>
                 </>
               ) : (
+                // Log in already sits in the header; the strongest thing to
+                // offer a visitor while sign-ups are closed is the teaching.
                 <>
-                  <PrimaryButton href="/curriculum">Explore Mathematics</PrimaryButton>
-                  <GhostButton href="/login">Log in</GhostButton>
+                  <PrimaryButton href="/sample-lesson">See a Real Lesson</PrimaryButton>
+                  <GhostButton href="/curriculum">Explore Mathematics</GhostButton>
                 </>
               )}
             </div>
@@ -102,6 +105,27 @@ export default function HomePage() {
               <p className="mt-1 text-sm text-ink-500">{s.text}</p>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* Proof of teaching: one real lesson, open to anyone. */}
+      <section className="bg-brand-600 py-14">
+        <div className="mx-auto max-w-6xl px-4 text-center">
+          <h2 className="text-3xl font-extrabold text-white">Judge the teaching yourself</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-brand-100">
+            Don&rsquo;t take our word for it. Read a complete PEDMAS lesson — the exact one a child
+            sees before practising column addition — with nothing staged and no account needed.
+            Every one of our 132 lessons is built the same way: start from what the child knows,
+            make the common mistake and disprove it, and let the rule come last.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/sample-lesson"
+              className="btn inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-brand-700 shadow hover:bg-brand-50"
+            >
+              📘 Read the full lesson
+            </Link>
+          </div>
         </div>
       </section>
 
