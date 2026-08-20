@@ -97,60 +97,133 @@ Parent dashboard: ${dashboardUrl}`,
 }
 
 /* ------------------------------------------------- weekly progress to parent */
-export interface WeeklyChild {
-  name: string;
-  questions: number;
-  accuracy: number | null;
-  streak: number;
-  mastered: number;
-  workingOn: string;
+import type { WeeklyStory } from "@/lib/weeklyStory";
+
+/**
+ * The weekly note home. Reads like a tutor's note, not a report card: what
+ * moved, what is current, one focus, one question to try together. The
+ * "working hard on" line is deliberately singular and framed as effort.
+ */
+function childBlock(c: WeeklyStory): string {
+  const lines: string[] = [];
+  if (c.questions > 0) {
+    lines.push(
+      `${c.questions} questions${c.minutes > 0 ? ` · ${c.minutes} min of focused work` : ""}${
+        c.accuracy !== null ? ` · ${c.accuracy}% right first try` : ""
+      }${c.streak > 1 ? ` · ${c.streak}-day streak` : ""}`
+    );
+  } else {
+    lines.push("No practice this week — a single 10-minute session keeps the streak and the review schedule alive.");
+  }
+  if (c.masteredThisWeek.length) {
+    lines.push(`<strong>Moved past this week:</strong> ${c.masteredThisWeek.map(esc).join(", ")}.`);
+  }
+  // When the current skill IS the struggle, one merged line — repeating the
+  // same skill name twice in a row reads like a glitch.
+  const merged = c.workingHardOn && c.workingOn?.skillName === c.workingHardOn.skillName;
+  if (merged && c.workingOn) {
+    lines.push(
+      `<strong>Working hard on:</strong> ${esc(c.workingOn.skillName)} — ${esc(
+        c.workingOn.stageLabel
+      )}. This is the one spot where a few minutes together would help most.${
+        c.workingOn.lessonTitle ? ` The lesson for it is “${esc(c.workingOn.lessonTitle)}”.` : ""
+      }`
+    );
+  } else {
+    if (c.workingOn) {
+      lines.push(
+        `<strong>Now working on:</strong> ${esc(c.workingOn.skillName)} — ${esc(c.workingOn.stageLabel)}.${
+          c.workingOn.lessonTitle ? ` The lesson for it is “${esc(c.workingOn.lessonTitle)}”.` : ""
+        }`
+      );
+    }
+    if (c.workingHardOn) {
+      lines.push(
+        `<strong>Working hard on:</strong> ${esc(c.workingHardOn.skillName)} (${esc(
+          c.workingHardOn.stageLabel
+        )}). This is the one spot where a few minutes together would help most.`
+      );
+    }
+  }
+  const tryBox = c.tryThis
+    ? `<div style="background:#f6f5fb;border-radius:10px;padding:12px;margin-top:10px;font-size:14px">
+        <div style="font-weight:700;margin-bottom:4px">Try this one together</div>
+        <div>${esc(c.tryThis.prompt)}</div>
+        ${c.tryThis.hint ? `<div style="color:#6b6d80;margin-top:4px">Nudge if stuck: ${esc(c.tryThis.hint)}</div>` : ""}
+        <div style="color:#6b6d80;margin-top:4px">Answer: ${esc(c.tryThis.answer)}</div>
+      </div>`
+    : "";
+  return `<div style="border:1px solid #eceaf5;border-radius:12px;padding:14px;margin:12px 0">
+    <div style="font-weight:700;margin-bottom:6px">${esc(c.name)}</div>
+    <div style="font-size:14px;color:#4a4c60;line-height:1.55">${lines.join("<br/>")}</div>
+    ${tryBox}
+  </div>`;
+}
+
+function childText(c: WeeklyStory): string {
+  const lines = [`${c.name}:`];
+  lines.push(
+    c.questions > 0
+      ? `  ${c.questions} questions${c.minutes > 0 ? `, ${c.minutes} min` : ""}${
+          c.accuracy !== null ? `, ${c.accuracy}% right first try` : ""
+        }${c.streak > 1 ? `, ${c.streak}-day streak` : ""}`
+      : "  No practice this week — one 10-minute session keeps things moving."
+  );
+  if (c.masteredThisWeek.length) lines.push(`  Moved past: ${c.masteredThisWeek.join(", ")}.`);
+  const merged = c.workingHardOn && c.workingOn?.skillName === c.workingHardOn.skillName;
+  if (merged && c.workingOn) {
+    lines.push(`  Working hard on: ${c.workingOn.skillName} — ${c.workingOn.stageLabel}. A few minutes together here would help most.`);
+  } else {
+    if (c.workingOn) lines.push(`  Now working on: ${c.workingOn.skillName} — ${c.workingOn.stageLabel}.`);
+    if (c.workingHardOn)
+      lines.push(`  Working hard on: ${c.workingHardOn.skillName} (${c.workingHardOn.stageLabel}) — a few minutes together here would help most.`);
+  }
+  if (c.tryThis) {
+    lines.push(`  Try this one together: ${c.tryThis.prompt}`);
+    if (c.tryThis.hint) lines.push(`    Nudge if stuck: ${c.tryThis.hint}`);
+    lines.push(`    Answer: ${c.tryThis.answer}`);
+  }
+  return lines.join("\n");
 }
 
 export function weeklyProgressMail(
   to: string,
   parentName: string,
-  children: WeeklyChild[],
-  dashboardUrl: string
+  children: WeeklyStory[],
+  dashboardUrl: string,
+  unsubscribeUrl?: string | null
 ): Mail {
-  const blocks = children
-    .map(
-      (c) => `<div style="border:1px solid #eceaf5;border-radius:12px;padding:14px;margin:12px 0">
-        <div style="font-weight:700;margin-bottom:6px">${esc(c.name)}</div>
-        <div style="font-size:14px;color:#4a4c60">
-          ${c.questions} questions this week${c.accuracy !== null ? ` · ${c.accuracy}% first-try accuracy` : ""}<br/>
-          ${c.streak} day streak · ${c.mastered} skills mastered<br/>
-          Working on: ${esc(c.workingOn)}
-        </div>
-      </div>`
-    )
-    .join("");
   const anyActivity = children.some((c) => c.questions > 0);
+  const highlight = children.find((c) => c.masteredThisWeek.length > 0);
+  const subject = highlight
+    ? `${highlight.name} moved past ${highlight.masteredThisWeek[0]} this week`
+    : anyActivity
+      ? "This week in PEDMAS"
+      : "A quiet week in PEDMAS";
+  const footer = unsubscribeUrl
+    ? `<p style="color:#9a9cb0;font-size:12px;margin-top:8px"><a href="${unsubscribeUrl}" style="color:#9a9cb0">Stop these weekly summaries</a></p>`
+    : "";
   return {
     to,
-    subject: "This week in PEDMAS",
+    subject,
     html: layout(
       "This week's progress",
       `<p>Hi ${esc(parentName)}, here is how the week went.</p>
-       ${blocks}
+       ${children.map(childBlock).join("")}
        <p>${
          anyActivity
            ? "Consistency is what turns practice into mastery — even a short session a day keeps every strand moving."
-           : "No practice logged this week. A single 10-minute session is enough to keep the streak and the spaced review on track."
-       }</p>`,
+           : "Picking the streak back up takes one short session — the review schedule adapts, nothing is lost."
+       }</p>${footer}`,
       { label: "See the full dashboard", url: dashboardUrl }
     ),
     text: `Hi ${parentName},
 
 This week in PEDMAS:
 
-${children
-  .map(
-    (c) =>
-      `${c.name}: ${c.questions} questions${c.accuracy !== null ? `, ${c.accuracy}% first-try accuracy` : ""}, ${c.streak} day streak, ${c.mastered} skills mastered. Working on: ${c.workingOn}`
-  )
-  .join("\n")}
+${children.map(childText).join("\n\n")}
 
-Dashboard: ${dashboardUrl}`,
+Dashboard: ${dashboardUrl}${unsubscribeUrl ? `\n\nStop these weekly summaries: ${unsubscribeUrl}` : ""}`,
   };
 }
 
