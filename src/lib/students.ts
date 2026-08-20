@@ -6,7 +6,7 @@ import {
   DEFAULT_PREFERENCES,
   type LearningPreferences,
 } from "./model";
-import { allRows, deleteRow, getRow, newId, putRow } from "./store/db";
+import { allRows, deleteRow, getRow, newId, putRow, studentsByAccount } from "./store/db";
 import {
   applyPlacementAnswer,
   nextPlacementQuestion,
@@ -66,9 +66,8 @@ export async function createStudent(
 }
 
 export async function studentsOf(account: Account): Promise<StudentProfile[]> {
-  const rows = await allRows<StudentProfile>(TABLE);
-  if (account.role === "ADMIN") return rows;
-  return rows.filter((s) => s.accountId === account.id);
+  if (account.role === "ADMIN") return allRows<StudentProfile>(TABLE);
+  return studentsByAccount<StudentProfile>(account.id);
 }
 
 export async function studentFor(

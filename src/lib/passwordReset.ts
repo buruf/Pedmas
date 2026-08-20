@@ -1,6 +1,6 @@
 import { randomBytes, createHash, timingSafeEqual } from "crypto";
 import type { Account, PasswordResetToken } from "./model";
-import { getRow, putRow, findRow, allRows, deleteRow, newId } from "./store/db";
+import { getRow, putRow, allRows, deleteRow, newId, accountByEmail as dbAccountByEmail } from "./store/db";
 import { hashPassword } from "./auth";
 
 /**
@@ -83,6 +83,5 @@ export async function consumeResetToken(
 }
 
 export async function accountByEmail(email: string): Promise<Account | undefined> {
-  const norm = email.trim().toLowerCase();
-  return findRow<Account>("accounts", (a) => a.email === norm);
+  return dbAccountByEmail<Account>(email);
 }

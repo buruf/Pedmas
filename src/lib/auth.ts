@@ -1,7 +1,7 @@
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import type { Account, AuthSession, Role } from "./model";
-import { allRows, findRow, getRow, newId, putRow, deleteRow } from "./store/db";
+import { allRows, getRow, newId, putRow, deleteRow, accountByEmail, isUniqueViolation } from "./store/db";
 import { POLICY_VERSION } from "./legal";
 
 const COOKIE = "pedmas_session";
@@ -39,7 +39,7 @@ export async function createAccount(
   if (role === "PARENT" && !consent.parentAffirmed) {
     return { error: "Please confirm you are the parent or guardian of the children you add." };
   }
-  const existing = await findRow<Account>("accounts", (a) => a.email === norm);
+  const existing = await accountByEmail<Account>(norm);
   if (existing) return { error: "An account with that email already exists." };
   const account: Account = {
     id: newId("acc"),
@@ -54,13 +54,23 @@ export async function createAccount(
       parentAffirmed: Boolean(consent.parentAffirmed),
     },
   };
-  await putRow("accounts", account.id, account);
+  try {
+    await putRow("accounts", account.id, account);
+  } catch (err) {
+    // Two simultaneous signups with the same email: the check above passed
+    // for both, and the unique index caught the second. Same answer as the
+    // check — not a 500.
+    if (isUniqueViolation(err, "accounts_email_key")) {
+      return { error: "An account with that email already exists." };
+    }
+    throw err;
+  }
   return account;
 }
 
 export async function login(email: string, password: string): Promise<Account | null> {
   const norm = email.trim().toLowerCase();
-  const account = await findRow<Account>("accounts", (a) => a.email === norm);
+  const account = await accountByEmail<Account>(norm);
   if (!account) return null;
   if (!verifyPassword(password, account.passwordHash)) return null;
   return account;

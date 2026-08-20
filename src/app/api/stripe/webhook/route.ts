@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripeClient, appUrl } from "@/lib/billing/stripe";
 import { syncSubscription, mergeBilling } from "@/lib/billing/service";
-import { getRow, findRow, putRow } from "@/lib/store/db";
+import { getRow, putRow, accountByCustomerId } from "@/lib/store/db";
 import type { Account } from "@/lib/model";
 import { sendMail } from "@/lib/email/send";
 import {
@@ -32,7 +32,7 @@ async function alreadyHandled(eventId: string): Promise<boolean> {
 async function accountForCustomer(customer: string | Stripe.Customer | Stripe.DeletedCustomer | null) {
   const id = typeof customer === "string" ? customer : customer?.id;
   if (!id) return null;
-  return (await findRow<Account>("accounts", (a) => a.billing?.customerId === id)) ?? null;
+  return (await accountByCustomerId<Account>(id)) ?? null;
 }
 
 export async function POST(req: Request) {

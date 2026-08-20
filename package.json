@@ -19,6 +19,7 @@
     "stripe": "^22.5.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.5",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.8",

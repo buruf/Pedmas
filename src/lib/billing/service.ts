@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import type { Account, Billing } from "@/lib/model";
-import { getRow, putRow, findRow } from "@/lib/store/db";
+import { getRow, putRow, accountByCustomerId } from "@/lib/store/db";
 import { stripeClient, stripeConfig, appUrl } from "./stripe";
 import { seatsFor, priceCentsFor, TRIAL_DAYS, MAX_CHILDREN, PLAN_NAME } from "./plan";
 
@@ -123,7 +123,7 @@ export async function syncSubscription(sub: Stripe.Subscription): Promise<Accoun
 
 async function accountIdForCustomer(customerId?: string): Promise<string | undefined> {
   if (!customerId) return undefined;
-  const account = await findRow<Account>("accounts", (a) => a.billing?.customerId === customerId);
+  const account = await accountByCustomerId<Account>(customerId);
   return account?.id;
 }
 
