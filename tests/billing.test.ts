@@ -126,3 +126,30 @@ describe("entitlement gate", () => {
     expect(e.reason).toBe("unconfigured");
   });
 });
+
+describe("cancellation on account deletion", () => {
+  it("cancels any subscription that could still charge", async () => {
+    const { needsCancellation } = await import("@/lib/billing/service");
+    for (const status of ["trialing", "active", "past_due", "unpaid", "incomplete", undefined]) {
+      expect(needsCancellation({ subscriptionId: "sub_1", status })).toBe(true);
+    }
+  });
+
+  it("skips subscriptions Stripe already finished", async () => {
+    const { needsCancellation } = await import("@/lib/billing/service");
+    expect(needsCancellation({ subscriptionId: "sub_1", status: "canceled" })).toBe(false);
+    expect(needsCancellation({ subscriptionId: "sub_1", status: "incomplete_expired" })).toBe(false);
+    expect(needsCancellation({ status: "active" })).toBe(false);
+    expect(needsCancellation(undefined)).toBe(false);
+  });
+
+  it("never blocks deletion when billing is unconfigured", async () => {
+    const { cancelSubscriptionForDeletion } = await import("@/lib/billing/service");
+    // No Stripe env in tests: must return cleanly, not throw.
+    const res = await cancelSubscriptionForDeletion({
+      id: "acc_x",
+      billing: { subscriptionId: "sub_x", status: "active" },
+    } as never);
+    expect(res.canceled).toBe(false);
+  });
+});

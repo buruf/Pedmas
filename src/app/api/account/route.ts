@@ -4,6 +4,7 @@ import { endSession } from "@/lib/auth";
 import { studentsOf } from "@/lib/students";
 import { revokeTokensFor } from "@/lib/passwordReset";
 import { allRows, deleteRow } from "@/lib/store/db";
+import { cancelSubscriptionForDeletion } from "@/lib/billing/service";
 import type { AuthSession } from "@/lib/model";
 
 /**
@@ -17,6 +18,17 @@ import type { AuthSession } from "@/lib/model";
 export async function DELETE() {
   const account = await requireAccount();
   if (isResponse(account)) return account;
+
+  // Stop the money before erasing the data: an active subscription on a
+  // deleted account would keep charging a family that can no longer even
+  // sign in to cancel. A billing failure is logged loudly but never blocks
+  // deletion — erasure cannot depend on the billing API being up.
+  const cancel = await cancelSubscriptionForDeletion(account);
+  if (cancel.error) {
+    console.error(
+      `[account:delete] FAILED to cancel subscription ${account.billing?.subscriptionId} for ${account.id}: ${cancel.error} — cancel manually in the Stripe dashboard.`
+    );
+  }
 
   const children = await studentsOf(account);
   for (const child of children) {

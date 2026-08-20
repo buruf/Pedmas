@@ -157,3 +157,37 @@ export async function syncSeats(account: Account, children: number): Promise<voi
 export function monthlyTotalCents(children: number): number {
   return priceCentsFor(children);
 }
+
+/**
+ * Whether a stored billing record points at a subscription that still needs
+ * cancelling. Terminal Stripe statuses need no call; anything else does —
+ * including past_due and unpaid, where Stripe would otherwise keep retrying
+ * the card of an account that no longer exists.
+ */
+export function needsCancellation(billing: Billing | undefined): boolean {
+  if (!billing?.subscriptionId) return false;
+  return billing.status !== "canceled" && billing.status !== "incomplete_expired";
+}
+
+/**
+ * Cancel the subscription immediately as part of account deletion.
+ *
+ * Immediate rather than at period end: the account and every child profile
+ * are being erased, so there is nothing left to serve for the rest of the
+ * paid period. A failure must never block deletion — the family's right to
+ * erase their data cannot depend on the billing API being up — so this
+ * returns the error for the caller to log loudly instead of throwing.
+ */
+export async function cancelSubscriptionForDeletion(
+  account: Account
+): Promise<{ canceled: boolean; error?: string }> {
+  if (!needsCancellation(account.billing)) return { canceled: false };
+  const stripe = stripeClient();
+  if (!stripe) return { canceled: false };
+  try {
+    await stripe.subscriptions.cancel(account.billing!.subscriptionId!);
+    return { canceled: true };
+  } catch (err) {
+    return { canceled: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}

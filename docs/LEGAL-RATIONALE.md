@@ -41,7 +41,7 @@ At signup the account stores `{policyVersion, acceptedAt, parentAffirmed}`. The 
 
 The privacy policy's deletion promises were written to match implemented endpoints, not the reverse. `DELETE /api/account` erases every child profile and its learning history, revokes every session and reset token, then deletes the account record. Per-child deletion exists separately. Both are immediate hard deletes — there is no soft-delete or retention window in the application database. Stripe's own payment records persist under Stripe's retention policy, which the privacy policy discloses.
 
-**One exception found in this review, which is a genuine defect:** account deletion does **not** cancel an active Stripe subscription. A family that deletes its account mid-subscription would keep being charged for a service they can no longer access. This must be fixed in code before real payments (§4, item 2) — it is both a consumer-protection exposure and a plain wrong.
+**One defect was found in this review and has since been fixed:** account deletion did not cancel an active Stripe subscription, so a family that deleted its account mid-subscription would have kept being charged. Deletion now cancels the subscription immediately first (including `past_due`/`unpaid` states, where Stripe would otherwise keep retrying the card); a billing-API failure is logged for manual follow-up but never blocks the erasure itself, since the right to delete data cannot depend on the billing API being up.
 
 ### 2.5 Subscription terms follow the strict-state playbook
 
@@ -77,7 +77,7 @@ scrypt password hashing with per-account salts, HTTP-only SameSite cookies with 
 **Blocking before the first real charge:**
 
 1. **Operator identity.** `src/lib/legal.ts` has four placeholders: legal entity, postal address, monitored privacy mailbox, governing jurisdiction. A privacy policy without a contactable operator is not a valid one, and for a children's service the entity question is also a liability question — counsel should advise on incorporating rather than operating personally.
-2. **Fix account deletion to cancel any active Stripe subscription** (defect found in this review, §2.4). Code change, small.
+2. ~~Fix account deletion to cancel any active Stripe subscription~~ **Done** (August 20, 2026 — see §2.4).
 3. **Execute Data Processing Agreements** with Stripe, Neon, Vercel, and Resend. All four offer standard self-serve DPAs; this is hours, not weeks.
 4. **Decide launch geography and enforce it.** Recommendation: US + Canada. Enforcement can be a signup-time statement plus Stripe billing-country restriction; counsel to advise whether active geo-blocking is needed or a terms statement suffices.
 5. **Counsel review of the Terms and Privacy Policy**, then remove the "draft pending legal review" banners. The documents were drafted to describe actual behavior, so review should be verification rather than rewriting.
