@@ -3,6 +3,7 @@ import { requireAccount, isResponse, bad } from "@/lib/api";
 import { allRows } from "@/lib/store/db";
 import type { Account, StudentProfile } from "@/lib/model";
 import { GRADES, allSkills } from "@/curriculum";
+import { lessonEffectiveness } from "@/lib/lessonEffect";
 
 export async function GET() {
   const account = await requireAccount();
@@ -30,5 +31,6 @@ export async function GET() {
       mastered: Object.values(s.skills).filter((k) => k.mastered && !k.assumed).length,
       struggling: Object.values(s.skills).filter((k) => k.needsRepair).length,
     })),
+    lessons: lessonEffectiveness(students),
   });
 }

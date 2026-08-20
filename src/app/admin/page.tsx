@@ -28,7 +28,31 @@ interface AdminPayload {
     mastered: number;
     struggling: number;
   }[];
+  lessons: {
+    key: string;
+    title: string;
+    taughtStudents: number;
+    untaughtStudents: number;
+    beforeAttempts: number;
+    afterAttempts: number;
+    untaughtAttempts: number;
+    afterAccuracy: number | null;
+    baselineAccuracy: number | null;
+    lift: number | null;
+    verdict: "working" | "no clear signal" | "check this lesson" | "not enough data";
+  }[];
 }
+
+const VERDICT_STYLE: Record<string, string> = {
+  working: "bg-ok-100 text-ok-700",
+  "no clear signal": "bg-ink-100 text-ink-600",
+  "check this lesson": "bg-err-100 text-err-700",
+  "not enough data": "bg-ink-50 text-ink-400",
+};
+
+const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
+const liftDisp = (v: number | null) =>
+  v === null ? "—" : `${v >= 0 ? "+" : "−"}${Math.round(Math.abs(v) * 100)} pts`;
 
 interface PreviewPayload {
   skill: { id: string; name: string; grade: number; family: string };
@@ -292,6 +316,57 @@ export default function AdminPage() {
               ))}
               {data.students.length === 0 && (
                 <tr><td colSpan={7} className="py-4 text-center text-ink-500">No students yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card className="mt-6">
+        <h2 className="font-bold text-ink-900">Lesson effectiveness</h2>
+        <p className="mt-1 text-xs text-ink-500">
+          First-try accuracy on a lesson&apos;s skills, after the lesson vs the baseline (attempts made before it,
+          plus students who never opened it). Lift is the difference. Verdicts hold back until each side has 25
+          attempts — and students choose whether to open a lesson, so read this as a signal, not an experiment.
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead className="text-left text-xs uppercase tracking-wide text-ink-500">
+              <tr>
+                <th className="py-2 pr-4">Lesson</th>
+                <th className="py-2 pr-4">Taught</th>
+                <th className="py-2 pr-4">After</th>
+                <th className="py-2 pr-4">Baseline</th>
+                <th className="py-2 pr-4">Lift</th>
+                <th className="py-2">Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.lessons ?? []).map((l) => (
+                <tr key={l.key} className="border-t border-ink-100">
+                  <td className="py-2 pr-4 font-medium text-ink-900">{l.title}</td>
+                  <td className="py-2 pr-4">
+                    {l.taughtStudents}
+                    <span className="text-ink-400"> / {l.taughtStudents + l.untaughtStudents}</span>
+                  </td>
+                  <td className="py-2 pr-4">
+                    {pct(l.afterAccuracy)}
+                    <span className="text-xs text-ink-400"> ({l.afterAttempts})</span>
+                  </td>
+                  <td className="py-2 pr-4">
+                    {pct(l.baselineAccuracy)}
+                    <span className="text-xs text-ink-400"> ({l.beforeAttempts + l.untaughtAttempts})</span>
+                  </td>
+                  <td className="py-2 pr-4 font-semibold">{liftDisp(l.lift)}</td>
+                  <td className="py-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${VERDICT_STYLE[l.verdict]}`}>
+                      {l.verdict}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {(data.lessons ?? []).length === 0 && (
+                <tr><td colSpan={6} className="py-4 text-center text-ink-500">No practice on lesson-covered skills yet.</td></tr>
               )}
             </tbody>
           </table>
