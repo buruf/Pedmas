@@ -127,7 +127,12 @@ export default function BillingPage() {
           <div>
             <dt className="text-ink-500">Children on the account</dt>
             <dd className="font-semibold text-ink-900">
-              {status?.children ?? "—"} of {status?.maxChildren ?? 4}
+              {/* The admin can hold more profiles than the family cap; "9 of 4"
+                  reads broken, so past the cap show the count with the cap as
+                  context instead of as a fraction. */}
+              {status && status.children > (status.maxChildren ?? 4)
+                ? `${status.children} (plan covers ${status.maxChildren ?? 4})`
+                : `${status?.children ?? "—"} of ${status?.maxChildren ?? 4}`}
             </dd>
           </div>
           <div>

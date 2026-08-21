@@ -62,6 +62,15 @@ select {
   min-height: 44px;
 }
 
+/* A button vertically centers its label inside that minimum height; a link
+   does not — its text sits at the top padding, so links and buttons in the
+   same row misalign ("Log out" rode lower than "Billing"). align-content
+   centers a block's content without becoming a flex container, so links
+   whose children rely on block stacking (the grade tiles) are untouched. */
+a.btn {
+  align-content: center;
+}
+
 /* A bare <input> has no type attribute, so [type="text"] does NOT match it.
    The answer box was invisible for exactly that reason. */
 input:not([type]),
