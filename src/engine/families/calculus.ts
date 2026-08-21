@@ -199,8 +199,11 @@ function derivFirstPrinciples(stage: number, rng: Rng): RawQuestion {
     const p = rng.pick([2, 3, 4]);
     const k = rng.int(1, 4);
     const kD = k === 1 ? "" : String(k);
-    const inner = p === 2 ? "2x" : p === 3 ? "3x^2" : "4x^3";
-    const answer = k === 1 ? inner : `${k}${inner}`;
+    // The derivative of kx^p is (k·p)x^(p−1) — the coefficients MULTIPLY.
+    // Gluing the strings together ("2" + "3x^2" = "23x^2") shipped a wrong
+    // answer the numeric verify() below could never see, because it checks
+    // the power rule against itself rather than the displayed string.
+    const answer = fmtPowTerm(k * p, p - 1);
     const expand =
       p === 2
         ? `${kD}(2xh + h^2)`
@@ -219,8 +222,8 @@ function derivFirstPrinciples(stage: number, rng: Rng): RawQuestion {
       choices: mcChoices(rng, answer, [
         `${kD}x^${p}`,
         `${answer} + h`,
-        `${kD}${p}x^${p}`,
-        `${k * p}x^${p}`,
+        fmtPowTerm(k * p, p), // right coefficient, forgot to drop the power
+        fmtPowTerm(k, p - 1), // dropped the power, forgot to multiply by it
       ]),
       answer,
       hint: `Expand (x + h)^${p} and simplify before letting h → 0.`,

@@ -9,7 +9,8 @@
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
     "verify:store": "tsx scripts/verify-store.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "audit:cas": "tsx scripts/cas-audit.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -27,6 +28,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "jsdom": "^30.0.1",
+    "mathjs": "^15.2.0",
     "pdfkit": "^0.19.1",
     "tailwindcss": "^4.1.11",
     "tsx": "^4.19.2",
