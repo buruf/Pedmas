@@ -52,8 +52,17 @@ d.step(30, "Use \u201CForgot password\u201D on a real account you control.", "Th
 d.step(31, "Trigger the weekly summary manually: send GET to /api/cron/weekly-progress with header Authorization: Bearer <CRON_SECRET>.", "Response reports sent/skipped counts; the parent inbox receives the summary; its unsubscribe link works with one click.");
 d.step(32, "Fire a test error from /admin.", "Within a minute the admin inbox gets the error alert; firing another immediately does NOT send a second email (6-hour cooldown).");
 
-d.h1("H. Automated checks (run before every deploy)");
-d.code("cd C:\\Users\\buruf\\Documents\\Pedmas\nnpm test          # 139 tests: engine, lessons, regions, store (real Postgres via PGlite), billing, errors\nnpm run build     # must compile clean — stop the dev server first");
+d.h1("H. Every skill and every step — how full coverage works");
+d.p("No human can hand-test 634 skills x 5 stages x 2 regions (6,340 combinations) or all 132 lessons' steps — so the machine does, on every single test run:");
+d.bullets([
+  "Every skill, every stage, both regions: the suite generates and validates questions for all 6,340 combinations (three random seeds each, about 19,000 questions per run). A failure names the exact skill, stage and region.",
+  "Every step of every lesson: an automated walker opens all 132 lessons and taps through every step, failing on anything that crashes, prints a template placeholder, or renders NaN.",
+  "Every skill's five stage names, every skill-to-lesson route, and every advertised error-analysis question are checked exhaustively the same way.",
+]);
+d.p("What the machine cannot judge is whether a question FEELS right for the grade and whether the teaching lands. That is the human job, and it has its own document: the Skill Coverage Checklist PDF lists all 634 skills with a tick-box per stage. Work through it with the admin question preview (/admin) at whatever pace you like — it is designed to be done over days, not in one sitting.");
+
+d.h1("I. Automated checks (run before every deploy)");
+d.code("cd C:\\Users\\buruf\\Documents\\Pedmas\nnpm test          # 275 tests, including EVERY skill x stage x region and EVERY lesson step\nnpm run build     # must compile clean — stop the dev server first");
 d.p("After a production deploy, three quick probes from any terminal:");
 d.code("curl -s -o NUL -w \"%{http_code}\" https://www.pedmas.com/            (expect 200)\ncurl -s -X POST https://www.pedmas.com/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"nobody@example.com\\\",\\\"password\\\":\\\"x\\\"}\"   (expect a clean 'incorrect' message, not a 500)\ncurl -s https://www.pedmas.com/sample-lesson | findstr \"spill\"        (expect the lesson title)");
 d.note("A full pass of sections A–F takes roughly 45 minutes. Sections A, B and the automated checks alone take 10 and are the minimum before any deploy you care about.");

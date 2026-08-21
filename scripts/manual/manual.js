@@ -55,7 +55,7 @@ d.p("Registration is CLOSED by default and the homepage shows an under-construct
 d.h2("Deploying");
 d.bullets([
   "Commit and push to main. Vercel builds and deploys automatically (about 2 minutes).",
-  "Before pushing, always run locally: npm test (139 tests) and npm run build.",
+  "Before pushing, always run locally: npm test (275 tests — includes every skill and every lesson step) and npm run build.",
   "Never run npm run build while the local dev server is running — it corrupts the dev server's cache and buttons silently stop working. If that happens: stop the dev server, delete the .next folder, start it again.",
 ]);
 d.h2("Weekly parent email");
@@ -118,7 +118,7 @@ d.bullets([
 ]);
 
 d.h1("8. Useful commands");
-d.code("cd C:\\Users\\buruf\\Documents\\Pedmas\nnpm run dev          # local server on http://localhost:3080\nnpm test             # full test suite (139 tests)\nnpm run build        # production build check (stop the dev server first)\nnpx tsx scripts/preview-weekly-email.ts   # preview the weekly email locally");
+d.code("cd C:\\Users\\buruf\\Documents\\Pedmas\nnpm run dev          # local server on http://localhost:3080\nnpm test             # full test suite (275 tests)\nnpm run build        # production build check (stop the dev server first)\nnpx tsx scripts/preview-weekly-email.ts   # preview the weekly email locally");
 d.note("This manual describes the platform as of August 20, 2026 (commit 9541f50). When behaviour changes, regenerate or amend it — a manual that has drifted from the product is worse than none.");
 
 d.finish();

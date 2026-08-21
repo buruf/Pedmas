@@ -124,6 +124,26 @@ function makeDoc(file, title, subtitle) {
       doc.x = x; doc.moveDown(0.8);
       return api;
     },
+    /** Compact checklist row: five stage boxes + optional lesson box + name. */
+    checkRow(name, lesson, stageLabels) {
+      api.ensure(20);
+      const x = doc.x;
+      let bx = x;
+      for (let i = 0; i < 5; i++) {
+        doc.save().rect(bx, doc.y + 1.5, 9, 9).strokeColor("#b9b6cf").lineWidth(0.8).stroke().restore();
+        bx += 13;
+      }
+      // Lesson box, only when the skill has a written lesson.
+      if (lesson) {
+        doc.save().rect(bx + 4, doc.y + 1.5, 9, 9).strokeColor(BRAND).lineWidth(0.9).stroke().restore();
+        doc.fontSize(6.5).fillColor(BRAND).font("Helvetica-Bold").text("L", bx + 6.5, doc.y + 3.2, { lineBreak: false });
+      }
+      doc.fontSize(9.6).fillColor(INK).font("Helvetica")
+        .text(name, x + 96, doc.y, { width: doc.page.width - 128 - 96, lineBreak: false, ellipsis: true });
+      doc.x = x;
+      doc.moveDown(0.55);
+      return api;
+    },
     finish() {
       const range = doc.bufferedPageRange();
       for (let i = 0; i < range.count; i++) {
