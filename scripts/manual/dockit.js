@@ -124,8 +124,8 @@ function makeDoc(file, title, subtitle) {
       doc.x = x; doc.moveDown(0.8);
       return api;
     },
-    /** Compact checklist row: five stage boxes + optional lesson box + name. */
-    checkRow(name, lesson, stageLabels) {
+    /** Compact checklist row: five stage boxes + optional lesson box + name + right tag. */
+    checkRow(name, lesson, stageLabels, tag) {
       api.ensure(20);
       const x = doc.x;
       let bx = x;
@@ -139,7 +139,12 @@ function makeDoc(file, title, subtitle) {
         doc.fontSize(6.5).fillColor(BRAND).font("Helvetica-Bold").text("L", bx + 6.5, doc.y + 3.2, { lineBreak: false });
       }
       doc.fontSize(9.6).fillColor(INK).font("Helvetica")
-        .text(name, x + 96, doc.y, { width: doc.page.width - 128 - 96, lineBreak: false, ellipsis: true });
+        .text(name, x + 96, doc.y, { width: doc.page.width - 128 - 96 - 52, lineBreak: false, ellipsis: true });
+      if (tag) {
+        doc.moveUp();
+        doc.fontSize(8).fillColor("#8a8ca0").font("Helvetica")
+          .text(tag, doc.page.width - 64 - 50, doc.y + 1.5, { width: 50, align: "right", lineBreak: false });
+      }
       doc.x = x;
       doc.moveDown(0.55);
       return api;
