@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ErrorReporter } from "@/components/ErrorReporter";
 
 export const metadata: Metadata = {
   title: "PEDMAS — Master Math. One Skill at a Time.",
@@ -19,7 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <ErrorReporter />
+        {children}
+      </body>
     </html>
   );
 }

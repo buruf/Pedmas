@@ -28,6 +28,14 @@ interface AdminPayload {
     mastered: number;
     struggling: number;
   }[];
+  errors: {
+    id: string;
+    source: "server" | "client";
+    message: string;
+    path?: string;
+    count: number;
+    lastSeen: number;
+  }[];
   lessons: {
     key: string;
     title: string;
@@ -319,6 +327,52 @@ export default function AdminPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      <Card className="mt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-ink-900">Errors</h2>
+          <button
+            className="btn rounded-xl border border-ink-100 px-3 py-1.5 text-xs font-semibold text-ink-500 hover:text-ink-900"
+            onClick={async () => {
+              await fetch("/api/admin/errors", { method: "POST" }).catch(() => undefined);
+              setTimeout(() => location.reload(), 800);
+            }}
+          >
+            Fire a test error
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-ink-500">
+          Unhandled errors from the server and from visitors&rsquo; browsers, grouped. The test
+          button throws a real server error — if it appears below, monitoring works end to end.
+        </p>
+        <div className="mt-3 space-y-2">
+          {(data.errors ?? []).map((e) => (
+            <div key={e.id} className="flex items-start justify-between gap-3 rounded-xl border border-err-600/20 bg-err-100/40 px-3 py-2">
+              <div className="min-w-0 text-sm">
+                <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-semibold ${e.source === "server" ? "bg-ink-900 text-white" : "bg-brand-100 text-brand-700"}`}>
+                  {e.source}
+                </span>
+                <span className="font-medium text-ink-900 break-words">{e.message}</span>
+                <div className="mt-0.5 text-xs text-ink-500">
+                  {e.count}× · {e.path ?? "unknown path"} · last {new Date(e.lastSeen).toLocaleString()}
+                </div>
+              </div>
+              <button
+                className="btn shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 hover:text-err-600"
+                onClick={async () => {
+                  await fetch(`/api/admin/errors?id=${encodeURIComponent(e.id)}`, { method: "DELETE" }).catch(() => undefined);
+                  location.reload();
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          ))}
+          {(data.errors ?? []).length === 0 && (
+            <p className="py-2 text-center text-sm text-ink-500">No errors recorded. ✨</p>
+          )}
         </div>
       </Card>
 

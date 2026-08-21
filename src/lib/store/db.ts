@@ -22,11 +22,21 @@
  * cache — reading stale rows across instances would corrupt sessions and
  * practice state.
  */
-import { promises as fs } from "fs";
-import path from "path";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+/**
+ * Node's fs, loaded lazily and hidden from the bundler. instrumentation.ts
+ * pulls this module into bundles for runtimes without node builtins; only
+ * file mode (local dev, never those runtimes) actually touches the disk.
+ */
+async function nodeFs(): Promise<typeof import("fs").promises> {
+  const mod = (await import(/* webpackIgnore: true */ "fs")) as typeof import("fs");
+  return mod.promises;
+}
+
+function dataFile(table: string): string {
+  return `${process.cwd()}/data/${table}.json`;
+}
 
 type Table = Record<string, unknown>;
 
@@ -51,6 +61,7 @@ const TABLES: Record<string, string> = {
   passwordResetTokens: "password_reset_tokens",
   rateLimits: "rate_limits",
   stripeEvents: "stripe_events",
+  errorEvents: "error_events",
 };
 
 /**
@@ -170,7 +181,7 @@ export async function buildSchema(exec: Exec): Promise<void> {
       updated_at timestamptz NOT NULL DEFAULT now()
     )
   `);
-  for (const plain of ["password_reset_tokens", "rate_limits", "stripe_events"]) {
+  for (const plain of ["password_reset_tokens", "rate_limits", "stripe_events", "error_events"]) {
     await exec(`
       CREATE TABLE IF NOT EXISTS ${plain} (
         id         text        PRIMARY KEY,
@@ -263,9 +274,9 @@ function assertWritableBackend(): void {
  * production path (Postgres) never had this problem because it reads per row.
  */
 async function loadFile(table: string): Promise<Table> {
-  const file = path.join(DATA_DIR, `${table}.json`);
   try {
-    return JSON.parse(await fs.readFile(file, "utf8")) as Table;
+    const fs = await nodeFs();
+    return JSON.parse(await fs.readFile(dataFile(table), "utf8")) as Table;
   } catch {
     return {};
   }
@@ -282,10 +293,11 @@ async function loadFile(table: string): Promise<Table> {
 async function mutateFile(table: string, change: (data: Table) => void): Promise<void> {
   const prev = store.locks.get(table) ?? Promise.resolve();
   const next = prev.then(async () => {
+    const fs = await nodeFs();
     const data = await loadFile(table);
     change(data);
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    const file = path.join(DATA_DIR, `${table}.json`);
+    await fs.mkdir(`${process.cwd()}/data`, { recursive: true });
+    const file = dataFile(table);
     const tmp = `${file}.tmp`;
     await fs.writeFile(tmp, JSON.stringify(data), "utf8");
     await fs.rename(tmp, file).catch(async () => {

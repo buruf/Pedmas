@@ -4,6 +4,7 @@ import { allRows } from "@/lib/store/db";
 import type { Account, StudentProfile } from "@/lib/model";
 import { GRADES, allSkills } from "@/curriculum";
 import { lessonEffectiveness } from "@/lib/lessonEffect";
+import { recentErrors } from "@/lib/errors";
 
 export async function GET() {
   const account = await requireAccount();
@@ -32,5 +33,6 @@ export async function GET() {
       struggling: Object.values(s.skills).filter((k) => k.needsRepair).length,
     })),
     lessons: lessonEffectiveness(students),
+    errors: await recentErrors(),
   });
 }
