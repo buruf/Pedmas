@@ -128,8 +128,14 @@ function makeDoc(file, title, subtitle) {
       const range = doc.bufferedPageRange();
       for (let i = 0; i < range.count; i++) {
         doc.switchToPage(i);
+        // Writing inside the bottom margin makes pdfkit add a new page per
+        // footer — one blank page for every real one. Zero the margin for
+        // the stamp, then restore it.
+        const oldBottom = doc.page.margins.bottom;
+        doc.page.margins.bottom = 0;
         doc.fontSize(8.5).fillColor(MUTED).font("Helvetica")
           .text(`${title} — page ${i + 1} of ${range.count}`, 64, doc.page.height - 46, { width: doc.page.width - 128, align: "center", lineBreak: false });
+        doc.page.margins.bottom = oldBottom;
       }
       doc.end();
     },
