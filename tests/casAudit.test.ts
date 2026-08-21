@@ -48,6 +48,29 @@ describe("CAS sensitivity — wrong answers must be caught", () => {
     expect((v.checked && v.ok === false) || (bad.checked && bad.ok === false)).toBe(true);
   });
 
+  it("catches a wrong system solution", () => {
+    const q = { ...fake("3x + y = 9\n4x + 2y = 16", "(2, 3)", "Where do these two lines meet?"), skillId: "g9.algebra.graphical-solutions" };
+    const v = casCheck(q as Question);
+    expect(v.checked).toBe(true);
+    expect(v.ok).toBe(false);
+    const good = { ...fake("3x + y = 9\n4x + 2y = 16", "(1, 6)", "Where do these two lines meet?"), skillId: "g9.algebra.graphical-solutions" };
+    expect(casCheck(good as Question).ok).toBe(true);
+  });
+
+  it("catches a wrong transformation description", () => {
+    const q = { ...fake("g(x) = f(x) − 7. How does the graph of g compare with the graph of f?", "Shifted up 7 units", "Describe the transformation."), skillId: "g10.functions.transformations" };
+    expect(casCheck(q as Question).ok).toBe(false);
+    const good = { ...q, answer: "Shifted down 7 units" };
+    expect(casCheck(good as Question).ok).toBe(true);
+  });
+
+  it("catches a wrong inequality direction", () => {
+    const q = { ...fake("−5x > 30", "x > −6", "Solve the inequality."), skillId: "g9.algebra.inequalities" };
+    expect(casCheck(q as Question).ok).toBe(false);
+    const good = { ...q, answer: "x < −6" };
+    expect(casCheck(good as Question).ok).toBe(true);
+  });
+
   it("catches a wrong definite integral", () => {
     expect(casCheck(fake("∫ from 0 to 5 of 2x dx", "30", "Evaluate.")).ok).toBe(false);
     expect(casCheck(fake("∫ from 0 to 5 of 2x dx", "25", "Evaluate.")).ok).toBe(true);
@@ -72,7 +95,7 @@ describe("CAS sweep — grades 8-12", () => {
         }
       }
     }
-    expect(checked).toBeGreaterThan(800);
+    expect(checked).toBeGreaterThan(1800);
     expect(failures.slice(0, 8)).toEqual([]);
   });
 });

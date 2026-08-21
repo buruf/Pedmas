@@ -23,7 +23,7 @@ import { getSkill } from "@/curriculum";
 import type { Question } from "./types";
 
 /** The generator family behind a question, via its skill id. */
-function familyOf(q: Question): string {
+export function familyOf(q: Question): string {
   return getSkill(q.skillId)?.family ?? "";
 }
 
@@ -66,13 +66,13 @@ function varsIn(expr: string): string[] {
   return [...new Set(masked.match(/[a-z]/g) ?? [])];
 }
 
-const num = (s: string): number => evaluate(toMathjs(s)) as number;
+export const num = (s: string): number => evaluate(toMathjs(s)) as number;
 
-const close = (a: number, b: number, tol = 1e-6): boolean =>
+export const close = (a: number, b: number, tol = 1e-6): boolean =>
   Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tol * Math.max(1, Math.abs(a), Math.abs(b));
 
 /** Numeric-sampling equivalence of two expressions in any shared variables. */
-function sameExpr(exprA: string, exprB: string): boolean {
+export function sameExpr(exprA: string, exprB: string): boolean {
   const a = toMathjs(exprA);
   const b = toMathjs(exprB);
   const vars = [...new Set([...varsIn(a), ...varsIn(b)])];
@@ -97,7 +97,7 @@ function sameExpr(exprA: string, exprB: string): boolean {
   return compared >= 3;
 }
 
-type Checker = (q: Question) => CasVerdict | null;
+export type Checker = (q: Question) => CasVerdict | null;
 
 /** "EXPR = ?"  or a bare arithmetic expression with a numeric answer. */
 const bareNumeric: Checker = (q) => {
@@ -381,7 +381,10 @@ const definiteIntegral: Checker = (q) => {
   }
 };
 
+import { MORE_CHECKERS } from "./casAuditMore";
+
 const CHECKERS: Checker[] = [
+  ...MORE_CHECKERS,
   definiteIntegral,
   trigValue,
   logValue,
