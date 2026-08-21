@@ -10,7 +10,8 @@
     "seed": "tsx scripts/seed.ts",
     "verify:store": "tsx scripts/verify-store.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
-    "audit:cas": "tsx scripts/cas-audit.ts"
+    "audit:cas": "tsx scripts/cas-audit.ts",
+    "audit:cas:report": "tsx scripts/cas-report.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
