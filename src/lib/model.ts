@@ -51,6 +51,19 @@ export interface Account {
   lastSeenAt?: number;
   /** Dormancy bookkeeping: when the deletion warning was sent. */
   retention?: { warnedAt?: number };
+  /**
+   * Two-factor authentication (admin accounts). The TOTP secret must be
+   * stored recoverably to verify codes at all; recovery codes are stored
+   * only as hashes, and lastStep blocks replay of a code inside its window.
+   */
+  mfa?: {
+    secret?: string;
+    enabledAt?: number;
+    lastStep?: number;
+    recoveryHashes?: string[];
+    pendingSecret?: string;
+    pendingAt?: number;
+  };
   consent?: {
     policyVersion: string;
     acceptedAt: number;

@@ -62,6 +62,7 @@ const TABLES: Record<string, string> = {
   rateLimits: "rate_limits",
   stripeEvents: "stripe_events",
   errorEvents: "error_events",
+  mfaChallenges: "mfa_challenges",
 };
 
 /**
@@ -181,7 +182,7 @@ export async function buildSchema(exec: Exec): Promise<void> {
       updated_at timestamptz NOT NULL DEFAULT now()
     )
   `);
-  for (const plain of ["password_reset_tokens", "rate_limits", "stripe_events", "error_events"]) {
+  for (const plain of ["password_reset_tokens", "rate_limits", "stripe_events", "error_events", "mfa_challenges"]) {
     await exec(`
       CREATE TABLE IF NOT EXISTS ${plain} (
         id         text        PRIMARY KEY,

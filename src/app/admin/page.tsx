@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Logo, Card, PrimaryButton } from "@/components/ui";
 import { MathText } from "@/components/MathText";
 import { api } from "@/lib/client";
+import { MfaPanel } from "@/components/MfaPanel";
 import { GRADES } from "@/curriculum";
 import { skillIdFor } from "@/curriculum/types";
 
@@ -329,6 +330,8 @@ export default function AdminPage() {
           </table>
         </div>
       </Card>
+
+      <MfaPanel />
 
       <Card className="mt-6">
         <div className="flex items-center justify-between">
