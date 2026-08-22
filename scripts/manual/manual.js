@@ -55,7 +55,7 @@ d.p("Registration is CLOSED by default and the homepage shows an under-construct
 d.h2("Deploying");
 d.bullets([
   "Commit and push to main. Vercel builds and deploys automatically (about 2 minutes).",
-  "Before pushing, always run locally: npm test (275 tests — includes every skill and every lesson step) and npm run build.",
+  "Before pushing, always run locally: npm test (284 tests — includes every skill, every lesson step and the CAS audit) and npm run build.",
   "Never run npm run build while the local dev server is running — it corrupts the dev server's cache and buttons silently stop working. If that happens: stop the dev server, delete the .next folder, start it again.",
 ]);
 d.h2("Weekly parent email");
@@ -117,9 +117,22 @@ d.bullets([
   "Write the short data-retention policy and information-security document the amended COPPA rule requires.",
 ]);
 
-d.h1("8. Useful commands");
-d.code("cd C:\\Users\\buruf\\Documents\\Pedmas\nnpm run dev          # local server on http://localhost:3080\nnpm test             # full test suite (275 tests)\nnpm run build        # production build check (stop the dev server first)\nnpx tsx scripts/preview-weekly-email.ts   # preview the weekly email locally");
-d.note("This manual describes the platform as of August 20, 2026 (commit 9541f50). When behaviour changes, regenerate or amend it — a manual that has drifted from the product is worse than none.");
+d.h1("8. How question correctness is guaranteed");
+d.p("Three independent layers stand behind every question a child sees. Knowing what each covers tells you where a bug can still hide — and where to look first when a parent reports a wrong answer.");
+d.bullets([
+  "Generation-time verification. Every question re-derives its own answer before it is served; anything failing that check is discarded and regenerated, never patched.",
+  "Exhaustive sweeps on every test run. All 634 skills \u00D7 5 stages \u00D7 2 regions are generated and validated (about 19,000 questions), all 132 lessons are opened and every step tapped through, and every skill-to-lesson route is verified.",
+  "The CAS second opinion, grades 8\u201312. An independent computer-algebra engine sharing no code with the generators re-derives answers from exactly the text a student sees. It closes the one gap the first layer cannot: a generator and its own checker agreeing on something wrong. It found precisely that on its first run \u2014 a derivative displayed as 23x\u00B2 where the answer is 6x\u00B2.",
+]);
+d.h2("Running and reading the CAS audit");
+d.code("npm run audit:cas          # verdict: checked / passed / failed\nnpm run audit:cas:report   # per-family table with coverage");
+d.p("Expect FAILED 0. Roughly 4,500 of the ~8,000 senior questions per sweep are claimed by a checker; the rest are conceptual or vocabulary questions with nothing to recompute. A failure names the skill, stage, prompt and answer — decide whether it is a real content bug (fix the generator) or a reworded question (update the checker). Never loosen a checker to silence a failure: the test suite deliberately feeds the auditor wrong answers it MUST catch, and an auditor that cannot fail proves nothing.");
+d.p("Run the audit after any change to grade 8\u201312 question generators. For the judgement no machine makes — does a question feel right for the grade — hand the Skill Coverage Checklist PDF to a mathematics teacher; its senior rows show each skill's CAS coverage, so the untagged ones are where human eyes are the only check.");
+
+d.h1("9. Useful commands");
+d.code("cd C:\\Users\\buruf\\Documents\\Pedmas\nnpm run dev                 # local server on http://localhost:3080\nnpm test                    # full test suite (284 tests)\nnpm run audit:cas           # independent CAS audit, grades 8-12 (expect FAILED 0)\nnpm run audit:cas:report    # per-family CAS coverage table\nnpm run build               # production build check (stop the dev server first)\nnpx tsx scripts/preview-weekly-email.ts    # preview the weekly email locally");
+d.p("The three PDFs in docs/ regenerate from scripts/manual — run node manual.js, node testscript.js, or npx tsx checklist.ts in that folder after the product changes.");
+d.note("This manual describes the platform as of August 21, 2026 (commit 1647c20). When behaviour changes, regenerate or amend it — a manual that has drifted from the product is worse than none.");
 
 d.finish();
 console.log("manual written");
