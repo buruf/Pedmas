@@ -143,17 +143,74 @@ export async function currentAccount(): Promise<Account | null> {
  * fallbacks are development-only conveniences. Set both before deploying —
  * the defaults are published in this repository.
  */
+/**
+ * Admin credentials from the environment, normalized.
+ *
+ * Pasting a value into a hosting dashboard very easily picks up a trailing
+ * space or newline. Left raw, that whitespace is baked into the stored email
+ * (which the lookup then never matches) or into the password hash (which the
+ * typed password then never verifies) — and the sign-in error deliberately
+ * cannot say which, so the account is simply locked out forever. Normalizing
+ * here is the difference between a typo and a lockout.
+ */
+function adminCredentialsFromEnv(): { email: string; password: string } {
+  const rawEmail = process.env.PEDMAS_ADMIN_EMAIL ?? "admin@pedmas.com";
+  const rawPassword = process.env.PEDMAS_ADMIN_PASSWORD ?? "pedmas-admin";
+  const email = rawEmail.trim().toLowerCase();
+  const password = rawPassword.trim();
+  if (rawEmail !== email || rawPassword !== rawPassword.trim()) {
+    console.warn(
+      "[auth] PEDMAS_ADMIN_EMAIL/PASSWORD had surrounding whitespace or capitals; using the trimmed, lowercased form."
+    );
+  }
+  return { email, password };
+}
+
+/**
+ * Skip the "is there an admin?" scan for a short while after finding one.
+ *
+ * Deliberately a brief expiry rather than a permanent flag: deleting the
+ * admin row is the documented way to recover from lost credentials, and a
+ * permanent memo would stop a warm instance from ever re-seeding it — the
+ * recovery advice would silently fail. A minute keeps the scan off the hot
+ * path without breaking the escape hatch.
+ */
+let adminSeenUntil = 0;
+const ADMIN_MEMO_MS = 60_000;
+
 export async function ensureAdmin(): Promise<void> {
+  const reseed = process.env.PEDMAS_ADMIN_RESEED === "true";
+  if (Date.now() < adminSeenUntil && !reseed) return;
+
   const admins = await allRows<Account>("accounts");
-  if (!admins.some((a) => a.role === "ADMIN")) {
+  const existing = admins.find((a) => a.role === "ADMIN");
+  const { email, password } = adminCredentialsFromEnv();
+
+  if (!existing) {
     const account: Account = {
       id: newId("acc"),
-      email: process.env.PEDMAS_ADMIN_EMAIL ?? "admin@pedmas.com",
-      passwordHash: hashPassword(process.env.PEDMAS_ADMIN_PASSWORD ?? "pedmas-admin"),
+      email,
+      passwordHash: hashPassword(password),
       role: "ADMIN",
       name: "Platform Admin",
       createdAt: Date.now(),
     };
     await putRow("accounts", account.id, account);
+    adminSeenUntil = Date.now() + ADMIN_MEMO_MS;
+    return;
   }
+  adminSeenUntil = Date.now() + ADMIN_MEMO_MS;
+
+  // Deliberate, opt-in recovery. Setting PEDMAS_ADMIN_RESEED=true makes the
+  // environment authoritative for the admin's email and password on the next
+  // request — the way back in when the stored credentials are unusable and no
+  // reset email can be sent. It is a no-op once they already match, and it
+  // leaves any second factor alone, so it can never be used to strip MFA.
+  if (!reseed) return;
+  const matches = existing.email === email && verifyPassword(password, existing.passwordHash);
+  if (matches) return;
+  existing.email = email;
+  existing.passwordHash = hashPassword(password);
+  await putRow("accounts", existing.id, existing);
+  console.warn(`[auth] admin credentials reseeded from the environment for ${email}. Unset PEDMAS_ADMIN_RESEED now.`);
 }

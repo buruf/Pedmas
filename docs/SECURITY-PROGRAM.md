@@ -1,6 +1,6 @@
 # PEDMAS — Written Information Security Program
 
-**Version 1.1 — 21 August 2026**
+**Version 1.2 — 22 August 2026**
 Applies to: PEDMAS (www.pedmas.com), an adaptive K–12 mathematics service used by children.
 
 This document exists because the amended COPPA rule requires an operator collecting children's personal information to maintain a *written* information security program, proportionate to the sensitivity of the data and the size of the operation. It describes the safeguards actually implemented in the service as of commit `ec06b12` — not aspirations. Where a control is not yet in place, it is listed in §9 as a gap rather than omitted.
@@ -37,6 +37,7 @@ This document exists because the amended COPPA rule requires an operator collect
 - **Sessions** are opaque random tokens stored server-side with a 30-day expiry, delivered in cookies that are `HttpOnly`, `SameSite=Lax`, `Secure` in production, and scoped to `.pedmas.com`. There is no client-readable session state and no JWT to forge.
 - **Password reset** tokens are single-use, time-limited, and stored **only as hashes** — a database reader cannot mint a working reset link. Using a reset revokes all existing sessions for that account.
 - **Children never authenticate.** There are no child credentials to phish, guess, or leak; a child profile is a record inside a parent's authenticated account.
+- **Admin credential recovery.** Setting `PEDMAS_ADMIN_RESEED=true` makes the environment authoritative for the admin email and password on the next request, and is the documented way back in when the stored credentials are unusable and no reset email can be sent. It requires hosting-platform access (already the trust boundary for the database URL and payment keys), it never touches a configured second factor, and it must be unset again once used.
 - **Administrative access** is a role on a normal account (`role: "ADMIN"`), seeded once from environment variables and reachable only at `/admin`, which refuses any non-admin session. There is no separate admin credential store and no shared admin login.
 - **Two-factor authentication (TOTP) is available on admin accounts** and is the control protecting the highest-value credential in the service. Implementation notes:
   - RFC 6238 TOTP, SHA-1, 6 digits, 30-second steps — compatible with any standard authenticator app. The implementation is verified in CI against the RFC's own published test vectors.
@@ -105,3 +106,4 @@ Stated plainly, because a security document that lists only strengths is not use
 |---|---|---|
 | 1.0 | 21 August 2026 | First written program. Documents controls as implemented at commit `ec06b12`, including the newly-added automatic dormancy purge. |
 | 1.1 | 21 August 2026 | Two-factor authentication implemented for admin accounts (§3, §4); gap 1 closed pending operator enrolment. |
+| 1.2 | 22 August 2026 | Admin credentials are normalized when seeded, so whitespace pasted into a hosting dashboard can no longer lock the operator out; documented opt-in reseed recovery added (§3). |
