@@ -31,6 +31,16 @@ d.kv([
 d.p("On your local machine the fallbacks work: log in at http://localhost:3080/login with admin@pedmas.com / pedmas-admin. In production the fallback has been verified NOT to work, which means your live admin uses the values stored in Vercel > your project > Settings > Environment Variables. If you have forgotten the password, look it up there.");
 d.warn("Changing the environment variable later does NOT change an existing admin account — the account is only seeded once. To actually change the admin password: use the password-reset email flow (requires Resend), or edit the account row in Neon directly.");
 
+d.h2("Two-factor authentication (do this before launch)");
+d.p("The admin account can read every family's data, so a stolen admin password is the worst thing that can happen to this service. Two-factor authentication makes that password useless on its own: after it is on, signing in asks for a six-digit code from your phone, and the password step no longer creates a session at all.");
+d.p("To turn it on: log in at /admin, find the Two-factor authentication panel at the top, press Turn on, then either paste the setup link into an authenticator app (Google Authenticator, Authy, 1Password) or type the key by hand. Enter the six-digit code it shows to prove the app works — nothing changes until that code verifies, so a mis-scanned setup costs you nothing.");
+d.warn("You are then shown TEN RECOVERY CODES, once and never again. Save them somewhere you can reach WITHOUT your phone — a password manager, or printed and filed. Each works once, in place of the app. Without them, a lost phone means losing admin access entirely.");
+d.bullets([
+  "Signing in: password, then the six-digit code. A recovery code can be typed in the same box if you do not have your phone; the app warns you how many remain.",
+  "Turning it off, or issuing fresh recovery codes, both require a current code — so someone who steals a logged-in session cannot quietly remove your protection.",
+  "It is admin-only by design. Parents recover their accounts by email; the admin account is the one worth protecting this way.",
+]);
+
 d.h1("3. The admin console  (/admin)");
 d.p("Log in as the admin, then open /admin. Non-admin accounts get \u201CAdmin only\u201D. The console has five areas, top to bottom:");
 d.h2("3.1 Overview cards");
@@ -58,6 +68,8 @@ d.bullets([
   "Before pushing, always run locally: npm test (284 tests — includes every skill, every lesson step and the CAS audit) and npm run build.",
   "Never run npm run build while the local dev server is running — it corrupts the dev server's cache and buttons silently stop working. If that happens: stop the dev server, delete the .next folder, start it again.",
 ]);
+d.h2("Scheduled jobs");
+d.p("Two crons run automatically (configured in vercel.json): the weekly parent summary on Sundays at 16:00 UTC, and the dormant-account sweep daily at 03:30 UTC. Both refuse to run without the CRON_SECRET bearer token.");
 d.h2("Weekly parent email");
 d.p("A Vercel cron calls /api/cron/weekly-progress every Sunday 16:00 UTC. It emails each parent a summary of every child's week, honours the account-level opt-out and the one-click unsubscribe link, and sends at most one email per account per day even if the cron retries. It does nothing until the Resend key is set.");
 d.h2("Billing (Stripe)");
@@ -74,6 +86,15 @@ d.bullets([
   "The database is Neon Postgres: per-entity tables (accounts, students, auth_sessions, password_reset_tokens, rate_limits, stripe_events, error_events). The old pedmas_rows table is a frozen pre-migration backup — never write to it and never re-import it (that would resurrect deleted data).",
   "Region (US or international wording/units) is detected from the family's location on first visit and stamped on the account. There is no UI to change it yet; if a family asks, edit their account row's region field in Neon (US or INTL).",
 ]);
+d.h2("Dormant accounts are deleted automatically");
+d.p("Children's data may not be kept indefinitely, so a daily job erases accounts nobody uses. After 730 days (24 months) with no sign-in AND no child practice, the account holder is emailed a warning; 30 days later the account and every child profile on it are permanently deleted.");
+d.bullets([
+  "Signing in resets the clock, and a child practising counts as activity just as much as a parent logging in.",
+  "An account with a live subscription is NEVER deleted this way, whatever its billing state — a paying family is not dormant.",
+  "Nothing is ever deleted without a warning first. Since warnings need email, NOTHING IS DELETED AT ALL until RESEND_API_KEY is set; the job says so plainly in its response.",
+  "Deletion runs through exactly the same code as the parent's own delete button, so the two can never drift apart.",
+]);
+d.p("To see what it would do today without waiting for the cron, call it yourself: send GET to /api/cron/retention with header Authorization: Bearer <CRON_SECRET>. The reply reports how many accounts were examined, warned and purged.");
 
 d.h1("5. Environment variables (Vercel)");
 d.kv([
