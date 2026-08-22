@@ -8,9 +8,9 @@
  */
 
 /** Bump when the wording changes materially, so consent is re-collected. */
-export const POLICY_VERSION = "2026-08-16";
+export const POLICY_VERSION = "2026-08-21";
 
-export const POLICY_EFFECTIVE = "16 August 2026";
+export const POLICY_EFFECTIVE = "21 August 2026";
 
 /**
  * Operator details. These appear verbatim in the published policies, so they

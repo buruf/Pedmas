@@ -2,6 +2,8 @@
 
 **Status: draft for review by qualified counsel. This is not legal advice.**
 
+**Companion document:** `docs/SECURITY-PROGRAM.md` is the written information security program this file's §4 requires.
+
 This document was prepared by an AI assistant from a direct reading of the codebase (commit `a4fe228`, August 20, 2026). It explains the legal reasoning behind how PEDMAS is built, states the compliance posture regime by regime, and lists what remains open — ranked, with the blocking items first. Its purpose is to let a licensed lawyer review the service efficiently: the facts about what the system does are verified against the code, and the legal conclusions are the part needing professional judgement. Statements about specific laws reflect the state of knowledge as of early 2026 and must be re-verified by counsel.
 
 ---
@@ -84,8 +86,8 @@ scrypt password hashing with per-account salts, HTTP-only SameSite cookies with 
 
 **Near-term (COPPA amendment compliance window):**
 
-6. **Written data-retention policy with a real limit.** The current policy says lapsed accounts are kept "until you ask" — indefinite retention, which the amended COPPA rule prohibits for children's data. Recommend: define a dormancy period (e.g., 24 months without sign-in), warn by email, then purge; update the policy wording to match.
-7. **Written information-security program.** The controls exist (§2.7); the document describing them does not. One or two pages.
+6. ~~Written data-retention policy with a real limit.~~ **Done** (August 21, 2026). A 24-month dormancy window is now enforced in code: a warning email, then permanent erasure 30 days later, run by a daily job that shares its erasure path with the parent's own delete button. Live subscriptions and the admin account are exempt, and nothing is ever purged without a warning first — which means nothing is purged at all until email is configured. The Privacy Policy's retention section was rewritten to match, and `POLICY_VERSION` was bumped so account holders re-accept.
+7. ~~Written information-security program.~~ **Done** (August 21, 2026) — `docs/SECURITY-PROGRAM.md`, covering what is protected, access control, rate limiting, transit and rest, software practices, monitoring and incident response, retention and disposal, and an explicit list of six known gaps.
 8. **Resolve the VPC question** (§2.3, and §5 Q3) with counsel; if the answer is that card-first is required, reorder the flow so subscription (with trial) precedes the placement test.
 
 **When expanding beyond US + Canada:** the EU/UK column of §3 becomes a project — representative, transfers, Children's Code conformance, withdrawal rights, VAT. Treat it as a deliberate market entry, not a default.

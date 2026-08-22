@@ -43,6 +43,14 @@ export interface Account {
   region?: "US" | "INTL";
   /** IANA timezone, so the day rolls over at the family's midnight. */
   timezone?: string;
+  /**
+   * Last sign-in. Written once per login rather than per request — the
+   * retention sweep also counts practice activity, so an idle-but-logged-in
+   * family is never mistaken for a dormant one.
+   */
+  lastSeenAt?: number;
+  /** Dormancy bookkeeping: when the deletion warning was sent. */
+  retention?: { warnedAt?: number };
   consent?: {
     policyVersion: string;
     acceptedAt: number;

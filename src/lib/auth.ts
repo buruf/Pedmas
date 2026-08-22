@@ -73,6 +73,14 @@ export async function login(email: string, password: string): Promise<Account | 
   const account = await accountByEmail<Account>(norm);
   if (!account) return null;
   if (!verifyPassword(password, account.passwordHash)) return null;
+  // Stamp the sign-in so the retention sweep can tell a returning family
+  // from a dormant one. Best-effort: a store hiccup must not block a login.
+  try {
+    account.lastSeenAt = Date.now();
+    await putRow("accounts", account.id, account);
+  } catch {
+    /* ignore */
+  }
   return account;
 }
 

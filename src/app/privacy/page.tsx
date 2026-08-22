@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui";
 import { OPERATOR, POLICY_EFFECTIVE, CHILD_AGE_THRESHOLD } from "@/lib/legal";
+import { DORMANT_DAYS, WARNING_LEAD_DAYS } from "@/lib/retention";
+
+const RETENTION_MONTHS = Math.round(DORMANT_DAYS / 30.44);
 
 export const metadata = {
   title: "Privacy Policy — PEDMAS",
@@ -113,9 +116,15 @@ export default function PrivacyPage() {
 
       <H>How long we keep it</H>
       <P>
-        Learning data is kept while the account is open, because progress and spaced review depend
-        on history. If you delete a profile or account it goes immediately. If a subscription
-        lapses, the account remains so you can return, until you ask us to remove it.
+        Learning data is kept while the account is in use, because progress and spaced review
+        depend on history. If you delete a profile or account it goes immediately.
+      </P>
+      <P>
+        We do not keep it indefinitely. If nobody signs in and no child practises for{" "}
+        {RETENTION_MONTHS} months, we email the account holder a warning and then, {WARNING_LEAD_DAYS}{" "}
+        days later, permanently delete the account and every child profile and learning record on
+        it. Signing in at any point resets the clock, and an account with an active subscription is
+        never deleted this way. This runs automatically — it is not something you have to ask for.
       </P>
 
       <H>Who else sees it</H>

@@ -1,5 +1,6 @@
 import type { Mail } from "./send";
 import { formatCents } from "@/lib/billing/plan";
+import { appUrl } from "@/lib/billing/stripe";
 
 /**
  * Email templates. Tone matches the product: encouraging, specific, never
@@ -324,5 +325,45 @@ The last payment for your PEDMAS subscription was declined.
 Practice stays available while we retry, but please update your card.
 
 Update it here: ${billingUrl}`,
+  };
+}
+
+/* --------------------------------------------------- dormancy / retention */
+/**
+ * Sent before a dormant account is deleted. The tone is a reminder, not a
+ * threat: signing in is all it takes, and the mail says exactly what would
+ * be lost and when.
+ */
+export function dormancyWarningMail(
+  to: string,
+  parentName: string,
+  daysLeft: number,
+  childNames: string[]
+): Mail {
+  const who =
+    childNames.length === 0
+      ? "your account"
+      : childNames.length === 1
+        ? `${childNames[0]}'s progress`
+        : `${childNames.slice(0, -1).join(", ")} and ${childNames[childNames.length - 1]}'s progress`;
+  return {
+    to,
+    subject: "Your PEDMAS account will be deleted soon",
+    html: layout(
+      "We are about to delete your data",
+      `<p>Hi ${esc(parentName)}, nobody has used your PEDMAS account for about two years.</p>
+       <p>We do not keep children's learning data longer than it is useful, so in <strong>${daysLeft} day${daysLeft === 1 ? "" : "s"}</strong> we will permanently delete your account and ${esc(who)}.</p>
+       <p><strong>Signing in is all it takes to keep everything.</strong> If you would rather we went ahead and deleted it, you need do nothing at all.</p>`,
+      { label: "Sign in to keep my data", url: `${appUrl()}/login` }
+    ),
+    text: `Hi ${parentName},
+
+Nobody has used your PEDMAS account for about two years.
+
+We do not keep children's learning data longer than it is useful, so in ${daysLeft} day${daysLeft === 1 ? "" : "s"} we will permanently delete your account and ${who}.
+
+Signing in is all it takes to keep everything: ${appUrl()}/login
+
+If you would rather we deleted it, you need do nothing at all.`,
   };
 }
