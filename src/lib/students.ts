@@ -14,7 +14,7 @@ import {
   startPlacement,
 } from "@/engine/placement";
 import { strandChain, getSkill, strandLabel } from "@/curriculum";
-import { buildPracticeSession, currentSkillFor, SESSION_SIZE } from "@/engine/practice";
+import { buildPracticeSession, currentSkillFor, focusSkillFor, SESSION_SIZE } from "@/engine/practice";
 import { assumedMastered, newSkillState, recordAttempt, skillProgress } from "@/engine/mastery";
 import { isCorrect, dedupKey } from "@/engine/validate";
 import { stageLabelFor, generateQuestion } from "@/engine/generate";
@@ -453,7 +453,37 @@ export function progressSummary(student: StudentProfile, timeZone?: string) {
     .map((s) => getSkill(s.skillId)?.name ?? s.skillId);
   const totalAnswered = student.recentSessions.reduce((a, s) => a + s.total, 0);
   const totalFirstTry = student.recentSessions.reduce((a, s) => a + s.firstTryCorrect, 0);
+  // The one topic today is about — the dashboard leads with this, because
+  // the session is entirely this skill. The per-strand list stays available
+  // as the map of where everything else sits, but it is no longer a to-do
+  // list of four things.
+  const focusChoice = focusSkillFor({
+    grade: student.grade,
+    strandLevels: student.strandLevels,
+    pointers: student.pointers,
+    skills: student.skills,
+  });
+  const focusState = focusChoice ? student.skills[focusChoice.skill.id] : undefined;
+  const focusLessonKey = focusChoice
+    ? lessonKeyForSkill(focusChoice.skill.family, focusChoice.skill.params)
+    : null;
+  const focus = focusChoice
+    ? {
+        id: focusChoice.skill.id,
+        name: focusChoice.skill.name,
+        grade: focusChoice.skill.grade,
+        strandName: strandLabel(focusChoice.skill.strandId),
+        stage: focusState?.stage ?? 1,
+        stageLabel: stageLabelFor(focusChoice.skill, focusState?.stage ?? 1),
+        progress: focusState ? skillProgress(focusState) : 0,
+        isRepair: focusChoice.isRepair,
+        lessonKey: focusLessonKey,
+        lessonTitle: focusLessonKey ? LESSON_TITLES[focusLessonKey] : null,
+      }
+    : null;
+
   return {
+    focus,
     strands,
     masteredCount: masteredSkills.length,
     masteredRecent: masteredNames,

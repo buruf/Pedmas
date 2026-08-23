@@ -38,7 +38,7 @@ async function run(req: Request) {
     // Surfaced rather than silent: with no mail provider no warning can be
     // sent, so nothing is ever purged and the data keeps piling up.
     note: result.skippedNoEmail
-      ? "Email is not configured, so no warnings were sent and nothing was purged. Set RESEND_API_KEY."
+      ? "Email is not configured, so no warnings were sent and nothing was purged. Set BREVO_API_KEY (or RESEND_API_KEY)."
       : undefined,
   });
 }

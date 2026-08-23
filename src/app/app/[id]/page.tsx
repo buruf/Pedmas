@@ -29,6 +29,18 @@ interface StudentPayload {
         progress: number;
       } | null;
     }[];
+    focus: {
+      id: string;
+      name: string;
+      grade: number;
+      strandName: string;
+      stage: number;
+      stageLabel: string;
+      progress: number;
+      isRepair: boolean;
+      lessonKey: string | null;
+      lessonTitle: string | null;
+    } | null;
     masteredCount: number;
     masteredRecent: string[];
     streak: { count: number; lastDay: string };
@@ -84,18 +96,41 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
       {/* Today's practice */}
       <Card className="mt-6 bg-gradient-to-br from-brand-600 to-brand-800 !border-0 text-white">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="text-lg font-bold">Today&rsquo;s Practice</div>
-            <div className="mt-0.5 text-sm text-brand-100">
-              12 questions · picked for exactly where you are
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-wide text-brand-200">
+              {p.focus?.isRepair ? "Building up to your next topic" : "Today you are working on"}
             </div>
+            <div className="mt-0.5 text-lg font-bold">
+              {p.focus ? p.focus.name : "Today’s Practice"}
+            </div>
+            <div className="mt-0.5 text-sm text-brand-100">
+              {p.focus
+                ? `${p.focus.strandName} · Step ${p.focus.stage} of 5 — ${p.focus.stageLabel}`
+                : "12 questions · picked for exactly where you are"}
+            </div>
+            {p.focus && (
+              <div className="mt-2 text-xs text-brand-100">
+                You will stay on this until you have mastered it.
+              </div>
+            )}
           </div>
-          <Link
-            href={`/app/${id}/practice`}
-            className={`btn inline-flex items-center ${band.radius} ${band.touchTarget} bg-white px-6 py-3 font-bold text-brand-700 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]`}
-          >
-            {band.practiceCta} →
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {p.focus?.lessonKey && (
+              <Link
+                href={`/app/${id}/learn/${p.focus.lessonKey}`}
+                title={p.focus.lessonTitle ?? undefined}
+                className={`btn inline-flex items-center ${band.radius} ${band.touchTarget} border border-white/40 px-4 py-3 font-bold text-white transition hover:bg-white/10`}
+              >
+                📘 Learn it first
+              </Link>
+            )}
+            <Link
+              href={`/app/${id}/practice`}
+              className={`btn inline-flex items-center ${band.radius} ${band.touchTarget} bg-white px-6 py-3 font-bold text-brand-700 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]`}
+            >
+              {band.practiceCta} →
+            </Link>
+          </div>
         </div>
       </Card>
 
@@ -104,7 +139,13 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
         <div className="md:col-span-2">
           <Card>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-bold text-ink-900">My Mathematics</h2>
+              <div>
+                <h2 className="font-bold text-ink-900">My Mathematics</h2>
+                <p className="mt-0.5 text-xs text-ink-500">
+                  Where you are in each area. Different grades in different areas is normal — you
+                  work on one at a time.
+                </p>
+              </div>
               <GhostButton href={`/app/${id}/path`} className="!px-3 !py-1.5 text-xs">
                 View my path
               </GhostButton>
@@ -118,20 +159,13 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
                   </div>
                   <ProgressBar value={s.percent} />
                   {s.currentSkill && (
-                    <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
-                      <div className="text-xs text-ink-500">
-                        Now: <span className="font-medium text-brand-700">{s.currentSkill.name}</span>{" "}
-                        · Stage {s.currentSkill.stage}/5 — {s.currentSkill.stageLabel}
-                      </div>
-                      {/* Teaching should be reachable without starting a session. */}
-                      {s.currentSkill.lessonKey && (
-                        <Link
-                          href={`/app/${id}/learn/${s.currentSkill.lessonKey}`}
-                          title={s.currentSkill.lessonTitle ?? undefined}
-                          className="btn inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700 hover:border-brand-400"
-                        >
-                          📘 Learn
-                        </Link>
+                    <div className="mt-1 text-xs text-ink-500">
+                      {p.focus?.id === s.currentSkill.id ? (
+                        <span className="font-semibold text-brand-700">
+                          ★ Working on this now: {s.currentSkill.name}
+                        </span>
+                      ) : (
+                        <>Next up: {s.currentSkill.name}</>
                       )}
                     </div>
                   )}

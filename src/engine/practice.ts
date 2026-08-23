@@ -1,12 +1,18 @@
 /**
- * Daily practice mixer. Builds a personalized ~12-question session:
- *   1. current learning skill (focus strand gets the deepest block)
- *   2. skills close to mastery in other strands
- *   3. fluency
- *   4. spaced review that is due
- *   5. prerequisite repair when a skill is struggling
+ * Daily practice mixer: one topic at a time.
+ *
+ * A session is a small number of due spaced reviews, then the rest of the
+ * sitting on a single skill, carried day after day until it is mastered —
+ * at which point the next topic begins. Nothing else is mixed in.
+ *
+ * This replaced a mixer that spread twelve questions across five topics.
+ * Three questions on a brand-new skill is not enough practice to master
+ * anything, so a child could work every day and watch "0 skills mastered"
+ * never move. Review survives because it is the opposite of a distraction:
+ * without it, a topic that was mastered decays back to unmastered, and
+ * "master it, then move on" would quietly stop being true.
  */
-import { getSkill, nextSkillInStrand, strandChain } from "@/curriculum";
+import { getSkill, nextSkillInStrand, strandChain, strandEntrySkill } from "@/curriculum";
 import type { Skill } from "@/curriculum/types";
 import { generateQuestion, generateErrorAnalysis } from "./generate";
 import type { Question } from "./types";
@@ -44,9 +50,19 @@ function stateFor(learner: LearnerState, skillId: string): SkillState {
 export function currentSkillFor(learner: LearnerState, strandId: string): Skill | undefined {
   let id = learner.pointers[strandId];
   if (!id) {
-    const chain = strandChain(strandId);
-    if (!chain.length) return undefined;
-    id = chain[0].id;
+    // No pointer yet — start at the placed level for this strand, NOT at the
+    // beginning of the chain. Falling back to chain[0] served Grade 1 topics
+    // ("Counting", "2D Shapes") to a student placed in Grade 10, because the
+    // placement level was never consulted. A missing pointer happens on any
+    // strand placement did not cover, so this path is reached in practice.
+    const level = learner.strandLevels[strandId] ?? learner.grade;
+    const entry = strandEntrySkill(strandId, level);
+    if (entry) id = entry.id;
+    else {
+      const chain = strandChain(strandId);
+      if (!chain.length) return undefined;
+      id = chain[0].id;
+    }
   }
   let skill = getSkill(id);
   let guard = 0;
@@ -59,15 +75,59 @@ export function currentSkillFor(learner: LearnerState, strandId: string): Skill 
   return skill;
 }
 
-/** The strand that needs the most attention gets the focus block. */
-export function focusStrand(learner: LearnerState, dayIndex: number): string | undefined {
-  const ids = Object.keys(learner.strandLevels);
-  if (!ids.length) return undefined;
-  const sorted = [...ids].sort(
-    (a, b) => (learner.strandLevels[a] ?? learner.grade) - (learner.strandLevels[b] ?? learner.grade)
-  );
-  // Weakest strand leads most days; rotate so nothing goes stale.
-  return dayIndex % 3 === 2 ? sorted[(dayIndex / 3) % sorted.length | 0] : sorted[0];
+/** How many skills in this strand the learner has genuinely mastered. */
+function masteredInStrand(learner: LearnerState, strandId: string): number {
+  return strandChain(strandId).filter((s) => {
+    const st = learner.skills[s.id];
+    return st?.mastered && !st.assumed;
+  }).length;
+}
+
+/**
+ * The single topic today is about.
+ *
+ * One topic at a time, carried until it is mastered, then the next — so a
+ * child always knows what they are working on and something actually gets
+ * finished. Spreading twelve questions over five topics gave three each,
+ * which is not enough practice to master anything: the old mixer looked
+ * adaptive and felt like it never moved.
+ *
+ * Which topic comes next is decided by *progress*, not by placement level:
+ * levels are written once at placement and never change, so ordering by
+ * level alone would pin a child to one strand forever. Fewest-mastered-first
+ * means finishing a topic naturally hands the next turn to another strand.
+ */
+export interface FocusChoice {
+  skill: Skill;
+  /** True when this is a prerequisite pulled in because the next skill is struggling. */
+  isRepair: boolean;
+}
+
+export function focusSkillFor(learner: LearnerState): FocusChoice | undefined {
+  const strandIds = Object.keys(learner.strandLevels);
+  if (!strandIds.length) return undefined;
+
+  const ranked = [...strandIds].sort((a, b) => {
+    const byMastered = masteredInStrand(learner, a) - masteredInStrand(learner, b);
+    if (byMastered !== 0) return byMastered;
+    const byLevel = (learner.strandLevels[a] ?? learner.grade) - (learner.strandLevels[b] ?? learner.grade);
+    if (byLevel !== 0) return byLevel;
+    return a.localeCompare(b); // stable: the topic must not wander day to day
+  });
+
+  for (const strandId of ranked) {
+    const skill = currentSkillFor(learner, strandId);
+    if (!skill) continue;
+    // A struggling skill means its prerequisite is the real thing to work on.
+    // That is still one topic — just the right one.
+    const state = stateFor(learner, skill.id);
+    if (state.needsRepair && skill.prereqs[0]) {
+      const prereq = getSkill(skill.prereqs[0]);
+      if (prereq && !stateFor(learner, prereq.id).mastered) return { skill: prereq, isRepair: true };
+    }
+    return { skill, isRepair: false };
+  }
+  return undefined;
 }
 
 export function buildPracticeSession(
@@ -88,76 +148,67 @@ export function buildPracticeSession(
       return null;
     }
   };
-  const push = (skill: Skill | undefined, stage: number, purpose: QuestionPurpose, isReview = false) => {
-    if (!skill || items.length >= SIZE) return;
+  const push = (skill: Skill | undefined, stage: number, purpose: QuestionPurpose, isReview = false): boolean => {
+    if (!skill || items.length >= SIZE) return false;
     const q = gen(skill, Math.max(1, Math.min(5, stage)));
-    if (q) items.push({ question: q, purpose, isReview });
+    if (!q) return false;
+    items.push({ question: q, purpose, isReview });
+    return true;
   };
 
-  // 4. Due spaced reviews (max 2 up front).
+  // Spaced review first, and only what is genuinely due. These are skills
+  // already mastered, so they are not "another topic to learn" — they are
+  // what stops a mastered topic quietly decaying back to unmastered. Capped
+  // at two so the day still belongs to the one thing being learned.
   const due = reviewsDue(Object.values(learner.skills), now).slice(0, 2);
   for (const st of due) push(getSkill(st.skillId), 4, "Review", true);
 
-  // 5. Prerequisite repair: struggling skills bring in their prerequisite.
-  const repairs = Object.values(learner.skills).filter((s) => s.needsRepair && !s.mastered).slice(0, 1);
-  for (const st of repairs) {
-    const skill = getSkill(st.skillId);
-    const prereq = skill?.prereqs[0] ? getSkill(skill.prereqs[0]) : undefined;
-    if (prereq) push(prereq, 3, "Skill builder");
-  }
-
-  // 1. Focus strand block.
-  const dayIndex = Math.floor(now / (24 * 60 * 60 * 1000));
-  const focus = focusStrand(learner, dayIndex);
-  const strandIds = Object.keys(learner.strandLevels);
+  // Everything else is one topic, carried until it is mastered.
+  const focus = focusSkillFor(learner);
   if (focus) {
-    const skill = currentSkillFor(learner, focus);
-    if (skill) {
-      const st = stateFor(learner, skill.id);
-      for (let i = 0; i < 4; i++) push(skill, st.stage, "Current skill");
+    const { skill, isRepair } = focus;
+    const st = stateFor(learner, skill.id);
 
-      // Judging someone else's working is a different act from computing, and
-      // it targets the same misconception the skill's lesson teaches against.
-      // Only once the procedure is known — stage 3 onwards.
-      if (st.stage >= 3) {
-        const err = generateErrorAnalysis(skill, {
-          seed: seed + seedStep++ * 104729,
-          avoid,
-        });
-        if (err && items.length < SIZE) {
-          items.push({ question: err, purpose: "Spot the mistake", isReview: false });
-        }
+    // Judging someone else's working is a different act from computing, and
+    // it targets the same misconception this skill's lesson teaches against.
+    // Same topic, so it belongs here — but only once the procedure is known.
+    if (st.stage >= 3) {
+      const err = generateErrorAnalysis(skill, { seed: seed + seedStep++ * 104729, avoid });
+      if (err && items.length < SIZE) {
+        items.push({ question: err, purpose: "Spot the mistake", isReview: false });
+      }
+    }
+
+    // Fill the rest of the sitting from this one skill.
+    //
+    // A single skill+stage does not hold twelve distinct questions, so when
+    // the current stage is exhausted the session widens to the neighbouring
+    // stages of the *same* skill — easier ones first, which consolidates
+    // rather than escalates. That keeps the day on one topic while giving it
+    // enough variety to be worth twelve questions.
+    const purpose: QuestionPurpose = isRepair ? "Skill builder" : "Current skill";
+    const ladder = [st.stage, st.stage - 1, st.stage + 1, st.stage - 2, st.stage + 2].filter(
+      (n, i, all) => n >= 1 && n <= 5 && all.indexOf(n) === i
+    );
+    for (const stage of ladder) {
+      // Ask until this stage stops yielding anything new, then step along.
+      while (items.length < SIZE && push(skill, stage, purpose)) {
+        /* keep filling */
+      }
+      if (items.length >= SIZE) break;
+    }
+
+    // Still short only if the whole skill has fewer distinct questions than a
+    // session. Repeating a question the child has already seen today beats
+    // handing them a half-length session, so allow duplicates as a last step.
+    if (items.length < SIZE) {
+      avoid.clear();
+      let guard = 0;
+      while (items.length < SIZE && guard++ < SIZE * 2) {
+        if (!push(skill, st.stage, purpose)) break;
       }
     }
   }
 
-  // 2. Other strands, round-robin by need.
-  const others = strandIds.filter((s) => s !== focus);
-  others.sort((a, b) => (learner.strandLevels[a] ?? 0) - (learner.strandLevels[b] ?? 0));
-  let round = 0;
-  while (items.length < SIZE - 1 && round < 3 && others.length) {
-    for (const sid of others) {
-      if (items.length >= SIZE - 1) break;
-      const skill = currentSkillFor(learner, sid);
-      if (!skill) continue;
-      const st = stateFor(learner, skill.id);
-      push(skill, st.stage, "Practice");
-    }
-    round++;
-  }
-
-  // 3. One fluency question from an earlier operations skill.
-  const opsChain = strandChain("operations").filter((s) => s.grade <= learner.grade);
-  const fluencySkill = opsChain.length ? opsChain[Math.max(0, opsChain.length - 3)] : undefined;
-  push(fluencySkill, 2, "Fluency");
-
-  // Fill any remaining slots from the focus strand.
-  let guard = 0;
-  while (items.length < SIZE && guard++ < 20) {
-    const sid = focus ?? strandIds[guard % Math.max(1, strandIds.length)];
-    const skill = sid ? currentSkillFor(learner, sid) : undefined;
-    if (!skill) break;
-    push(skill, stateFor(learner, skill.id).stage, "Practice");
-  }
   return items;
 }

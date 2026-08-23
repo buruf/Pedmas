@@ -34,8 +34,17 @@ async function nodeFs(): Promise<typeof import("fs").promises> {
   return mod.promises;
 }
 
+/**
+ * Where file-mode rows live. Overridable so the test suite can point at a
+ * throwaway directory: tests exercise real store writes, and pointed at the
+ * default they delete the developer's own local accounts.
+ */
+function dataDir(): string {
+  return process.env.PEDMAS_DATA_DIR || `${process.cwd()}/data`;
+}
+
 function dataFile(table: string): string {
-  return `${process.cwd()}/data/${table}.json`;
+  return `${dataDir()}/${table}.json`;
 }
 
 type Table = Record<string, unknown>;
@@ -297,7 +306,7 @@ async function mutateFile(table: string, change: (data: Table) => void): Promise
     const fs = await nodeFs();
     const data = await loadFile(table);
     change(data);
-    await fs.mkdir(`${process.cwd()}/data`, { recursive: true });
+    await fs.mkdir(dataDir(), { recursive: true });
     const file = dataFile(table);
     const tmp = `${file}.tmp`;
     await fs.writeFile(tmp, JSON.stringify(data), "utf8");
