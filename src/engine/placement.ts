@@ -18,7 +18,7 @@
  *
  * Branching still keeps the question count small — this is not a fixed test.
  */
-import { strandsAtGrade, strandChain, strandLabel } from "@/curriculum";
+import { strandIds, strandChain, strandLabel } from "@/curriculum";
 import type { Skill } from "@/curriculum/types";
 import { generateQuestion } from "./generate";
 import type { Question } from "./types";
@@ -99,18 +99,27 @@ export function entryGradeFor(studentGrade: number): number {
   return studentGrade <= 3 ? 1 : Math.max(1, studentGrade - 3);
 }
 
-/** Strands probed during placement (those defined at the student's grade). */
+/**
+ * Every strand the student could owe work in.
+ *
+ * Not "strands listed at their grade": that returned only the four a Grade 8
+ * syllabus names, so Fractions, Decimals, Ratios, Operations and Measurement
+ * were never assessed and never taught — two hundred skills unreachable, and
+ * a Grade 8 student weak at fractions had no way to be given fractions.
+ *
+ * A strand counts if it *starts* at or below the student's grade, whether or
+ * not it still runs there. Fractions ends at Grade 6, which is exactly why a
+ * Grade 8 student must still be checked on it rather than assumed past it.
+ */
+export function strandsToPlace(studentGrade: number): string[] {
+  return strandIds()
+    .filter((id) => firstGradeOf(id) <= studentGrade)
+    .sort((a, b) => orderIndex(a) - orderIndex(b));
+}
+
+/** Strands probed during placement, in dependency order. */
 export function startPlacement(studentGrade: number, seedBase: number, now: number): PlacementState {
-  const strands = strandsAtGrade(studentGrade);
-  const seen = new Set<string>();
-  const order: string[] = [];
-  for (const s of strands) {
-    if (!seen.has(s.id)) {
-      seen.add(s.id);
-      order.push(s.id);
-    }
-  }
-  order.sort((a, b) => orderIndex(a) - orderIndex(b));
+  const order = strandsToPlace(studentGrade);
 
   const entry = entryGradeFor(studentGrade);
   const probes: Record<string, StrandProbe> = {};
@@ -120,7 +129,7 @@ export function startPlacement(studentGrade: number, seedBase: number, now: numb
       strandName: strandLabel(id),
       testGrade: nearestGradeWithStrand(id, entry),
       low: 1,
-      high: Math.min(12, studentGrade + 2),
+      high: Math.min(12, studentGrade + 2, lastGradeOf(id)),
       firstGrade: firstGradeOf(id),
       correctAtGrade: 0,
       totalAtGrade: 0,
@@ -142,6 +151,12 @@ export function startPlacement(studentGrade: number, seedBase: number, now: numb
   };
   skipGatedStrands(state);
   return state;
+}
+
+/** The highest grade this strand reaches. */
+function lastGradeOf(strandId: string): number {
+  const chain = strandChain(strandId);
+  return chain.length ? Math.max(...chain.map((s) => s.grade)) : 1;
 }
 
 function nearestGradeWithStrand(strandId: string, grade: number): number {
@@ -381,10 +396,17 @@ export function placementReport(state: PlacementState): PlacementReportRow[] {
   return state.order.map((id) => {
     const p = state.probes[id];
     const level = p.finalGrade ?? state.studentGrade;
-    const diff = level - state.studentGrade;
+    // Compare against where this strand actually ends, not the school grade.
+    // Measurement stops at Grade 5, so a Grade 8 student who answered every
+    // measurement question correctly has finished the strand — calling that
+    // "Developing" tells a child they are behind in something they have in
+    // fact completed.
+    const ceiling = lastGradeOf(id);
+    const benchmark = Math.min(state.studentGrade, ceiling);
+    const diff = level - benchmark;
     const status: StrandStatus = !p.assessed
       ? "Ready to Learn"
-      : diff >= 1 ? "Mastered"
+      : diff >= 1 || (diff === 0 && level >= ceiling) ? "Mastered"
       : diff === 0 ? "Strong"
       : diff === -1 ? "Developing"
       : "Practicing";

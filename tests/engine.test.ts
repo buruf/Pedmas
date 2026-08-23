@@ -278,7 +278,12 @@ describe("placement engine", () => {
   it("a strong student places above grade", () => {
     const report = run(6, () => true);
     for (const row of report) {
-      expect(row.level).toBeGreaterThanOrEqual(6);
+      // A strand cannot place a student above where it ends: Measurement
+      // stops at Grade 5, so a flawless Grade 6 student tops out there.
+      const ceiling = Math.max(...strandChain(row.strandId).map((s) => s.grade));
+      expect(row.level, `${row.strandName} (ends at Grade ${ceiling})`).toBeGreaterThanOrEqual(
+        Math.min(6, ceiling)
+      );
       expect(["Mastered", "Strong"]).toContain(row.status);
     }
   });
