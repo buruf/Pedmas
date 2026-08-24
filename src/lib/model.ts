@@ -28,6 +28,20 @@ export interface Account {
   name: string;
   createdAt: number;
   billing?: Billing;
+  /**
+   * Complimentary access granted by an admin — beta families, test
+   * accounts, a goodwill month after a support problem. Deliberately NOT
+   * written into `billing`: faking a Stripe status there would make the
+   * billing mirror lie, and the next webhook would overwrite it anyway.
+   * Kept separate, attributed, and revocable.
+   */
+  compAccess?: {
+    grantedAt: number;
+    grantedBy: string;
+    reason: string;
+    /** Optional end date; absent means until revoked. */
+    expiresAt?: number;
+  };
   /** Weekly parent summary opt-out and send bookkeeping. */
   emailPrefs?: { weeklySummary?: boolean; lastWeeklySentDay?: string };
   /**

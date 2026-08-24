@@ -29,6 +29,14 @@ interface AdminPayload {
     mastered: number;
     struggling: number;
   }[];
+  families: {
+    id: string;
+    email: string;
+    children: number;
+    billingStatus: string | null;
+    comp: { reason: string; grantedBy: string; expiresAt: number | null } | null;
+    unlocked: boolean;
+  }[];
   errors: {
     id: string;
     source: "server" | "client";
@@ -332,6 +340,51 @@ export default function AdminPage() {
       </Card>
 
       <MfaPanel />
+
+      <Card className="mt-6">
+        <h2 className="font-bold text-ink-900">Families</h2>
+        <p className="mt-1 text-xs text-ink-500">
+          Locked families are listed first. Granting access unlocks practice without touching
+          Stripe — use it for test families and beta users. Every grant records who made it.
+        </p>
+        <div className="mt-3 space-y-2">
+          {(data.families ?? []).map((f) => (
+            <div key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink-100 px-3 py-2">
+              <div className="min-w-0 text-sm">
+                <span className="font-medium text-ink-900">{f.email}</span>
+                <span className="ml-2 text-xs text-ink-500">
+                  {f.children} child{f.children === 1 ? "" : "ren"} ·{" "}
+                  {f.billingStatus ?? "no subscription"}
+                  {f.comp ? ` · granted by ${f.comp.grantedBy} (${f.comp.reason})` : ""}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${f.unlocked ? "bg-ok-100 text-ok-700" : "bg-err-100 text-err-700"}`}>
+                  {f.unlocked ? "can practise" : "locked"}
+                </span>
+                <button
+                  className="btn rounded-lg border border-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-700 hover:border-brand-400"
+                  onClick={async () => {
+                    const reason = f.comp ? "" : prompt(`Why is ${f.email} being granted access?`, "Beta testing") ?? "";
+                    if (!f.comp && !reason) return;
+                    await fetch("/api/admin/comp", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ accountId: f.id, grant: !f.comp, reason }),
+                    }).catch(() => undefined);
+                    location.reload();
+                  }}
+                >
+                  {f.comp ? "Revoke access" : "Grant access"}
+                </button>
+              </div>
+            </div>
+          ))}
+          {(data.families ?? []).length === 0 && (
+            <p className="py-2 text-center text-sm text-ink-500">No families yet.</p>
+          )}
+        </div>
+      </Card>
 
       <Card className="mt-6">
         <div className="flex items-center justify-between">

@@ -13,14 +13,25 @@ import { isBillingConfigured } from "./stripe";
  */
 
 export type Entitlement =
-  | { active: true; reason: "trialing" | "subscribed" | "unconfigured" | "admin"; trialEndsAt?: number }
+  | { active: true; reason: "trialing" | "subscribed" | "unconfigured" | "admin" | "granted"; trialEndsAt?: number }
   | { active: false; reason: "none" | "past_due" | "canceled"; graceEndsAt?: number };
 
 /** Statuses Stripe reports that still grant access. */
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
-export function entitlementFor(account: Pick<Account, "role" | "billing">, now = Date.now()): Entitlement {
+export function entitlementFor(
+  account: Pick<Account, "role" | "billing" | "compAccess">,
+  now = Date.now()
+): Entitlement {
   if (account.role === "ADMIN") return { active: true, reason: "admin" };
+
+  // Complimentary access outranks Stripe: it is granted deliberately by a
+  // human, and a family being tested or compensated should not be cut off
+  // because they never had a card on file.
+  const comp = account.compAccess;
+  if (comp && (!comp.expiresAt || comp.expiresAt > now)) {
+    return { active: true, reason: "granted" };
+  }
   if (!isBillingConfigured()) return { active: true, reason: "unconfigured" };
 
   const b: Billing | undefined = account.billing;
@@ -43,7 +54,10 @@ export function entitlementFor(account: Pick<Account, "role" | "billing">, now =
   return { active: false, reason: "canceled" };
 }
 
-export function hasPracticeAccess(account: Pick<Account, "role" | "billing">, now = Date.now()): boolean {
+export function hasPracticeAccess(
+  account: Pick<Account, "role" | "billing" | "compAccess">,
+  now = Date.now()
+): boolean {
   return entitlementFor(account, now).active;
 }
 

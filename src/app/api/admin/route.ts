@@ -5,6 +5,7 @@ import type { Account, StudentProfile } from "@/lib/model";
 import { GRADES, allSkills } from "@/curriculum";
 import { lessonEffectiveness } from "@/lib/lessonEffect";
 import { recentErrors } from "@/lib/errors";
+import { entitlementFor } from "@/lib/billing/entitlement";
 
 export async function GET() {
   const account = await requireParent();
@@ -32,6 +33,18 @@ export async function GET() {
       mastered: Object.values(s.skills).filter((k) => k.mastered && !k.assumed).length,
       struggling: Object.values(s.skills).filter((k) => k.needsRepair).length,
     })),
+    // Families, so an admin can see who is locked out and unlock them.
+    families: accounts
+      .filter((a) => a.role !== "ADMIN")
+      .map((a) => ({
+        id: a.id,
+        email: a.email,
+        children: students.filter((s) => s.accountId === a.id).length,
+        billingStatus: a.billing?.status ?? null,
+        comp: a.compAccess ? { reason: a.compAccess.reason, grantedBy: a.compAccess.grantedBy, expiresAt: a.compAccess.expiresAt ?? null } : null,
+        unlocked: entitlementFor(a).active,
+      }))
+      .sort((a, b) => Number(a.unlocked) - Number(b.unlocked)),
     lessons: lessonEffectiveness(students),
     errors: await recentErrors(),
   });
