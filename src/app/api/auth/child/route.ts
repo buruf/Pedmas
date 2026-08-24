@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startSession } from "@/lib/auth";
-import { clientKey, rateLimit } from "@/lib/rateLimit";
+import { clientKey, rateLimit, clearRateLimit } from "@/lib/rateLimit";
 import { studentForCode, markCodeUsed } from "@/lib/childSignIn";
 import { getRow } from "@/lib/store/db";
 import type { Account } from "@/lib/model";
@@ -14,10 +14,25 @@ import type { Account } from "@/lib/model";
  * to discover which codes exist.
  */
 export async function POST(req: NextRequest) {
-  const gate = await rateLimit("childSignIn", clientKey(req), 8, 15 * 60);
+  // The limit exists to stop abuse, not to stop guessing: a 12-character
+  // code drawn from a 30-symbol alphabet is around 10^17 combinations, so
+  // no realistic number of tries threatens it. What a tight limit DOES
+  // break is a household — one address is shared by every child in the
+  // family, and a young child mistyping a code copied off a note should
+  // not lock their siblings out. Hence a generous ceiling, and a correct
+  // code wipes the slate below, so only failures ever accumulate.
+  const who = clientKey(req);
+  const gate = await rateLimit("childSignIn", who, 20, 15 * 60);
   if (!gate.ok) {
+    const minutes = Math.max(1, Math.ceil(gate.retryAfterSeconds / 60));
     return NextResponse.json(
-      { error: "Too many tries. Please wait a few minutes and ask a parent for help." },
+      {
+        error:
+          "Too many tries. Please wait about " +
+          minutes +
+          (minutes === 1 ? " minute" : " minutes") +
+          " and try again.",
+      },
       { status: 429, headers: { "Retry-After": String(gate.retryAfterSeconds) } }
     );
   }
@@ -35,6 +50,8 @@ export async function POST(req: NextRequest) {
   const account = await getRow<Account>("accounts", student.accountId);
   if (!account) return deny();
 
+  // Correct code: forget the failed attempts that came before it.
+  await clearRateLimit("childSignIn", who);
   await markCodeUsed(student);
   await startSession(account.id, { studentId: student.id });
   return NextResponse.json({ ok: true, studentId: student.id, name: student.name });

@@ -58,7 +58,7 @@ Fixed-window rate limits are enforced server-side, in shared storage so they hol
 | Registration | 5 / hour / client |
 | Password reset request | 5 / hour / client |
 | Browser error reporting | 10 / 10 minutes / client |
-| Child sign-in code | 8 / 15 minutes / client |
+| Child sign-in code | 20 / 15 minutes / client, cleared on success |
 
 Sign-in responses are deliberately identical for "no such account" and "wrong password", so the endpoint cannot be used to enumerate which email addresses have accounts. Password-reset responses are likewise uniform.
 

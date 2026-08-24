@@ -9,7 +9,7 @@
  * across serverless instances rather than only within one process. A store
  * failure must never block a legitimate sign-in, so errors fail open.
  */
-import { getRow, putRow } from "./store/db";
+import { getRow, putRow, deleteRow } from "./store/db";
 
 const TABLE = "rateLimits";
 
@@ -71,3 +71,20 @@ export const LIMITS = {
   register: { limit: 5, windowSeconds: 60 * 60 },
   passwordReset: { limit: 5, windowSeconds: 60 * 60 },
 } as const;
+
+/**
+ * Forget a client's attempts in a bucket.
+ *
+ * Used after a SUCCESSFUL sign-in so honest mistakes never accumulate: a
+ * child who mistypes their code twice and then gets it right starts clean,
+ * rather than carrying two strikes toward a lockout for the next quarter of
+ * an hour. Only failures should count toward a limit whose purpose is to
+ * stop guessing.
+ */
+export async function clearRateLimit(bucket: string, key: string): Promise<void> {
+  try {
+    await deleteRow(TABLE, `${bucket}:${key}`);
+  } catch {
+    // Best effort: failing to clear a counter must never fail the request.
+  }
+}

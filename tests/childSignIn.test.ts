@@ -103,3 +103,28 @@ describe("storage and revocation", () => {
     expect(found?.id).not.toBe(b.id);
   });
 });
+
+describe("a child must not be locked out by their own typing", () => {
+  it("forgets failed attempts once the right code is entered", async () => {
+    const { rateLimit, clearRateLimit } = await import("@/lib/rateLimit");
+    const key = "test-family-address";
+
+    // Three fumbles at the code.
+    for (let i = 0; i < 3; i++) await rateLimit("childSignIn", key, 20, 900);
+    // Then they get it right, which clears the slate.
+    await clearRateLimit("childSignIn", key);
+
+    const after = await rateLimit("childSignIn", key, 20, 900);
+    expect(after.ok).toBe(true);
+    expect(after.remaining, "earlier mistakes still counted").toBe(19);
+  });
+
+  it("leaves room for a whole family on one address", async () => {
+    const { rateLimit } = await import("@/lib/rateLimit");
+    const key = "busy-household";
+    // Four children, a couple of fumbles each, all in one evening.
+    let last = { ok: true, remaining: 0, retryAfterSeconds: 0 };
+    for (let i = 0; i < 12; i++) last = await rateLimit("childSignIn", key, 20, 900);
+    expect(last.ok, "a family of four was locked out on one address").toBe(true);
+  });
+});
