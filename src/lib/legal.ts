@@ -21,7 +21,7 @@ export const OPERATOR = {
   service: "PEDMAS",
   site: "www.pedmas.com",
   entity: "BAAF Consulting Inc.",
-  address: "67 Masters Green Cres, Brampton, Ontario, Canada",
+  address: "67 Masters Green Cres, Brampton, Ontario L7A 3K6, Canada",
   /** Forwarded via name.com to a monitored inbox. */
   contactEmail: "privacy@pedmas.com",
   jurisdiction: "Ontario, Canada",
