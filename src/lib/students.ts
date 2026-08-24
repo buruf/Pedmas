@@ -12,6 +12,7 @@ import {
   nextPlacementQuestion,
   placementReport,
   startPlacement,
+  strandsToPlace,
 } from "@/engine/placement";
 import { strandChain, getSkill, strandLabel } from "@/curriculum";
 import {
@@ -109,6 +110,57 @@ export function beginPlacement(student: StudentProfile): void {
   const seed = Math.floor(Math.random() * 2 ** 30);
   student.placement = startPlacement(student.grade, seed, Date.now());
   student.placementReport = undefined;
+}
+
+/**
+ * Why this learner's placement may no longer be trustworthy.
+ *
+ * Two cases, both real. A placement taken before the assessment covered the
+ * whole curriculum measured only a handful of strands, so the learner is
+ * positioned on incomplete evidence. And a placement that ended early — a
+ * run of wrong answers, or a child tapping through — decided a lot from
+ * very little. Neither is visible to a parent unless we say so.
+ */
+export function placementConcern(student: StudentProfile): string | null {
+  if (!student.placedAt) return null;
+  const expected = strandsToPlace(student.grade).length;
+  const assessed = Object.keys(student.strandLevels ?? {}).length;
+  if (assessed > 0 && assessed < expected) {
+    return `This placement measured ${assessed} of ${expected} areas of maths. Retaking it will check the rest.`;
+  }
+  if (student.placement?.endedEarly) {
+    return `This placement ended early after ${student.placement.asked} questions, so the starting point was decided from very little. Retaking it may find a better fit.`;
+  }
+  return null;
+}
+
+/**
+ * Start the placement again from scratch.
+ *
+ * Skills the learner genuinely mastered through practice are KEPT — they
+ * earned those, and a retake is about re-measuring the starting point, not
+ * erasing work. Skills merely *assumed* mastered by the previous placement
+ * are cleared, because those were inferences from the very assessment being
+ * redone; keeping them would let stale conclusions survive their own retake.
+ */
+export function resetPlacement(student: StudentProfile): { kept: number; cleared: number } {
+  let kept = 0;
+  let cleared = 0;
+  for (const [id, state] of Object.entries(student.skills ?? {})) {
+    if (state.assumed) {
+      delete student.skills[id];
+      cleared++;
+    } else if (state.mastered) {
+      kept++;
+    }
+  }
+  student.strandLevels = {};
+  student.pointers = {};
+  student.placementReport = undefined;
+  student.placedAt = undefined;
+  student.activeSession = undefined;
+  beginPlacement(student);
+  return { kept, cleared };
 }
 
 export function placementCurrent(student: StudentProfile, region: Region = "INTL") {

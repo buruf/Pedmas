@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAccount, isResponse, sessionStudentId } from "@/lib/api";
-import { studentsOf } from "@/lib/students";
+import { studentsOf, placementConcern } from "@/lib/students";
 import { ensureAccountRegion } from "@/lib/regionServer";
 
 export async function GET() {
@@ -34,6 +34,9 @@ export async function GET() {
       // Whether this child can sign in on their own. The code itself is
       // never sent — only its hash is stored.
       signInEnabled: Boolean(s.signIn?.codeHash),
+      // Set when the stored placement is not trustworthy any more, so the
+      // parent can be offered a retake rather than having to suspect it.
+      placementConcern: placementConcern(s),
     })),
   });
 }

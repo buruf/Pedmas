@@ -17,6 +17,7 @@ interface Me {
     placed: boolean;
     streak: number;
     signInEnabled: boolean;
+    placementConcern: string | null;
   }[];
 }
 
@@ -97,6 +98,21 @@ export default function HomeHub() {
                 </PrimaryButton>
               )}
             </div>
+            {s.placed && s.placementConcern && (
+              <div className="mt-3 rounded-xl border border-warn-600/40 bg-warn-100 px-3 py-2">
+                <p className="text-xs text-ink-700">{s.placementConcern}</p>
+                <button
+                  className="btn mt-2 rounded-lg border border-warn-600/50 bg-white px-2.5 py-1 text-xs font-bold text-warn-600 hover:border-warn-600"
+                  onClick={async () => {
+                    if (!confirm(`Retake the placement test for ${s.name}? Skills they have already mastered through practice are kept.`)) return;
+                    await fetch(`/api/students/${s.id}/placement/retake`, { method: "POST" }).catch(() => undefined);
+                    router.push(`/placement/${s.id}`);
+                  }}
+                >
+                  Retake placement
+                </button>
+              </div>
+            )}
             {s.placed && (
               <ChildSignInCard
                 studentId={s.id}
