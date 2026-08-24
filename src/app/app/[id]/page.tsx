@@ -29,6 +29,7 @@ interface StudentPayload {
         progress: number;
       } | null;
     }[];
+    gradeProgress: { grade: number; mastered: number; total: number };
     focus: {
       id: string;
       name: string;
@@ -105,7 +106,7 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
             </div>
             <div className="mt-0.5 text-sm text-brand-100">
               {p.focus
-                ? `${p.focus.strandName} · Step ${p.focus.stage} of 5 — ${p.focus.stageLabel}`
+                ? `${p.focus.strandName} · Stage ${p.focus.stage} of 5 — ${p.focus.stageLabel}`
                 : "12 questions · picked for exactly where you are"}
             </div>
             {p.focus && (
@@ -140,38 +141,30 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
           <Card>
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-ink-900">My Mathematics</h2>
+                <h2 className="font-bold text-ink-900">Grade {p.gradeProgress.grade}</h2>
                 <p className="mt-0.5 text-xs text-ink-500">
-                  Where you are in each area. Different grades in different areas is normal — you
-                  work on one at a time.
+                  You are working through Grade {p.gradeProgress.grade}. Finish every skill here and
+                  Grade {p.gradeProgress.grade + 1} opens.
                 </p>
               </div>
               <GhostButton href={`/app/${id}/path`} className="!px-3 !py-1.5 text-xs">
                 View my path
               </GhostButton>
             </div>
-            <div className="space-y-4">
-              {p.strands.map((s) => (
-                <div key={s.strandId}>
-                  <div className="mb-1 flex items-baseline justify-between">
-                    <span className="text-sm font-semibold text-ink-900">{s.strandName}</span>
-                    <span className="text-xs font-semibold text-ink-500">Grade {s.level}</span>
-                  </div>
-                  <ProgressBar value={s.percent} />
-                  {s.currentSkill && (
-                    <div className="mt-1 text-xs text-ink-500">
-                      {p.focus?.id === s.currentSkill.id ? (
-                        <span className="font-semibold text-brand-700">
-                          ★ Working on this now: {s.currentSkill.name}
-                        </span>
-                      ) : (
-                        <>Next up: {s.currentSkill.name}</>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <div className="mt-4">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="font-semibold text-ink-900">
+                  {p.gradeProgress.mastered} of {p.gradeProgress.total} skills mastered
+                </span>
+                <span className="text-xs text-ink-500">
+                  {Math.round((p.gradeProgress.mastered / Math.max(1, p.gradeProgress.total)) * 100)}%
+                </span>
+              </div>
+              <div className="mt-2">
+                <ProgressBar
+                  value={Math.round((p.gradeProgress.mastered / Math.max(1, p.gradeProgress.total)) * 100)}
+                />
+              </div>            </div>
           </Card>
         </div>
         <div className="space-y-4">

@@ -82,8 +82,10 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
         <Card className="pop-in">
           <h1 className="text-2xl font-extrabold text-ink-900">Your Starting Point</h1>
           <p className="mt-1 text-sm text-ink-500">
-            PEDMAS uses this profile to create your personalized practice. Every strand starts
-            exactly where you&rsquo;re ready to learn.
+            This is what the test found in each area. PEDMAS starts you at the earliest grade
+            that still has work in it, and you will complete that whole grade — one skill at a
+            time, in order — before the next one opens. Anything you already showed you know is
+            skipped, not repeated.
           </p>
           <div className="mt-5 overflow-hidden rounded-xl border border-ink-100">
             <table className="w-full text-sm">

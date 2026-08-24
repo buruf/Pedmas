@@ -61,7 +61,10 @@ export function StatusPill({ status }: { status: string }) {
     Practicing: "bg-blue-50 text-blue-600",
     "Ready to Learn": "bg-ink-100 text-ink-700",
     Current: "bg-brand-600 text-white",
+    // Where the strand resumes once the current topic is mastered.
+    "Next up": "bg-brand-50 text-brand-700",
     Locked: "bg-ink-100 text-ink-500",
+    Upcoming: "bg-ink-100 text-ink-500",
   };
   return (
     <span

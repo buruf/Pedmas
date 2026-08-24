@@ -1,18 +1,17 @@
 /**
- * Daily practice mixer: one topic at a time.
+ * Daily practice mixer: one grade at a time, one skill at a time.
  *
- * A session is a small number of due spaced reviews, then the rest of the
- * sitting on a single skill, carried day after day until it is mastered —
- * at which point the next topic begins. Nothing else is mixed in.
+ * A learner works the skills of their current grade in curriculum order —
+ * Grade 2 is Addition Within 100, then Addition Within 1,000, then
+ * Regrouping — mastering each before the next begins. When every skill of
+ * the grade is mastered, the next grade opens.
  *
- * This replaced a mixer that spread twelve questions across five topics.
- * Three questions on a brand-new skill is not enough practice to master
- * anything, so a child could work every day and watch "0 skills mastered"
- * never move. Review survives because it is the opposite of a distraction:
- * without it, a topic that was mastered decays back to unmastered, and
- * "master it, then move on" would quietly stop being true.
+ * A session is therefore any genuinely due spaced reviews, then the whole
+ * rest of the sitting on that single skill. Review survives because it is
+ * the opposite of a distraction: without it a mastered topic decays back to
+ * unmastered, and "master it, then move on" quietly stops being true.
  */
-import { getSkill, nextSkillInStrand, strandChain, strandEntrySkill } from "@/curriculum";
+import { allSkills, getSkill, nextSkillInStrand, strandChain, strandEntrySkill } from "@/curriculum";
 import type { Skill } from "@/curriculum/types";
 import { generateQuestion, generateErrorAnalysis } from "./generate";
 import type { Question } from "./types";
@@ -75,51 +74,68 @@ export function currentSkillFor(learner: LearnerState, strandId: string): Skill 
   return skill;
 }
 
-/** How many skills in this strand the learner has genuinely mastered. */
-function masteredInStrand(learner: LearnerState, strandId: string): number {
-  return strandChain(strandId).filter((s) => {
-    const st = learner.skills[s.id];
-    return st?.mastered && !st.assumed;
-  }).length;
+/**
+ * The grade the learner is currently working through.
+ *
+ * A single number, not a level per strand. Placement decides where to
+ * start; from then on the learner completes a whole grade before the next
+ * one opens, which is how a curriculum is actually sequenced and how a
+ * parent expects to read progress.
+ *
+ * Derived rather than stored: it is simply the earliest grade that still
+ * has unmastered work, floored at where placement put the learner. That
+ * keeps it self-correcting — nothing to migrate, and no stored pointer can
+ * drift out of step with what has actually been mastered.
+ */
+export function currentGradeFor(learner: LearnerState): number {
+  const levels = Object.values(learner.strandLevels);
+  // The weakest area sets the floor: a grade is not finished until every
+  // strand in it is. Anything the learner already proved is marked mastered
+  // by placement, so stronger strands are skipped rather than repeated.
+  const floor = levels.length ? Math.min(...levels) : learner.grade;
+  for (const skill of allSkills()) {
+    if (skill.grade < floor) continue;
+    if (!learner.skills[skill.id]?.mastered) return skill.grade;
+  }
+  return 12;
 }
 
-/**
- * The single topic today is about.
- *
- * One topic at a time, carried until it is mastered, then the next — so a
- * child always knows what they are working on and something actually gets
- * finished. Spreading twelve questions over five topics gave three each,
- * which is not enough practice to master anything: the old mixer looked
- * adaptive and felt like it never moved.
- *
- * Which topic comes next is decided by *progress*, not by placement level:
- * levels are written once at placement and never change, so ordering by
- * level alone would pin a child to one strand forever. Fewest-mastered-first
- * means finishing a topic naturally hands the next turn to another strand.
- */
+/** Every skill of a grade, in the order the curriculum teaches them. */
+export function skillsInGrade(grade: number): Skill[] {
+  return allSkills().filter((s) => s.grade === grade);
+}
+
+/** How far through the current grade the learner is. */
+export function gradeProgress(learner: LearnerState): { grade: number; mastered: number; total: number } {
+  const grade = currentGradeFor(learner);
+  const skills = skillsInGrade(grade);
+  return {
+    grade,
+    mastered: skills.filter((s) => learner.skills[s.id]?.mastered).length,
+    total: skills.length,
+  };
+}
+
 export interface FocusChoice {
   skill: Skill;
   /** True when this is a prerequisite pulled in because the next skill is struggling. */
   isRepair: boolean;
 }
 
+/**
+ * The one skill today is about: the next unmastered skill of the current
+ * grade, in curriculum order.
+ *
+ * So a learner starting Grade 2 works Addition Within 100, masters it, then
+ * Addition Within 1,000, and so on until Grade 2 is finished — then Grade 3
+ * opens. One thing at a time, in the order the subject is actually built.
+ */
 export function focusSkillFor(learner: LearnerState): FocusChoice | undefined {
-  const strandIds = Object.keys(learner.strandLevels);
-  if (!strandIds.length) return undefined;
-
-  const ranked = [...strandIds].sort((a, b) => {
-    const byMastered = masteredInStrand(learner, a) - masteredInStrand(learner, b);
-    if (byMastered !== 0) return byMastered;
-    const byLevel = (learner.strandLevels[a] ?? learner.grade) - (learner.strandLevels[b] ?? learner.grade);
-    if (byLevel !== 0) return byLevel;
-    return a.localeCompare(b); // stable: the topic must not wander day to day
-  });
-
-  for (const strandId of ranked) {
-    const skill = currentSkillFor(learner, strandId);
-    if (!skill) continue;
-    // A struggling skill means its prerequisite is the real thing to work on.
-    // That is still one topic — just the right one.
+  const grade = currentGradeFor(learner);
+  for (const skill of skillsInGrade(grade)) {
+    if (learner.skills[skill.id]?.mastered) continue;
+    // A struggling skill means its prerequisite is the real work. Still one
+    // topic — just the right one.
     const state = stateFor(learner, skill.id);
     if (state.needsRepair && skill.prereqs[0]) {
       const prereq = getSkill(skill.prereqs[0]);

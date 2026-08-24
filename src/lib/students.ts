@@ -14,7 +14,13 @@ import {
   startPlacement,
 } from "@/engine/placement";
 import { strandChain, getSkill, strandLabel } from "@/curriculum";
-import { buildPracticeSession, currentSkillFor, focusSkillFor, SESSION_SIZE } from "@/engine/practice";
+import {
+  buildPracticeSession,
+  currentSkillFor,
+  focusSkillFor,
+  gradeProgress,
+  SESSION_SIZE,
+} from "@/engine/practice";
 import { assumedMastered, newSkillState, recordAttempt, skillProgress } from "@/engine/mastery";
 import { isCorrect, dedupKey } from "@/engine/validate";
 import { stageLabelFor, generateQuestion } from "@/engine/generate";
@@ -482,7 +488,17 @@ export function progressSummary(student: StudentProfile, timeZone?: string) {
       }
     : null;
 
+  // Progress is read as "how far through this grade", because that is the
+  // unit the learner actually completes before anything else opens.
+  const grade = gradeProgress({
+    grade: student.grade,
+    strandLevels: student.strandLevels,
+    pointers: student.pointers,
+    skills: student.skills,
+  });
+
   return {
+    gradeProgress: grade,
     focus,
     strands,
     masteredCount: masteredSkills.length,

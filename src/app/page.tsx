@@ -6,9 +6,9 @@ import { StudentIllustration } from "@/components/StudentIllustration";
 
 const STEPS = [
   { icon: "🎯", title: "Find Your Level", text: "A short adaptive placement finds what you already know — strand by strand, not one number." },
-  { icon: "🧠", title: "Practice the Right Skills", text: "Daily practice targets exactly what you're ready to learn, never busywork." },
+  { icon: "🧠", title: "One Skill at a Time", text: "You work on a single skill until you have mastered it — never four things at once." },
   { icon: "🏅", title: "Master Each Concept", text: "You advance by demonstrating mastery across sessions — not by finishing a lesson." },
-  { icon: "🚀", title: "Move Forward", text: "Master a skill and the next one unlocks, following real prerequisite chains." },
+  { icon: "🚀", title: "Finish a Grade, Open the Next", text: "Master every skill in your grade and the next grade opens. No gaps left behind." },
   { icon: "🔄", title: "Keep It Fresh", text: "Spaced review brings skills back at 2 days, 1 week, 3 weeks — so mastery sticks." },
 ];
 
@@ -155,16 +155,17 @@ export default function HomePage() {
       <section id="adapts" className="mx-auto max-w-6xl px-4 py-14">
         <div className="grid gap-8 md:grid-cols-2 md:items-center">
           <div>
-            <h2 className="text-3xl font-extrabold text-ink-900">Mathematics that adapts to you</h2>
+            <h2 className="text-3xl font-extrabold text-ink-900">One skill at a time, in the right order</h2>
             <p className="mt-3 text-ink-700">
               A Grade 6 student is rarely &ldquo;a Grade 6 math student&rdquo; in every strand.
               They might be Grade 7 in geometry and still growing into Grade 5 fractions —
               and that&rsquo;s normal.
             </p>
             <p className="mt-3 text-ink-700">
-              PEDMAS builds a per-strand profile from your placement, practices each strand
-              at the right level, repairs missing prerequisites when you struggle, and only
-              advances you when mastery is demonstrated — the way a great tutor would.
+              PEDMAS tests every area, then starts you at the earliest grade that still has work
+              in it. From there it is one skill at a time, in the order the subject is built:
+              master it, move to the next, finish the grade, open the next one. Nothing is skipped,
+              and nothing you have already proved is repeated.
             </p>
             <div className="mt-5">
               <PrimaryButton href={signupsOpen ? "/signup" : "/curriculum"}>
@@ -173,7 +174,7 @@ export default function HomePage() {
             </div>
           </div>
           <Card>
-            <div className="text-sm font-bold text-ink-900">School Grade ≠ Mathematical Ability</div>
+            <div className="text-sm font-bold text-ink-900">The test finds where to start</div>
             <div className="mt-3 space-y-2 text-sm">
               {[
                 ["Number Sense", "Grade 6", "Mastered"],
@@ -199,7 +200,8 @@ export default function HomePage() {
               ))}
             </div>
             <p className="mt-3 text-xs text-ink-500">
-              One student, four different levels — each practiced where it should be.
+              The weakest area decides the starting grade, so no gap is skipped. Everything already
+              proved is marked done and never repeated.
             </p>
           </Card>
         </div>

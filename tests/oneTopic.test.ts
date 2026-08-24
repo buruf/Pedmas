@@ -37,18 +37,16 @@ describe("one topic at a time", () => {
     expect(new Set(days).size, `topic wandered across days: ${days.join(", ")}`).toBe(1);
   });
 
-  it("moves to a different strand's topic once the first is mastered", () => {
+  it("moves to the next skill of the same grade, in curriculum order", () => {
     const state = learner();
     const first = focusSkillFor(state)!.skill;
 
-    // Master it, the way the engine would.
     state.skills[first.id] = { ...newSkillState(first.id), mastered: true, masteredAt: NOW, stage: 5, stageMastered: 5 };
 
     const next = focusSkillFor(state)!.skill;
     expect(next.id).not.toBe(first.id);
-    expect(next.strandId, "the next topic should come from a different strand").not.toBe(first.strandId);
+    expect(next.grade, "progression must stay inside the grade until it is finished").toBe(first.grade);
   });
-
   it("works through topics one at a time without repeating a mastered one", () => {
     const state = learner();
     const seen: string[] = [];
