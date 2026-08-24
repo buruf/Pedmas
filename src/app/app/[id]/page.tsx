@@ -107,7 +107,7 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
             <div className="mt-0.5 text-sm text-brand-100">
               {p.focus
                 ? `${p.focus.strandName} · Stage ${p.focus.stage} of 5 — ${p.focus.stageLabel}`
-                : "12 questions · picked for exactly where you are"}
+                : "Your next session is ready."}
             </div>
             {p.focus && (
               <div className="mt-2 text-xs text-brand-100">
