@@ -218,6 +218,8 @@ export interface AnswerResult {
   stageAdvanced?: boolean;
   skillMastered?: boolean;
   skillName?: string;
+  /** Set when mastery freed the rest of the session for the next skill. */
+  nextSkillName?: string;
 }
 
 /**
@@ -319,7 +321,8 @@ export function answerCurrent(
   student: StudentProfile,
   input: string,
   usedHint: boolean,
-  timeZone?: string
+  timeZone?: string,
+  region?: Region
 ): AnswerResult | null {
   const session = student.activeSession;
   if (!session || session.completedAt) return null;
@@ -368,6 +371,16 @@ export function answerCurrent(
       result.stageAdvanced = outcome.stageAdvanced;
       result.skillMastered = outcome.skillMastered;
       result.skillName = skill.name;
+
+      // Mastered mid-session: hand the rest of the sitting to the next
+      // skill instead of drilling one already finished. Without this a
+      // quick learner spends the remainder of every session on work they
+      // have just proved, which is exactly the busywork the progression is
+      // meant to avoid — and it costs them a day per skill.
+      if (outcome.skillMastered) {
+        const moved = refillAfterMastery(student, session, region);
+        if (moved) result.nextSkillName = moved;
+      }
     }
     session.index += 1;
     if (session.index >= session.items.length) {
@@ -379,6 +392,51 @@ export function answerCurrent(
     result.steps = [item.question.hint];
   }
   return result;
+}
+
+/**
+ * Replace the not-yet-answered part of a session with the next skill.
+ *
+ * Returns the new skill's name when the session moved on, so the client can
+ * celebrate the mastery and announce what is next. Reviews already served
+ * are left alone; only the unanswered tail is rebuilt.
+ */
+function refillAfterMastery(
+  student: StudentProfile,
+  session: PracticeSessionState,
+  region?: Region
+): string | null {
+  const remaining = session.items.length - (session.index + 1);
+  if (remaining <= 0) return null;
+
+  const learner = {
+    grade: student.grade,
+    strandLevels: student.strandLevels,
+    pointers: student.pointers,
+    skills: student.skills,
+  };
+  const next = focusSkillFor(learner);
+  if (!next) return null;
+
+  const fresh = buildPracticeSession(learner, {
+    now: Date.now(),
+    seed: Math.floor(Math.random() * 2 ** 30),
+    size: remaining,
+    region,
+  }).filter((i) => !i.isReview);
+  if (!fresh.length) return null;
+
+  session.items = [
+    ...session.items.slice(0, session.index + 1),
+    ...fresh.map((i) => ({
+      question: i.question,
+      purpose: i.purpose,
+      isReview: i.isReview,
+      attempts: 0,
+      usedHint: false,
+    })),
+  ];
+  return next.skill.name;
 }
 
 function completeSession(

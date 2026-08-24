@@ -112,9 +112,9 @@ export default function OnboardingPage() {
                 onChange={(e) => setSessionLength(e.target.value as typeof sessionLength)}
                 className="mt-1"
               >
-                <option value="short">Short — 8 questions</option>
-                <option value="standard">Standard — 12 questions</option>
-                <option value="long">Long — 16 questions</option>
+                <option value="short">Short — 10 questions</option>
+                <option value="standard">Standard — 16 questions</option>
+                <option value="long">Long — 24 questions</option>
               </select>
             </label>
             <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">

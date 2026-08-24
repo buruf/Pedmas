@@ -92,7 +92,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   await ensureAccountRegion(account);
   const body = await req.json().catch(() => null);
   if (typeof body?.answer !== "string") return bad("An answer is required.");
-  const result = answerCurrent(student, body.answer, Boolean(body.usedHint), account.timezone);
+  // The region is needed here too: mastering a skill mid-session refills the
+  // rest of the sitting with the next skill, which must render in the same
+  // measurement system the learner has been reading all along.
+  const answerRegion = await ensureAccountRegion(account);
+  const result = answerCurrent(
+    student,
+    body.answer,
+    Boolean(body.usedHint),
+    account.timezone,
+    answerRegion
+  );
   if (!result) return bad("No active question.", 409);
   await saveStudent(student);
   return NextResponse.json(result);

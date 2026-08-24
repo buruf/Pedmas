@@ -18,7 +18,7 @@ import type { Question } from "./types";
 import type { Region } from "@/lib/region";
 import { newSkillState, reviewsDue, type SkillState } from "./mastery";
 
-export const SESSION_SIZE = 12;
+export const SESSION_SIZE = 16;
 
 export type QuestionPurpose =
   | "Current skill"

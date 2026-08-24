@@ -190,14 +190,22 @@ export const DEFAULT_PREFERENCES: LearningPreferences = {
 };
 
 /** Questions in a session, from the chosen length. */
+/**
+ * Questions in a session.
+ *
+ * Standard is 16 because of how mastery is earned: five stages needing four
+ * good attempts each is twenty questions, so a sitting of twelve leaves a
+ * learner stranded mid-skill and adds a whole day per skill. Sixteen clears
+ * the stages in one sitting, leaving only the second-session confirmation.
+ */
 export function sessionSizeFor(prefs: LearningPreferences | undefined): number {
   switch (prefs?.sessionLength) {
     case "short":
-      return 8;
+      return 10;
     case "long":
-      return 16;
+      return 24;
     default:
-      return 12;
+      return 16;
   }
 }
 

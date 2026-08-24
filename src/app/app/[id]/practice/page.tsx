@@ -40,6 +40,8 @@ interface AnswerPayload {
   stageAdvanced?: boolean;
   skillMastered?: boolean;
   skillName?: string;
+  /** Set when mastery freed the rest of the session for the next skill. */
+  nextSkillName?: string;
 }
 
 export default function PracticePage({ params }: { params: Promise<{ id: string }> }) {
@@ -294,7 +296,9 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
             {(feedback.stageAdvanced || feedback.skillMastered) && (
               <div className="mt-4 rounded-2xl bg-brand-600 px-4 py-3 text-white pop-in">
                 {feedback.skillMastered
-                  ? `🏅 Skill mastered: ${feedback.skillName}! It moves into spaced review now.`
+                  ? feedback.nextSkillName
+                    ? `🏅 ${feedback.skillName} mastered! Next up: ${feedback.nextSkillName} — starting now.`
+                    : `🏅 Skill mastered: ${feedback.skillName}! It moves into spaced review now.`
                   : `⬆️ Stage up in ${feedback.skillName}! The questions level up with you.`}
               </div>
             )}

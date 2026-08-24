@@ -43,11 +43,13 @@ describe("age-appropriate presentation", () => {
 describe("learning preferences (spec §2)", () => {
   it("changes the session length rather than just recording a choice", async () => {
     const { sessionSizeFor, DEFAULT_PREFERENCES } = await import("@/lib/model");
-    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "short" })).toBe(8);
-    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "standard" })).toBe(12);
-    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "long" })).toBe(16);
+    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "short" })).toBe(10);
+    // Standard is 16: mastery needs twenty good attempts across five stages,
+    // so a shorter sitting strands a learner mid-skill and costs a whole day.
+    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "standard" })).toBe(16);
+    expect(sessionSizeFor({ ...DEFAULT_PREFERENCES, sessionLength: "long" })).toBe(24);
     // A student created before preferences existed still gets a session.
-    expect(sessionSizeFor(undefined)).toBe(12);
+    expect(sessionSizeFor(undefined)).toBe(16);
   });
 
   it("lets plain mode suppress celebration at any age", async () => {
