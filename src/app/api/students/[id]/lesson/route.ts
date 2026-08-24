@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
 import { markLessonSeen, saveStudent, studentFor } from "@/lib/students";
 import { LESSON_KEYS } from "@/lib/lessons";
 
@@ -8,6 +8,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const account = await requireAccount();
   if (isResponse(account)) return account;
   const { id } = await ctx.params;
+  // A child session may reach only its own record; anything else is 404,
+  // which reveals nothing about whether a sibling exists.
+  const scope = await guardStudentScope(id);
+  if (scope) return scope;
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
 

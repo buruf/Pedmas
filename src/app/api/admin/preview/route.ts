@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { getSkill } from "@/curriculum";
 import { generateSet, stageLabelFor } from "@/engine/generate";
 import { validateRaw, dedupKey } from "@/engine/validate";
 
 /** Admin: generate a validated sample of questions for a skill+stage. */
 export async function GET(req: NextRequest) {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   if (account.role !== "ADMIN") return bad("Admin only.", 403);
   const skillId = req.nextUrl.searchParams.get("skillId") ?? "";

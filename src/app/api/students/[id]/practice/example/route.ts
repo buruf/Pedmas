@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
 import { studentFor, workedExampleFor } from "@/lib/students";
 import { entitlementFor } from "@/lib/billing/entitlement";
 
@@ -11,6 +11,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const account = await requireAccount();
   if (isResponse(account)) return account;
   const { id } = await ctx.params;
+  // A child session may reach only its own record; anything else is 404,
+  // which reveals nothing about whether a sibling exists.
+  const scope = await guardStudentScope(id);
+  if (scope) return scope;
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
   if (!entitlementFor(account).active) return bad("Subscription required.", 402);

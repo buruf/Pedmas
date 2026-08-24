@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAccount, isResponse } from "@/lib/api";
+import { requireParent, isResponse } from "@/lib/api";
 import { studentsOf } from "@/lib/students";
 import { entitlementFor } from "@/lib/billing/entitlement";
 import { billingConfigProblems, isBillingConfigured } from "@/lib/billing/stripe";
@@ -16,7 +16,7 @@ import {
 
 /** Billing status for the pricing and billing screens. */
 export async function GET() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
 
   const children = (await studentsOf(account)).length;

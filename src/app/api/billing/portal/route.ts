@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { createPortalSession } from "@/lib/billing/service";
 
 /** Stripe Customer Portal: card updates, plan changes and cancellation. */
 export async function POST() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   try {
     const result = await createPortalSession(account);

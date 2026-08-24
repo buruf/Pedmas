@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { createStudent, studentsOf } from "@/lib/students";
 import { MAX_CHILDREN, canAddChild } from "@/lib/billing/plan";
 import { syncSeats } from "@/lib/billing/service";
 
 export async function GET() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   const students = await studentsOf(account);
   return NextResponse.json(
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   const body = await req.json().catch(() => null);
   if (!body?.name || !body?.grade) return bad("Name and grade are required.");

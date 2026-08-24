@@ -106,13 +106,17 @@ function cookieOptions() {
   };
 }
 
-export async function startSession(accountId: string): Promise<string> {
+export async function startSession(
+  accountId: string,
+  opts: { studentId?: string } = {}
+): Promise<string> {
   const token = newId("sess") + randomBytes(24).toString("hex");
   const session: AuthSession = {
     id: token,
     accountId,
     createdAt: Date.now(),
     expiresAt: Date.now() + SESSION_TTL,
+    ...(opts.studentId ? { studentId: opts.studentId } : {}),
   };
   await putRow("authSessions", token, session);
   const jar = await cookies();
@@ -128,13 +132,25 @@ export async function endSession(): Promise<void> {
   jar.set(COOKIE, "", { ...cookieOptions(), maxAge: 0 });
 }
 
-export async function currentAccount(): Promise<Account | null> {
+/**
+ * The live session and its account.
+ *
+ * Callers that touch anything sensitive must look at `studentId`: when it is
+ * set, a child signed in with their own code and the session is scoped to
+ * that child alone.
+ */
+export async function currentAuth(): Promise<{ account: Account; session: AuthSession } | null> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
   const session = await getRow<AuthSession>("authSessions", token);
   if (!session || session.expiresAt < Date.now()) return null;
-  return (await getRow<Account>("accounts", session.accountId)) ?? null;
+  const account = await getRow<Account>("accounts", session.accountId);
+  return account ? { account, session } : null;
+}
+
+export async function currentAccount(): Promise<Account | null> {
+  return (await currentAuth())?.account ?? null;
 }
 
 /**

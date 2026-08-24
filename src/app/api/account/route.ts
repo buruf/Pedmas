@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAccount, isResponse } from "@/lib/api";
+import { requireParent, isResponse } from "@/lib/api";
 import { endSession } from "@/lib/auth";
 import { eraseAccount } from "@/lib/retention";
 
@@ -12,7 +12,7 @@ import { eraseAccount } from "@/lib/retention";
  * the privacy policy states.
  */
 export async function DELETE() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
 
   // eraseAccount is the single erasure path, shared with the dormancy purge:

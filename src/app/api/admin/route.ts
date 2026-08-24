@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { allRows } from "@/lib/store/db";
 import type { Account, StudentProfile } from "@/lib/model";
 import { GRADES, allSkills } from "@/curriculum";
@@ -7,7 +7,7 @@ import { lessonEffectiveness } from "@/lib/lessonEffect";
 import { recentErrors } from "@/lib/errors";
 
 export async function GET() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   if (account.role !== "ADMIN") return bad("Admin only.", 403);
   const accounts = await allRows<Account>("accounts");

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { studentsOf } from "@/lib/students";
 import { createCheckoutSession } from "@/lib/billing/service";
 import { MAX_CHILDREN } from "@/lib/billing/plan";
@@ -7,7 +7,7 @@ import { billingConfigProblems } from "@/lib/billing/stripe";
 
 /** Start a subscription. Seats always follow the real child count. */
 export async function POST() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
 
   // Say what is actually wrong rather than "try again", which invites a

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
 import { deleteStudent, progressSummary, studentFor } from "@/lib/students";
 
 export async function GET(
@@ -9,6 +9,10 @@ export async function GET(
   const account = await requireAccount();
   if (isResponse(account)) return account;
   const { id } = await ctx.params;
+  // A child session may reach only its own record; anything else is 404,
+  // which reveals nothing about whether a sibling exists.
+  const scope = await guardStudentScope(id);
+  if (scope) return scope;
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
   return NextResponse.json({
@@ -34,6 +38,10 @@ export async function DELETE(
   const account = await requireAccount();
   if (isResponse(account)) return account;
   const { id } = await ctx.params;
+  // A child session may reach only its own record; anything else is 404,
+  // which reveals nothing about whether a sibling exists.
+  const scope = await guardStudentScope(id);
+  if (scope) return scope;
   const removed = await deleteStudent(account, id);
   if (!removed) return bad("Student not found.", 404);
   return NextResponse.json({ ok: true });

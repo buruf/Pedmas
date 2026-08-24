@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo, Card, PrimaryButton, GhostButton } from "@/components/ui";
 import { api } from "@/lib/client";
+import { ChildSignInCard } from "@/components/ChildSignInCard";
 
 interface Me {
   name: string;
   role: string;
-  students: { id: string; name: string; grade: number; placed: boolean; streak: number }[];
+  students: {
+    id: string;
+    name: string;
+    grade: number;
+    placed: boolean;
+    streak: number;
+    signInEnabled: boolean;
+  }[];
 }
 
 export default function HomeHub() {
@@ -17,7 +25,7 @@ export default function HomeHub() {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api<Me>("/api/auth/me")
       .then((m) => {
         if (m.students.length === 1 && m.role === "STUDENT") {
@@ -29,6 +37,8 @@ export default function HomeHub() {
       })
       .catch(() => router.replace("/login"));
   }, [router]);
+
+  useEffect(load, [load]);
 
   if (error) return <p className="p-8 text-err-600">{error}</p>;
   if (!me) return <div className="grid min-h-screen place-items-center text-ink-500">Loading…</div>;
@@ -87,6 +97,14 @@ export default function HomeHub() {
                 </PrimaryButton>
               )}
             </div>
+            {s.placed && (
+              <ChildSignInCard
+                studentId={s.id}
+                name={s.name}
+                enabled={s.signInEnabled}
+                onChanged={load}
+              />
+            )}
           </Card>
         ))}
         <Link

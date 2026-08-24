@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { beginEnrolment, confirmEnrolment, disableMfa, regenerateRecoveryCodes, mfaEnabled } from "@/lib/mfa";
 import { clientKey, rateLimit } from "@/lib/rateLimit";
 
@@ -12,7 +12,7 @@ import { clientKey, rateLimit } from "@/lib/rateLimit";
  * so a hijacked session cannot quietly remove the protection.
  */
 export async function GET() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   return NextResponse.json({
     enabled: mfaEnabled(account),
@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   if (account.role !== "ADMIN") return bad("Two-factor authentication is available for admin accounts.", 403);
 

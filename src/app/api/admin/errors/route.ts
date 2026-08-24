@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireAccount, isResponse, bad } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { dismissError } from "@/lib/errors";
 
 /** Dismiss one error group; POST throws on purpose to prove the monitoring works. */
 export async function DELETE(req: Request) {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   if (account.role !== "ADMIN") return bad("Admin only.", 403);
   const id = new URL(req.url).searchParams.get("id");
@@ -18,7 +18,7 @@ export async function DELETE(req: Request) {
  * monitor is to watch it catch one; this is the button that feeds it.
  */
 export async function POST() {
-  const account = await requireAccount();
+  const account = await requireParent();
   if (isResponse(account)) return account;
   if (account.role !== "ADMIN") return bad("Admin only.", 403);
   throw new Error("Test error from the admin console — monitoring is working if you can read this in the Errors panel.");

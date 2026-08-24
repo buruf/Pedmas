@@ -86,6 +86,12 @@ export interface AuthSession {
   accountId: string;
   createdAt: number;
   expiresAt: number;
+  /**
+   * Set when a CHILD signed in with their own code rather than the parent.
+   * Such a session may reach only this student's own learning — never
+   * billing, account settings, deletion, or a sibling.
+   */
+  studentId?: string;
 }
 
 export interface SessionItemState {
@@ -140,6 +146,12 @@ export interface StudentProfile {
   streak: { count: number; lastDay: string };
   /** Lesson key -> when it was first completed, so it is taught once. */
   lessonsSeen?: Record<string, number>;
+  /**
+   * The child's own sign-in code, issued by the parent. Stored only as a
+   * hash — the code itself is shown once and cannot be recovered, exactly
+   * like a password-reset token.
+   */
+  signIn?: { codeHash: string; createdAt: number; lastUsedAt?: number };
   /**
    * Learning preferences (spec §2). Only settings that genuinely change the
    * product live here — a preference that does nothing is worse than none,

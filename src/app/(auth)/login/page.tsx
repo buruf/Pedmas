@@ -129,6 +129,10 @@ export default function LoginPage() {
           </PrimaryButton>
         </form>
         <p className="mt-4 text-center text-sm text-ink-500">
+          Are you a student?{" "}
+          <Link href="/student" className="font-semibold text-brand-600">Use your code</Link>
+        </p>
+        <p className="mt-4 text-center text-sm text-ink-500">
           <Link href="/forgot" className="font-semibold text-brand-600">Forgot your password?</Link>
         </p>
         <p className="mt-2 text-center text-sm text-ink-500">
