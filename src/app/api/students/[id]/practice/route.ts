@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
+import { requireAccount, isResponse, bad, guardStudentScope, sessionStudentId } from "@/lib/api";
 import {
   answerCurrent,
   ensureSession,
@@ -13,12 +13,20 @@ import { toClientQuestion } from "@/lib/model";
 import { ensureAccountRegion } from "@/lib/regionServer";
 import { entitlementFor, lockMessage } from "@/lib/billing/entitlement";
 
-/** 402 with the reason, so the client can show the right upgrade prompt. */
-function locked(account: Parameters<typeof entitlementFor>[0]) {
+/**
+ * 402 with the reason, so the client can show the right prompt.
+ *
+ * `child` matters: a signed-in child must not be shown pricing or asked to
+ * start a trial. They cannot act on it, and putting a payment wall in front
+ * of a ten-year-old is the wrong thing to show a child regardless. The page
+ * uses this to say "ask a grown-up" instead.
+ */
+async function locked(account: Parameters<typeof entitlementFor>[0]) {
   const e = entitlementFor(account);
   if (e.active) return null;
+  const child = Boolean(await sessionStudentId());
   return NextResponse.json(
-    { error: lockMessage(e), locked: true, reason: e.reason },
+    { error: lockMessage(e), locked: true, reason: e.reason, child },
     { status: 402 }
   );
 }
@@ -35,7 +43,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
   if (!student.placedAt) return bad("Placement comes first.", 409);
-  const gate = locked(account);
+  const gate = await locked(account);
   if (gate) return gate;
   const region = await ensureAccountRegion(account);
   const session = ensureSession(student, account.timezone, region);
@@ -79,7 +87,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (scope) return scope;
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
-  const gate = locked(account);
+  const gate = await locked(account);
   if (gate) return gate;
   await ensureAccountRegion(account);
   const body = await req.json().catch(() => null);

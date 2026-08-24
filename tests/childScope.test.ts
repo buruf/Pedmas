@@ -143,3 +143,21 @@ describe("payloads are scoped too, not only routes", () => {
     expect(source, "a child must not receive the account email").toMatch(/scopedStudentId \? undefined : account\.email/);
   });
 });
+
+describe("a locked child never sees a payment wall", () => {
+  it("tells the practice route to answer child-aware when access is locked", () => {
+    const route = readFileSync(join(process.cwd(), "src/app/api/students/[id]/practice/route.ts"), "utf8");
+    expect(route, "the 402 must derive whether a child is asking").toMatch(
+      /const child = Boolean\(await sessionStudentId\(\)\)/
+    );
+    expect(route, "and must carry it in the body").toMatch(/locked: true, reason: e\.reason, child/);
+  });
+
+  it("shows a child an ask-a-grown-up screen with no pricing", () => {
+    const page = readFileSync(join(process.cwd(), "src/app/app/[id]/practice/page.tsx"), "utf8");
+    const childBranch = page.slice(page.indexOf("if (locked && lockedForChild)"), page.indexOf("if (locked) {"));
+    expect(childBranch, "child lock branch missing").toContain("Ask a grown-up");
+    expect(childBranch, "a child was offered pricing").not.toContain("/pricing");
+    expect(childBranch, "a child was asked to start a trial").not.toMatch(/free trial/i);
+  });
+});

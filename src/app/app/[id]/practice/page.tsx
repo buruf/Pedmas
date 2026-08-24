@@ -50,6 +50,8 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [locked, setLocked] = useState<string | null>(null);
+  // A child signed in with their own code cannot buy anything.
+  const [lockedForChild, setLockedForChild] = useState(false);
   const [example, setExample] = useState<WorkedExampleData | null>(null);
   const [exampleBusy, setExampleBusy] = useState(false);
   /** Lesson the student chose to skip or has finished this session. */
@@ -61,7 +63,10 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
     api<PracticePayload>(`/api/students/${id}/practice`)
       .then(setState)
       .catch((e) => {
-        if (e instanceof ApiError && e.status === 402) setLocked(e.message);
+        if (e instanceof ApiError && e.status === 402) {
+          setLocked(e.message);
+          setLockedForChild(Boolean((e.data as { child?: boolean }).child));
+        }
         else setError(e instanceof Error ? e.message : "Failed to load");
       });
   }, [id]);
@@ -77,7 +82,10 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
       });
       setFeedback(res);
     } catch (e) {
-      if (e instanceof ApiError && e.status === 402) setLocked(e.message);
+      if (e instanceof ApiError && e.status === 402) {
+          setLocked(e.message);
+          setLockedForChild(Boolean((e.data as { child?: boolean }).child));
+        }
       else setError(e instanceof Error ? e.message : "Failed to submit");
     } finally {
       setBusy(false);
@@ -94,6 +102,31 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
     setFeedback(null);
     setRetryNonce((n) => n + 1);
   };
+
+  if (locked && lockedForChild) {
+    // No pricing, no "start a trial": a child cannot act on either, and a
+    // payment wall is not something to put in front of a child at all.
+    return (
+      <Shell id={id}>
+        <Card className="pop-in text-center">
+          <div className="text-4xl">⏳</div>
+          <h1 className="mt-2 text-2xl font-extrabold text-ink-900">Almost ready!</h1>
+          <p className="mx-auto mt-2 max-w-md text-ink-700">
+            Your practice is not switched on yet. Ask a grown-up to finish setting up PEDMAS,
+            and your questions will be here waiting.
+          </p>
+          <div className="mt-5 flex justify-center">
+            <Link
+              href={`/app/${id}`}
+              className="btn inline-flex min-h-11 items-center rounded-xl border border-ink-100 bg-white px-4 text-sm font-semibold text-ink-700 hover:border-brand-300"
+            >
+              Back to my dashboard
+            </Link>
+          </div>
+        </Card>
+      </Shell>
+    );
+  }
 
   if (locked) {
     return (
