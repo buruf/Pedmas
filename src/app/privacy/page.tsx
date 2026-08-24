@@ -39,12 +39,6 @@ export default function PrivacyPage() {
       <h1 className="text-3xl font-black text-ink-900">Privacy Policy</h1>
       <p className="mt-1 text-sm text-ink-500">Effective {POLICY_EFFECTIVE}</p>
 
-      <div className="mt-6 rounded-xl border border-warn-600/30 bg-warn-100 px-4 py-3 text-sm text-ink-700">
-        ⚠️ <strong>Draft pending legal review.</strong> This policy describes what the service
-        actually does, but it has not been reviewed by a lawyer and the operator details are not
-        yet complete. It must not be relied on until both are done.
-      </div>
-
       <P>
         {OPERATOR.service} is a mathematics learning service at {OPERATOR.site}, operated by{" "}
         {OPERATOR.entity}. This policy explains what we collect, why we collect it, and how you
@@ -133,7 +127,7 @@ export default function PrivacyPage() {
           "Stripe — payment processing and subscription status.",
           "Neon — the database that stores account and learning records.",
           "Vercel — hosting and delivery of the website.",
-          "Resend — sending service email such as password resets and progress summaries.",
+          "Brevo — sending service email such as password resets and progress summaries.",
         ]}
       />
       <P>

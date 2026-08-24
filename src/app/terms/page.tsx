@@ -30,12 +30,6 @@ export default function TermsPage() {
       <h1 className="text-3xl font-black text-ink-900">Terms of Service</h1>
       <p className="mt-1 text-sm text-ink-500">Effective {POLICY_EFFECTIVE}</p>
 
-      <div className="mt-6 rounded-xl border border-warn-600/30 bg-warn-100 px-4 py-3 text-sm text-ink-700">
-        ⚠️ <strong>Draft pending legal review.</strong> These terms describe how the service
-        actually works, but they have not been reviewed by a lawyer and the operator details and
-        governing jurisdiction are not yet complete.
-      </div>
-
       <P>
         These terms are the agreement between you and {OPERATOR.entity} for use of{" "}
         {OPERATOR.service} at {OPERATOR.site}. By creating an account you accept them.

@@ -73,10 +73,12 @@ describe("policy documents", () => {
 
   it("names an operator and a contact for privacy requests", () => {
     // A privacy policy with no contactable operator is not a usable one.
-    // These start as bracketed placeholders and must be replaced before
-    // launch; this only checks the fields exist and are non-empty.
+    // Operator details were completed 2026-08-23; a bracketed placeholder
+    // reappearing here would silently invalidate the published policies.
     for (const field of [OPERATOR.entity, OPERATOR.address, OPERATOR.contactEmail, OPERATOR.jurisdiction]) {
       expect(field.trim().length).toBeGreaterThan(0);
+      expect(field).not.toMatch(/\[|to be (completed|confirmed)/i);
     }
+    expect(OPERATOR.contactEmail).toMatch(/^[^@\s]+@[^@\s]+$/);
   });
 });
