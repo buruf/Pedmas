@@ -69,3 +69,24 @@ export async function POST(req: Request) {
     children: created,
   });
 }
+
+/**
+ * Delete a family the admin created in error — a typo'd email cannot be
+ * signed into and no mail will ever reach it, so the honest fix is removal.
+ * Runs through eraseAccount, the same erasure path as self-service deletion,
+ * and refuses to touch an ADMIN account.
+ */
+export async function DELETE(req: Request) {
+  const admin = await requireParent();
+  if (isResponse(admin)) return admin;
+  if (admin.role !== "ADMIN") return bad("Admin only.", 403);
+  const accountId = new URL(req.url).searchParams.get("accountId");
+  if (!accountId) return bad("Missing accountId.");
+  const { getRow } = await import("@/lib/store/db");
+  const { eraseAccount } = await import("@/lib/retention");
+  const target = await getRow<import("@/lib/model").Account>("accounts", accountId);
+  if (!target) return bad("Account not found.", 404);
+  if (target.role === "ADMIN") return bad("The admin account cannot be deleted this way.", 400);
+  const { childrenRemoved } = await eraseAccount(target, { context: "admin:family-delete" });
+  return NextResponse.json({ ok: true, email: target.email, childrenRemoved });
+}
