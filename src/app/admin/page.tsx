@@ -116,6 +116,12 @@ export default function AdminPage() {
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [curGrade, setCurGrade] = useState(0);
+  const [famName, setFamName] = useState("");
+  const [famEmail, setFamEmail] = useState("");
+  const [famKids, setFamKids] = useState<{ name: string; grade: number }[]>([{ name: "", grade: 3 }]);
+  const [famResult, setFamResult] = useState<{ email: string; password: string; children: { name: string; grade: number }[] } | null>(null);
+  const [famError, setFamError] = useState("");
+  const [famBusy, setFamBusy] = useState(false);
   const [curriculum, setCurriculum] = useState<{
     id: string; name: string; strandName: string; prereqs: string[];
     stages: string[]; lessonTitle: string | null; disabled: boolean;
@@ -438,6 +444,57 @@ export default function AdminPage() {
 
       <Card className="mt-6">
         <h2 className="font-bold text-ink-900">Families</h2>
+        {famResult ? (
+          <div className="mt-3 rounded-xl border-2 border-brand-300 bg-brand-50 px-4 py-3">
+            <p className="text-sm font-bold text-ink-900">Family created — write this down now</p>
+            <p className="mt-2 text-sm text-ink-700">
+              Email: <span className="font-mono font-bold">{famResult.email}</span>
+              <br />
+              Password: <span className="select-all font-mono font-bold text-brand-700">{famResult.password}</span>
+            </p>
+            <p className="mt-1 text-xs text-ink-500">
+              Shown once — only a hash is stored. Children: {famResult.children.map((c) => `${c.name} (G${c.grade})`).join(", ")}.
+              Complimentary access is already granted.
+            </p>
+            <button className="btn mt-2 rounded-lg border border-brand-300 px-3 py-1 text-xs font-bold text-brand-700" onClick={() => { setFamResult(null); location.reload(); }}>
+              I have saved it
+            </button>
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-ink-100 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Add a test family</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <input placeholder="Parent name" value={famName} onChange={(e) => setFamName(e.target.value)} />
+              <input placeholder="Parent email" type="email" value={famEmail} onChange={(e) => setFamEmail(e.target.value)} />
+            </div>
+            {famKids.map((k, i) => (
+              <div key={i} className="mt-2 flex gap-2">
+                <input placeholder={`Child ${i + 1} name`} value={k.name} onChange={(e) => setFamKids(famKids.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+                <select value={k.grade} onChange={(e) => setFamKids(famKids.map((x, j) => (j === i ? { ...x, grade: Number(e.target.value) } : x)))} className="!w-28">
+                  {GRADES.map((g) => (
+                    <option key={g.grade} value={g.grade}>Grade {g.grade}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {famKids.length < 4 && (
+                <button className="btn rounded-lg border border-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-500" onClick={() => setFamKids([...famKids, { name: "", grade: 3 }])}>+ child</button>
+              )}
+              <PrimaryButton className="!px-3 !py-1.5 text-xs" disabled={famBusy} onClick={async () => {
+                setFamBusy(true); setFamError("");
+                try {
+                  const res = await api<NonNullable<typeof famResult>>("/api/admin/families", { method: "POST", json: { parentName: famName, email: famEmail, children: famKids } });
+                  setFamResult(res);
+                } catch (e) { setFamError(e instanceof Error ? e.message : "Failed"); }
+                finally { setFamBusy(false); }
+              }}>
+                {famBusy ? "Creating…" : "Create family"}
+              </PrimaryButton>
+              {famError && <span className="text-xs text-err-600">{famError}</span>}
+            </div>
+          </div>
+        )}
         <p className="mt-1 text-xs text-ink-500">
           Locked families are listed first. Granting access unlocks practice without touching
           Stripe — use it for test families and beta users. Every grant records who made it.
