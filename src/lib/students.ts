@@ -417,6 +417,8 @@ export function answerCurrent(
           eventuallyCorrect: correct,
           usedHint: item.usedHint,
           sessionId: session.id,
+          // Timing feeds the fluency gate for fact-recall families.
+          elapsedMs: item.elapsedMs,
         },
         { isReview: item.isReview }
       );
@@ -607,8 +609,23 @@ export function progressSummary(student: StudentProfile, timeZone?: string) {
     skills: student.skills,
   });
 
+  // Skills the engine is actively repairing. The engine has always known
+  // these (needsRepair drives prerequisite diversion); the parent could not
+  // see them, which meant the product was quietly doing its best work —
+  // catching a wobble early — without ever getting credit for it.
+  const needsAttention = Object.values(student.skills)
+    .filter((st) => st.needsRepair && !st.mastered)
+    .map((st) => getSkill(st.skillId))
+    .filter((sk): sk is NonNullable<typeof sk> => Boolean(sk))
+    .slice(0, 5)
+    .map((sk) => ({
+      name: sk.name,
+      strandName: strandLabel(sk.strandId),
+    }));
+
   return {
     gradeProgress: grade,
+    needsAttention,
     focus,
     strands,
     masteredCount: masteredSkills.length,

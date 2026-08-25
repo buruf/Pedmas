@@ -29,6 +29,15 @@ interface AdminPayload {
     mastered: number;
     struggling: number;
   }[];
+  flags: {
+    id: string;
+    skillId: string;
+    stage: number;
+    prompt: string;
+    reason: string;
+    flaggedBy: string;
+    flaggedAt: number;
+  }[];
   families: {
     id: string;
     email: string;
@@ -106,6 +115,21 @@ export default function AdminPage() {
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewError, setPreviewError] = useState("");
+  const [curGrade, setCurGrade] = useState(0);
+  const [curriculum, setCurriculum] = useState<{
+    id: string; name: string; strandName: string; prereqs: string[];
+    stages: string[]; lessonTitle: string | null; disabled: boolean;
+  }[] | null>(null);
+
+  const loadCurriculum = async (g: number) => {
+    setCurGrade(g);
+    setCurriculum(null);
+    if (!g) return;
+    try {
+      const res = await api<{ skills: NonNullable<typeof curriculum> }>(`/api/admin/curriculum?grade=${g}`);
+      setCurriculum(res.skills);
+    } catch { setCurriculum([]); }
+  };
 
   useEffect(() => {
     api<AdminPayload>("/api/admin")
@@ -251,6 +275,22 @@ export default function AdminPage() {
             {preview.questions.map((q, i) => (
               <div key={i} className="rounded-xl border border-ink-100 p-4">
                 <div className="flex items-start justify-between gap-3">
+                  <button
+                    className="btn order-2 shrink-0 rounded-lg border border-ink-100 px-2 py-1 text-xs font-semibold text-ink-500 hover:border-warn-600 hover:text-warn-600"
+                    title="Flag this question for review"
+                    onClick={async () => {
+                      const reason = prompt("What is wrong with this question?");
+                      if (!reason) return;
+                      await fetch("/api/admin/flags", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ skillId, stage, prompt: q.prompt, answer: q.answer, reason }),
+                      }).catch(() => undefined);
+                      alert("Flagged. It will stay in the Flagged questions list until resolved.");
+                    }}
+                  >
+                    ⚑ Flag
+                  </button>
                   <div>
                     <div className="text-sm text-ink-500"><MathText text={q.instruction} /></div>
                     <div className="mt-1 text-lg font-bold text-ink-900"><MathText text={q.prompt} /></div>
@@ -342,6 +382,61 @@ export default function AdminPage() {
       <MfaPanel />
 
       <Card className="mt-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-bold text-ink-900">Curriculum</h2>
+            <p className="mt-0.5 text-xs text-ink-500">
+              Browse the hierarchy. Content changes are made in the repository (versioned and
+              tested); here you can pull a misbehaving skill from rotation instantly. Disabled
+              skills are skipped by practice, reviews and grade completion.
+            </p>
+          </div>
+          <select value={curGrade} onChange={(e) => void loadCurriculum(Number(e.target.value))} className="!w-auto">
+            <option value={0}>Pick a grade…</option>
+            {GRADES.map((g) => (
+              <option key={g.grade} value={g.grade}>Grade {g.grade}</option>
+            ))}
+          </select>
+        </div>
+        {curriculum && (
+          <div className="mt-3 max-h-96 space-y-1.5 overflow-y-auto pr-1">
+            {curriculum.map((k) => (
+              <div key={k.id} className={`rounded-xl border px-3 py-2 ${k.disabled ? "border-err-600/40 bg-err-100/40" : "border-ink-100"}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0 text-sm">
+                    <span className="font-medium text-ink-900">{k.name}</span>
+                    <span className="ml-1.5 text-xs text-ink-500">{k.strandName}</span>
+                    {k.lessonTitle && <span className="ml-1.5 text-xs text-brand-700">📘 {k.lessonTitle}</span>}
+                    <div className="mt-0.5 text-xs text-ink-500">
+                      Stages: {k.stages.join(" → ")}
+                    </div>
+                    {k.prereqs.length > 0 && (
+                      <div className="text-xs text-ink-500">Needs: {k.prereqs.join(", ")}</div>
+                    )}
+                  </div>
+                  <button
+                    className={`btn shrink-0 rounded-lg border px-2.5 py-1 text-xs font-semibold ${k.disabled ? "border-ok-600/50 text-ok-600 hover:bg-ok-100" : "border-ink-100 text-ink-500 hover:border-err-600 hover:text-err-600"}`}
+                    onClick={async () => {
+                      const reason = k.disabled ? "" : prompt(`Why disable ${k.name}?`);
+                      if (!k.disabled && !reason) return;
+                      await fetch("/api/admin/curriculum", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ skillId: k.id, disabled: !k.disabled, reason }),
+                      }).catch(() => undefined);
+                      void loadCurriculum(curGrade);
+                    }}
+                  >
+                    {k.disabled ? "Re-enable" : "Disable"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="mt-6">
         <h2 className="font-bold text-ink-900">Families</h2>
         <p className="mt-1 text-xs text-ink-500">
           Locked families are listed first. Granting access unlocks practice without touching
@@ -385,6 +480,38 @@ export default function AdminPage() {
           )}
         </div>
       </Card>
+
+      {(data.flags ?? []).length > 0 && (
+        <Card className="mt-6">
+          <h2 className="font-bold text-ink-900">Flagged questions</h2>
+          <p className="mt-1 text-xs text-ink-500">
+            Questions flagged during review. They stay here until resolved, so a concern
+            spotted one day is not lost the next.
+          </p>
+          <div className="mt-3 space-y-2">
+            {data.flags.map((fl) => (
+              <div key={fl.id} className="flex items-start justify-between gap-3 rounded-xl border border-warn-600/30 bg-warn-100/40 px-3 py-2">
+                <div className="min-w-0 text-sm">
+                  <div className="font-medium text-ink-900"><MathText text={fl.prompt} /></div>
+                  <div className="mt-0.5 text-xs text-ink-500">
+                    {fl.skillId} · stage {fl.stage} · “{fl.reason}” — {fl.flaggedBy},{" "}
+                    {new Date(fl.flaggedAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <button
+                  className="btn shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 hover:text-ok-600"
+                  onClick={async () => {
+                    await fetch(`/api/admin/flags?id=${encodeURIComponent(fl.id)}`, { method: "DELETE" }).catch(() => undefined);
+                    location.reload();
+                  }}
+                >
+                  Resolve
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="mt-6">
         <div className="flex items-center justify-between">

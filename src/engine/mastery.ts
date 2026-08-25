@@ -5,6 +5,7 @@
  * stage 5 plus multi-session consistency. Mastered skills enter spaced
  * review; a failed review returns the skill to active practice.
  */
+import { getSkill } from "@/curriculum";
 
 export interface AttemptRecord {
   ts: number;
@@ -13,6 +14,44 @@ export interface AttemptRecord {
   eventuallyCorrect: boolean;
   usedHint: boolean;
   sessionId: string;
+  /** Time on the question, capped upstream so a break is not counted. */
+  elapsedMs?: number;
+}
+
+/**
+ * Families where mastery includes SPEED, not just accuracy (spec §13:
+ * "speed/fluency where appropriate").
+ *
+ * Appropriate means fact recall: number facts a child will lean on in every
+ * later skill. A child solving 7×8 by repeated addition can be perfectly
+ * accurate, but that strategy collapses under the load of long division —
+ * accuracy alone would call this mastered and set them up to struggle.
+ * Everywhere else, thinking time is legitimate and speed is NOT judged:
+ * a geometry proof taken slowly is diligence, not weakness.
+ */
+export const FLUENCY_FAMILIES = new Set([
+  "fact-family",
+  "mental-math",
+  "mult-facts",
+  "div-facts",
+  "add-sub",
+]);
+
+/** Median time of recent correct answers must come in under this. */
+export const FLUENT_MS = 15_000;
+
+/**
+ * Fluency verdict over the recent window. Fails OPEN when timings are
+ * missing (attempts recorded before timing existed) — an engine change
+ * must never retroactively lock a learner who was doing fine.
+ */
+export function isFluent(family: string, recent: AttemptRecord[]): boolean {
+  if (!FLUENCY_FAMILIES.has(family)) return true;
+  const timed = recent.filter((a) => a.correct && typeof a.elapsedMs === "number");
+  if (timed.length < 2) return true;
+  const times = timed.map((a) => a.elapsedMs!).sort((x, y) => x - y);
+  const median = times[Math.floor(times.length / 2)];
+  return median <= FLUENT_MS;
 }
 
 export interface ReviewState {
@@ -103,8 +142,13 @@ export function recordAttempt(
   const enough = recent.length >= 4;
   const accurate = firstTry >= Math.max(3, Math.ceil(recent.length * 0.8));
   const independent = hints <= 1;
+  // Fact-recall skills must also be QUICK: right-but-slow means the child
+  // is deriving, not recalling, and the strategy collapses under later
+  // skills that lean on these facts. Other families ignore timing entirely.
+  const family = getSkill(state.skillId)?.family ?? "";
+  const fluent = isFluent(family, recent);
 
-  if (enough && accurate && independent) {
+  if (enough && accurate && independent && fluent) {
     state.stageMastered = Math.max(state.stageMastered, state.stage);
     if (state.stage < 5) {
       state.stage += 1;

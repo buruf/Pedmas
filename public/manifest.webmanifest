@@ -1,0 +1,12 @@
+{
+  "name": "PEDMAS — Master Math. One Skill at a Time.",
+  "short_name": "PEDMAS",
+  "description": "Adaptive K-12 mathematics: placement, one skill at a time, mastery, spaced review.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

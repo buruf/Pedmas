@@ -6,6 +6,7 @@ import { GRADES, allSkills } from "@/curriculum";
 import { lessonEffectiveness } from "@/lib/lessonEffect";
 import { recentErrors } from "@/lib/errors";
 import { entitlementFor } from "@/lib/billing/entitlement";
+import type { QuestionFlag } from "@/app/api/admin/flags/route";
 
 export async function GET() {
   const account = await requireParent();
@@ -47,5 +48,6 @@ export async function GET() {
       .sort((a, b) => Number(a.unlocked) - Number(b.unlocked)),
     lessons: lessonEffectiveness(students),
     errors: await recentErrors(),
+    flags: (await allRows<QuestionFlag>("questionFlags")).sort((a, b) => b.flaggedAt - a.flaggedAt),
   });
 }

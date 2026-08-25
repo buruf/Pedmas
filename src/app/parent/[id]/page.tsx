@@ -20,6 +20,7 @@ interface StudentPayload {
     }[];
     masteredCount: number;
     masteredRecent: string[];
+    needsAttention: { name: string; strandName: string }[];
     streak: { count: number };
     accuracy: number | null;
     timeSpent: { today: number; last7Days: number; allTime: number };
@@ -58,6 +59,25 @@ export default function ParentDashboard({ params }: { params: Promise<{ id: stri
       <p className="mt-1 text-ink-500">
         {data.name} · Grade {data.grade} at school
       </p>
+
+      {p.needsAttention.length > 0 && (
+        <Card className="mt-6 border-warn-600/30 bg-warn-100/50">
+          <h2 className="font-bold text-ink-900">Getting extra help right now</h2>
+          <p className="mt-1 text-sm text-ink-700">
+            {data.name} found these tricky, so PEDMAS has stepped back to the building-block
+            skills first. This is the system working, not a problem — but these are the areas
+            where your encouragement lands best this week.
+          </p>
+          <ul className="mt-3 space-y-1.5">
+            {p.needsAttention.map((k) => (
+              <li key={k.name} className="text-sm text-ink-900">
+                <span className="font-semibold">{k.name}</span>
+                <span className="ml-1.5 text-xs text-ink-500">{k.strandName}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {focus && strongest && (
         <Card className="mt-6 border-brand-200 bg-brand-50">

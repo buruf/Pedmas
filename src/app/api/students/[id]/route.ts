@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { loadOverrides } from "@/engine/overrides";
 import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
 import { deleteStudent, progressSummary, studentFor } from "@/lib/students";
 
@@ -13,6 +14,7 @@ export async function GET(
   // which reveals nothing about whether a sibling exists.
   const scope = await guardStudentScope(id);
   if (scope) return scope;
+  await loadOverrides();
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
   return NextResponse.json({
@@ -42,6 +44,7 @@ export async function DELETE(
   // which reveals nothing about whether a sibling exists.
   const scope = await guardStudentScope(id);
   if (scope) return scope;
+  await loadOverrides();
   const removed = await deleteStudent(account, id);
   if (!removed) return bad("Student not found.", 404);
   return NextResponse.json({ ok: true });

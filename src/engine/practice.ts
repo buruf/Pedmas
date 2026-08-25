@@ -17,6 +17,7 @@ import { generateQuestion, generateErrorAnalysis } from "./generate";
 import type { Question } from "./types";
 import type { Region } from "@/lib/region";
 import { newSkillState, reviewsDue, type SkillState } from "./mastery";
+import { isSkillDisabled } from "./overrides";
 
 export const SESSION_SIZE = 16;
 
@@ -95,6 +96,9 @@ export function currentGradeFor(learner: LearnerState): number {
   const floor = levels.length ? Math.min(...levels) : learner.grade;
   for (const skill of allSkills()) {
     if (skill.grade < floor) continue;
+    // A disabled skill is out of rotation: it cannot be practised, so it
+    // must not hold a grade open either.
+    if (isSkillDisabled(skill.id)) continue;
     if (!learner.skills[skill.id]?.mastered) return skill.grade;
   }
   return 12;
@@ -108,7 +112,7 @@ export function skillsInGrade(grade: number): Skill[] {
 /** How far through the current grade the learner is. */
 export function gradeProgress(learner: LearnerState): { grade: number; mastered: number; total: number } {
   const grade = currentGradeFor(learner);
-  const skills = skillsInGrade(grade);
+  const skills = skillsInGrade(grade).filter((s) => !isSkillDisabled(s.id));
   return {
     grade,
     mastered: skills.filter((s) => learner.skills[s.id]?.mastered).length,
@@ -133,6 +137,7 @@ export interface FocusChoice {
 export function focusSkillFor(learner: LearnerState): FocusChoice | undefined {
   const grade = currentGradeFor(learner);
   for (const skill of skillsInGrade(grade)) {
+    if (isSkillDisabled(skill.id)) continue;
     if (learner.skills[skill.id]?.mastered) continue;
     // A struggling skill means its prerequisite is the real work. Still one
     // topic — just the right one.
@@ -176,7 +181,9 @@ export function buildPracticeSession(
   // already mastered, so they are not "another topic to learn" — they are
   // what stops a mastered topic quietly decaying back to unmastered. Capped
   // at two so the day still belongs to the one thing being learned.
-  const due = reviewsDue(Object.values(learner.skills), now).slice(0, 2);
+  const due = reviewsDue(Object.values(learner.skills), now)
+    .filter((st) => !isSkillDisabled(st.skillId))
+    .slice(0, 2);
   for (const st of due) push(getSkill(st.skillId), 4, "Review", true);
 
   // Everything else is one topic, carried until it is mastered.

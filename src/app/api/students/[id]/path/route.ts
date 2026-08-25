@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { loadOverrides } from "@/engine/overrides";
 import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
 import { studentFor } from "@/lib/students";
 import { stageLabelFor } from "@/engine/generate";
@@ -19,6 +20,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   // which reveals nothing about whether a sibling exists.
   const scope = await guardStudentScope(id);
   if (scope) return scope;
+  await loadOverrides();
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
 
