@@ -15,11 +15,13 @@ export function ChildSignInCard({
   studentId,
   name,
   enabled,
+  placed,
   onChanged,
 }: {
   studentId: string;
   name: string;
   enabled: boolean;
+  placed: boolean;
   onChanged: () => void;
 }) {
   const [code, setCode] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export function ChildSignInCard({
           Write this down — it is shown <strong>once</strong>. {name} enters it at{" "}
           <span className="font-semibold">pedmas.com/student</span>. It signs them in to their own
           practice only: they cannot see billing, your account, or another child.
+          {!placed && <> They&rsquo;ll start with their placement test.</>}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <GhostButton

@@ -113,14 +113,16 @@ export default function HomeHub() {
                 </button>
               </div>
             )}
-            {s.placed && (
-              <ChildSignInCard
-                studentId={s.id}
-                name={s.name}
-                enabled={s.signInEnabled}
-                onChanged={load}
-              />
-            )}
+            {/* Not gated on placement: a child signing in unplaced lands on
+                their own placement test, which is exactly right for a family
+                whose children use their own devices. */}
+            <ChildSignInCard
+              studentId={s.id}
+              name={s.name}
+              enabled={s.signInEnabled}
+              placed={s.placed}
+              onChanged={load}
+            />
           </Card>
         ))}
         <Link
