@@ -9,6 +9,7 @@ import { LESSON_COMPONENTS } from "@/components/lesson/registry";
 import { RegionText } from "@/components/lesson/RegionText";
 import type { Region } from "@/lib/region";
 import { api, ApiError } from "@/lib/client";
+import { ReportProblem } from "@/components/ReportProblem";
 import type { LessonKey } from "@/lib/lessons";
 import { styleForGrade } from "@/lib/ageBand";
 import type { ClientQuestion } from "@/lib/model";
@@ -280,6 +281,14 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
           </button>
         )}
         {example && <WorkedExample data={example} onClose={() => setExample(null)} />}
+        <ReportProblem
+          studentId={id}
+          question={{
+            id: cur.question.id,
+            stage: cur.question.stage,
+            prompt: cur.question.prompt,
+          }}
+        />
         {feedback && !feedback.moveOn && (
           <div className="mt-4 rounded-2xl border border-warn-600/30 bg-warn-100 p-4 pop-in">
             <div className="font-bold text-ink-900">Not quite — you&rsquo;ve got this. Try again!</div>

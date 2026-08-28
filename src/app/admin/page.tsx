@@ -29,6 +29,15 @@ interface AdminPayload {
     mastered: number;
     struggling: number;
   }[];
+  reports: {
+    id: string;
+    studentName: string;
+    fromChildSession: boolean;
+    category: string;
+    message: string;
+    question: { skillId: string; stage: number; prompt: string };
+    createdAt: number;
+  }[];
   flags: {
     id: string;
     skillId: string;
@@ -537,6 +546,44 @@ export default function AdminPage() {
           )}
         </div>
       </Card>
+
+      {(data.reports ?? []).length > 0 && (
+        <Card className="mt-6">
+          <h2 className="font-bold text-ink-900">Student reports</h2>
+          <p className="mt-1 text-xs text-ink-500">
+            Problems reported from inside practice. Children tap a reason (no free text, by
+            policy); parents may add a note. The question they were on is attached.
+          </p>
+          <div className="mt-3 space-y-2">
+            {data.reports.map((r) => (
+              <div key={r.id} className="flex items-start justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2">
+                <div className="min-w-0 text-sm">
+                  <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-semibold ${r.fromChildSession ? "bg-brand-100 text-brand-700" : "bg-ink-900 text-white"}`}>
+                    {r.fromChildSession ? "student" : "parent"}
+                  </span>
+                  <span className="font-medium text-ink-900">{r.category}</span>
+                  <span className="ml-1.5 text-xs text-ink-500">— {r.studentName}, {new Date(r.createdAt).toLocaleString()}</span>
+                  {r.message && <div className="mt-0.5 text-xs text-ink-700">“{r.message}”</div>}
+                  {r.question?.prompt && (
+                    <div className="mt-0.5 text-xs text-ink-500">
+                      <MathText text={r.question.prompt} /> <span className="text-ink-400">({r.question.skillId} s{r.question.stage})</span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  className="btn shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-ink-500 hover:text-ok-600"
+                  onClick={async () => {
+                    await fetch(`/api/admin/reports?id=${encodeURIComponent(r.id)}`, { method: "DELETE" }).catch(() => undefined);
+                    location.reload();
+                  }}
+                >
+                  Resolve
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {(data.flags ?? []).length > 0 && (
         <Card className="mt-6">

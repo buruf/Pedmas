@@ -49,5 +49,8 @@ export async function GET() {
     lessons: lessonEffectiveness(students),
     errors: await recentErrors(),
     flags: (await allRows<QuestionFlag>("questionFlags")).sort((a, b) => b.flaggedAt - a.flaggedAt),
+    reports: (await allRows<Record<string, unknown>>("bugReports")).sort(
+      (a, b) => Number(b.createdAt) - Number(a.createdAt)
+    ),
   });
 }
