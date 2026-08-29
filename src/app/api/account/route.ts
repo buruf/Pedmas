@@ -1,7 +1,26 @@
 import { NextResponse } from "next/server";
-import { requireParent, isResponse } from "@/lib/api";
+import { requireParent, isResponse, bad } from "@/lib/api";
 import { endSession } from "@/lib/auth";
 import { eraseAccount } from "@/lib/retention";
+import { setAccountRegion } from "@/lib/regionServer";
+
+/**
+ * PATCH: the parent's region override.
+ *
+ * Detection is a default, never a lock — an American family in Canada should
+ * still get American units, and a Canadian family behind a US-routed
+ * connection must be able to get metric back. Child sessions cannot reach
+ * this (requireParent refuses them).
+ */
+export async function PATCH(req: Request) {
+  const account = await requireParent();
+  if (isResponse(account)) return account;
+  const body = await req.json().catch(() => null);
+  const region = body?.region;
+  if (region !== "US" && region !== "INTL") return bad("Region must be US or INTL.");
+  await setAccountRegion(account, region);
+  return NextResponse.json({ ok: true, region });
+}
 
 /**
  * DELETE: erase the account and everything attached to it.

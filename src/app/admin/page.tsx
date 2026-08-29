@@ -50,6 +50,7 @@ interface AdminPayload {
   families: {
     id: string;
     email: string;
+    region: "US" | "INTL" | null;
     children: number;
     billingStatus: string | null;
     comp: { reason: string; grantedBy: string; expiresAt: number | null } | null;
@@ -520,6 +521,23 @@ export default function AdminPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <select
+                  className="rounded-lg border border-ink-100 px-1.5 py-1 text-xs font-semibold text-ink-700"
+                  value={f.region ?? ""}
+                  title="Curriculum region — US customary units vs international metric. Auto-detected from the family's first request, which a VPN gets wrong."
+                  onChange={async (e) => {
+                    await fetch("/api/admin/families", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ accountId: f.id, region: e.target.value }),
+                    }).catch(() => undefined);
+                    location.reload();
+                  }}
+                >
+                  <option value="" disabled>region?</option>
+                  <option value="US">US units</option>
+                  <option value="INTL">Metric</option>
+                </select>
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${f.unlocked ? "bg-ok-100 text-ok-700" : "bg-err-100 text-err-700"}`}>
                   {f.unlocked ? "can practise" : "locked"}
                 </span>

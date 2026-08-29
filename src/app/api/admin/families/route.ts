@@ -76,6 +76,31 @@ export async function POST(req: Request) {
  * Runs through eraseAccount, the same erasure path as self-service deletion,
  * and refuses to touch an ADMIN account.
  */
+/**
+ * PATCH: correct a family's region (US customary vs international metric).
+ *
+ * Region is normally auto-detected from the account's first request, which a
+ * VPN or oddly-routed carrier gets wrong — and a wrong region serves the
+ * wrong measurement curriculum. Unfinished practice sessions are rebuilt so
+ * the units change immediately, not tomorrow.
+ */
+export async function PATCH(req: Request) {
+  const admin = await requireParent();
+  if (isResponse(admin)) return admin;
+  if (admin.role !== "ADMIN") return bad("Admin only.", 403);
+  const body = await req.json().catch(() => null);
+  const accountId = typeof body?.accountId === "string" ? body.accountId : "";
+  const region = body?.region;
+  if (!accountId) return bad("Missing accountId.");
+  if (region !== "US" && region !== "INTL") return bad("Region must be US or INTL.");
+  const { getRow } = await import("@/lib/store/db");
+  const { setAccountRegion } = await import("@/lib/regionServer");
+  const target = await getRow<import("@/lib/model").Account>("accounts", accountId);
+  if (!target) return bad("Account not found.", 404);
+  await setAccountRegion(target, region);
+  return NextResponse.json({ ok: true, email: target.email, region });
+}
+
 export async function DELETE(req: Request) {
   const admin = await requireParent();
   if (isResponse(admin)) return admin;

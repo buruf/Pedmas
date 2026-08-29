@@ -10,6 +10,7 @@ interface Me {
   email: string;
   name: string;
   role: string;
+  region?: "US" | "INTL";
 }
 interface Child {
   id: string;
@@ -89,6 +90,38 @@ export default function AccountPage() {
           </Link>{" "}
           sets this out in full.
         </p>
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="font-bold text-ink-900">Units &amp; spelling</h2>
+        <p className="mt-2 text-sm text-ink-700">
+          This decides which measurement units your children learn — inches, feet and pounds, or
+          centimetres, metres and kilograms — and the spelling used in questions. We guess it from
+          your location, but the guess can be wrong (a VPN is enough), so you can set it here.
+          Today&rsquo;s unfinished practice refreshes with the right units straight away.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {([
+            ["INTL", "Metric (Canada, UK, and most of the world)"],
+            ["US", "US customary (United States)"],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`btn rounded-xl border-2 px-4 py-2 text-sm font-semibold transition ${
+                me?.region === value
+                  ? "border-brand-600 bg-brand-50 text-brand-800"
+                  : "border-ink-100 bg-white text-ink-700 hover:border-brand-300"
+              }`}
+              onClick={async () => {
+                await api("/api/account", { method: "PATCH", json: { region: value } }).catch(() => undefined);
+                load();
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </Card>
 
       <Card className="mt-4">

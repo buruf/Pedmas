@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
-import type { Account } from "./model";
-import { putRow } from "./store/db";
+import type { Account, StudentProfile } from "./model";
+import { putRow, studentsByAccount } from "./store/db";
 import { regionForCountry, type Region } from "./region";
 
 /**
@@ -44,4 +44,27 @@ export async function ensureAccountRegion(account: Account): Promise<Region> {
   if (!hadZone && zone) account.timezone = zone;
   await putRow("accounts", account.id, account);
   return account.region!;
+}
+
+/**
+ * Explicitly set a family's region — the override the detection above needs.
+ *
+ * Detection stamps whatever country the account's FIRST request appears to
+ * come from, and a VPN or oddly-routed carrier makes that guess wrong
+ * permanently and invisibly: a family in Canada was served American
+ * customary units this way. Questions are generated into the day's session
+ * with the region they were born under, so the fix also discards unfinished
+ * sessions — a Canadian child must not finish a sheet of inches. Recorded
+ * answers live on the student's skills, not the session, so no progress is
+ * lost.
+ */
+export async function setAccountRegion(account: Account, region: Region): Promise<void> {
+  account.region = region;
+  await putRow("accounts", account.id, account);
+  for (const s of await studentsByAccount<StudentProfile>(account.id)) {
+    if (s.activeSession && !s.activeSession.completedAt) {
+      s.activeSession = undefined;
+      await putRow("students", s.id, s);
+    }
+  }
 }

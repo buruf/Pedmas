@@ -40,6 +40,7 @@ export async function GET() {
       .map((a) => ({
         id: a.id,
         email: a.email,
+        region: a.region ?? null,
         children: students.filter((s) => s.accountId === a.id).length,
         billingStatus: a.billing?.status ?? null,
         comp: a.compAccess ? { reason: a.compAccess.reason, grantedBy: a.compAccess.grantedBy, expiresAt: a.compAccess.expiresAt ?? null } : null,
