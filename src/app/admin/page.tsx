@@ -372,7 +372,8 @@ export default function AdminPage() {
                 <th className="py-2 pr-4">Sessions</th>
                 <th className="py-2 pr-4">Mastered</th>
                 <th className="py-2 pr-4">Struggling</th>
-                <th className="py-2">Streak</th>
+                <th className="py-2 pr-4">Streak</th>
+                <th className="py-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -384,11 +385,25 @@ export default function AdminPage() {
                   <td className="py-2 pr-4">{s.sessions}</td>
                   <td className="py-2 pr-4">{s.mastered}</td>
                   <td className="py-2 pr-4">{s.struggling > 0 ? `⚠ ${s.struggling}` : "0"}</td>
-                  <td className="py-2">{s.streak > 0 ? `🔥 ${s.streak}` : "—"}</td>
+                  <td className="py-2 pr-4">{s.streak > 0 ? `🔥 ${s.streak}` : "—"}</td>
+                  <td className="py-2">
+                    {s.placed && (
+                      <button
+                        className="btn rounded-lg border border-ink-100 px-2 py-1 text-xs font-semibold text-ink-500 hover:border-warn-600/50 hover:text-warn-600"
+                        onClick={async () => {
+                          if (!confirm(`Send ${s.name} back to the placement test? Skills mastered through practice are kept.`)) return;
+                          await fetch(`/api/students/${s.id}/placement/retake`, { method: "POST" }).catch(() => undefined);
+                          location.reload();
+                        }}
+                      >
+                        Retake placement
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
               {data.students.length === 0 && (
-                <tr><td colSpan={7} className="py-4 text-center text-ink-500">No students yet.</td></tr>
+                <tr><td colSpan={8} className="py-4 text-center text-ink-500">No students yet.</td></tr>
               )}
             </tbody>
           </table>

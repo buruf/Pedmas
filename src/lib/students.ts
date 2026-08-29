@@ -174,11 +174,18 @@ export function placementCurrent(student: StudentProfile, region: Region = "INTL
   };
 }
 
-export function placementAnswer(student: StudentProfile, answer: string) {
+export function placementAnswer(
+  student: StudentProfile,
+  answer: string,
+  opts: { idk?: boolean } = {}
+) {
   if (!student.placement || student.placement.done) return null;
   const next = nextPlacementQuestion(student.placement);
   if (!next) return null;
-  const correct = isCorrect(next.question, answer);
+  // "I don't know" is an honest negative — better placement data than a
+  // lucky multiple-choice guess, which can pass a whole grade in the
+  // warm-up zone. It grades exactly like a wrong answer.
+  const correct = opts.idk ? false : isCorrect(next.question, answer);
   applyPlacementAnswer(student.placement, correct);
   let report = null;
   if (student.placement.done) {

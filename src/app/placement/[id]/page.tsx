@@ -48,12 +48,12 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
 
   useEffect(load, [load]);
 
-  const submit = async (answer: string) => {
+  const submit = async (answer: string, idk = false) => {
     setBusy(true);
     try {
       const res = await api<AnswerPayload>(`/api/students/${id}/placement`, {
         method: "POST",
-        json: { answer },
+        json: idk ? { idk: true } : { answer },
       });
       setFeedback(res);
     } catch (e) {
@@ -182,6 +182,19 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
           disabled={busy || Boolean(feedback)}
           onSubmit={(a) => void submit(a)}
         />
+        {/* An honest "don't know" places better than a lucky guess, so make
+            it a first-class answer rather than forcing children to pick
+            something at random. Hidden once feedback is up. */}
+        {!feedback && (
+          <button
+            type="button"
+            disabled={busy}
+            className="btn mt-3 w-full rounded-xl border-2 border-dashed border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-500 transition hover:border-brand-300 hover:text-brand-700"
+            onClick={() => void submit("", true)}
+          >
+            🤷 I haven&rsquo;t learned this yet
+          </button>
+        )}
         {feedback && (
           <FeedbackPanel
             correct={feedback.correct}

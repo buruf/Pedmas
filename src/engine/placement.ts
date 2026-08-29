@@ -283,8 +283,15 @@ export function applyPlacementAnswer(state: PlacementState, correct: boolean): v
     probe.testGrade < state.studentGrade || (settledAny && probe.testGrade <= known);
   // Nothing passed yet and there is room to drop: one miss on the gentlest
   // question is enough to know we are still too high. This keeps a struggling
-  // student from answering pair after pair they cannot do.
-  const searchingDown = passedGrades.length === 0 && probe.testGrade > probe.low;
+  // student from answering pair after pair they cannot do — but it must not
+  // fire in the warm-up zone. A student who has already demonstrated ability
+  // grades above this one has earned the standard two-of-three evidence rule:
+  // a Grade 12 who slipped once on a Grade 5 measurement question was being
+  // dropped two grades on that single answer.
+  const searchingDown =
+    passedGrades.length === 0 &&
+    probe.testGrade > probe.low &&
+    !(settledAny && probe.testGrade <= known);
 
   const passed = c === QUESTIONS_PER_GRADE && t === QUESTIONS_PER_GRADE ? true
     : isWarmUp && t === 1 && c === 1 ? true
@@ -307,8 +314,16 @@ export function applyPlacementAnswer(state: PlacementState, correct: boolean): v
       const stride = probe.testGrade < target
         ? Math.max(1, Math.ceil((target - probe.testGrade) / 2))
         : 1;
-      const upper = probe.testGrade + stride;
-      if (upper > probe.high || probe.outcomes[upper] === false || !gradeHasStrand(strandId, upper)) {
+      // Clamp the climb to the strand's own ceiling, then walk down past
+      // grades already failed. The stride is computed against the student's
+      // overall level, which overshoots a strand that simply ends early —
+      // measurement stops at Grade 5, and finishing on overshoot locked a
+      // Grade 12 student at Grade 3 there after a single slip.
+      let upper = Math.min(probe.testGrade + stride, probe.high);
+      while (upper > probe.testGrade && (probe.outcomes[upper] === false || !gradeHasStrand(strandId, upper))) {
+        upper -= 1;
+      }
+      if (upper <= probe.testGrade) {
         finishStrand(state, probe, probe.testGrade);
       } else {
         probe.testGrade = upper;

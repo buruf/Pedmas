@@ -51,9 +51,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const student = await studentFor(account, id);
   if (!student) return bad("Student not found.", 404);
   const body = await req.json().catch(() => null);
-  if (typeof body?.answer !== "string") return bad("An answer is required.");
+  const idk = body?.idk === true;
+  if (!idk && typeof body?.answer !== "string") return bad("An answer is required.");
   const wasPlaced = Boolean(student.placedAt);
-  const result = placementAnswer(student, body.answer);
+  const result = placementAnswer(student, idk ? "" : body.answer, { idk });
   if (!result) return bad("No placement in progress.", 409);
   await saveStudent(student);
 
