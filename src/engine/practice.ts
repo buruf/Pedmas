@@ -11,7 +11,7 @@
  * the opposite of a distraction: without it a mastered topic decays back to
  * unmastered, and "master it, then move on" quietly stops being true.
  */
-import { allSkills, getSkill, nextSkillInStrand, strandChain, strandEntrySkill } from "@/curriculum";
+import { allSkills, getSkill, nextSkillInStrand, stageCapOf, strandChain, strandEntrySkill } from "@/curriculum";
 import type { Skill } from "@/curriculum/types";
 import { generateQuestion, generateErrorAnalysis } from "./generate";
 import type { Question } from "./types";
@@ -210,8 +210,9 @@ export function buildPracticeSession(
     // rather than escalates. That keeps the day on one topic while giving it
     // enough variety to be worth twelve questions.
     const purpose: QuestionPurpose = isRepair ? "Skill builder" : "Current skill";
+    const cap = stageCapOf(skill);
     const ladder = [st.stage, st.stage - 1, st.stage + 1, st.stage - 2, st.stage + 2].filter(
-      (n, i, all) => n >= 1 && n <= 5 && all.indexOf(n) === i
+      (n, i, all) => n >= 1 && n <= cap && all.indexOf(n) === i
     );
     for (const stage of ladder) {
       // Ask until this stage stops yielding anything new, then step along.

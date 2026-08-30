@@ -5,7 +5,7 @@
  * stage 5 plus multi-session consistency. Mastered skills enter spaced
  * review; a failed review returns the skill to active practice.
  */
-import { getSkill } from "@/curriculum";
+import { getSkill, stageCapOf } from "@/curriculum";
 
 export interface AttemptRecord {
   ts: number;
@@ -117,6 +117,12 @@ export function recordAttempt(
   state.attempts.push(attempt);
   if (state.attempts.length > WINDOW) state.attempts.splice(0, state.attempts.length - WINDOW);
 
+  // A skill may scope out the top of its family's ladder (stageCapOf); a
+  // state left above the cap — e.g. after a curriculum change — would never
+  // match its own attempts again, so clamp on entry.
+  const cap = stageCapOf(getSkill(state.skillId));
+  if (state.stage > cap) state.stage = cap;
+
   if (opts.isReview && state.mastered) {
     if (attempt.correct) {
       const idx = Math.min((state.review?.intervalIndex ?? 0) + 1, REVIEW_INTERVALS_DAYS.length - 1);
@@ -125,8 +131,8 @@ export function recordAttempt(
       // Retention slipped: back to active practice at a late stage.
       state.mastered = false;
       state.needsRepair = true;
-      state.stage = 4;
-      state.stageMastered = Math.min(state.stageMastered, 3);
+      state.stage = Math.min(4, cap);
+      state.stageMastered = Math.min(state.stageMastered, state.stage - 1);
       state.review = undefined;
       outcome.returnedToPractice = true;
     }
@@ -150,13 +156,13 @@ export function recordAttempt(
 
   if (enough && accurate && independent && fluent) {
     state.stageMastered = Math.max(state.stageMastered, state.stage);
-    if (state.stage < 5) {
+    if (state.stage < cap) {
       state.stage += 1;
       outcome.stageAdvanced = true;
     } else {
-      // Stage 5 cleared — mastery needs consistency across sessions.
+      // Final stage cleared — mastery needs consistency across sessions.
       const lateSessions = new Set(
-        state.attempts.filter((a) => a.stage >= 4 && a.correct).map((a) => a.sessionId)
+        state.attempts.filter((a) => a.stage >= Math.max(1, cap - 1) && a.correct).map((a) => a.sessionId)
       );
       if (lateSessions.size >= 2 || distinctSessions.size >= 2) {
         state.mastered = true;
@@ -182,10 +188,11 @@ export function recordAttempt(
 /** Progress within the current skill, 0..100, for UI bars. */
 export function skillProgress(state: SkillState): number {
   if (state.mastered) return 100;
-  const base = (state.stageMastered / 5) * 100;
+  const cap = stageCapOf(getSkill(state.skillId));
+  const base = (Math.min(state.stageMastered, cap) / cap) * 100;
   const atStage = state.attempts.filter((a) => a.stage === state.stage).slice(-6);
   const partial = atStage.length
-    ? (atStage.filter((a) => a.correct).length / 6) * (100 / 5)
+    ? (atStage.filter((a) => a.correct).length / 6) * (100 / cap)
     : 0;
   return Math.min(99, Math.round(base + partial));
 }

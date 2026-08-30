@@ -244,7 +244,7 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
           {/* Grade → strand → topic → micro-skill → stage (spec §5). */}
           {cur.question.strandName} › {cur.question.topicName} ›{" "}
           <span className="font-semibold text-brand-700">{cur.question.microSkill}</span> · Stage{" "}
-          {cur.question.stage} of 5
+          {cur.question.stage} of {cur.question.stageCount}
         </div>
         <QuestionView
               band={band}

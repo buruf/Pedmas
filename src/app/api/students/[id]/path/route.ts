@@ -3,6 +3,7 @@ import { loadOverrides } from "@/engine/overrides";
 import { requireAccount, isResponse, bad, guardStudentScope } from "@/lib/api";
 import { studentFor } from "@/lib/students";
 import { stageLabelFor } from "@/engine/generate";
+import { stageCapOf } from "@/curriculum";
 import { focusSkillFor, currentGradeFor, skillsInGrade } from "@/engine/practice";
 
 /**
@@ -42,6 +43,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       strandName: s.strandName,
       status,
       stage: state?.stage ?? 1,
+      stageCount: stageCapOf(s),
       stageLabel: status === "Current" ? stageLabelFor(s, state?.stage ?? 1) : null,
       assumed: state?.assumed ?? false,
     };

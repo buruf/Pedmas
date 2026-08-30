@@ -23,6 +23,7 @@ interface StudentPayload {
         name: string;
         grade: number;
         stage: number;
+        stageCount: number;
         stageLabel: string;
         lessonKey: string | null;
         lessonTitle: string | null;
@@ -36,6 +37,7 @@ interface StudentPayload {
       grade: number;
       strandName: string;
       stage: number;
+      stageCount: number;
       stageLabel: string;
       progress: number;
       isRepair: boolean;
@@ -106,7 +108,7 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
             </div>
             <div className="mt-0.5 text-sm text-brand-100">
               {p.focus
-                ? `${p.focus.strandName} · Stage ${p.focus.stage} of 5 — ${p.focus.stageLabel}`
+                ? `${p.focus.strandName} · Stage ${p.focus.stage} of ${p.focus.stageCount} — ${p.focus.stageLabel}`
                 : "Your next session is ready."}
             </div>
             {p.focus && (

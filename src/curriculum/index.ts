@@ -81,6 +81,20 @@ export function getSkill(id: string): Skill | undefined {
   return SKILLS.get(id);
 }
 
+/**
+ * How many of a family's five stages are in scope for this skill.
+ *
+ * A family's stage ladder attaches whole to every skill that uses it, so
+ * Grade 1 "2D Shapes" was asking polygon interior-angle sums (Grade 7–8
+ * content) at stage 5. A skill declares `maxStage` in its params to stop
+ * the ladder where its grade's curriculum stops; mastery then completes at
+ * that stage (2026 curriculum audit, tier 2).
+ */
+export function stageCapOf(skill: { params?: Record<string, unknown> } | undefined): number {
+  const v = skill?.params?.["maxStage"];
+  return typeof v === "number" && v >= 1 && v <= 5 ? Math.floor(v) : 5;
+}
+
 /** Ordered skills for a canonical strand across all grades. */
 export function strandChain(strandId: string): Skill[] {
   return CHAINS.get(strandId) ?? [];

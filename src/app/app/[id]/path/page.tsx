@@ -17,6 +17,7 @@ interface PathPayload {
     strandName: string;
     status: string;
     stage: number;
+    stageCount: number;
     stageLabel: string | null;
     assumed: boolean;
   }[];
@@ -103,7 +104,7 @@ export default function PathPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                   {k.status === "Current" && k.stageLabel && (
                     <div className="text-xs text-brand-700">
-                      Stage {k.stage} of 5 — {k.stageLabel}
+                      Stage {k.stage} of {k.stageCount} — {k.stageLabel}
                     </div>
                   )}
                   {k.assumed && k.status === "Mastered" && (

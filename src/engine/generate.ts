@@ -1,5 +1,6 @@
 import type { Question, Rng, SkillRef } from "./types";
 import type { Skill } from "@/curriculum/types";
+import { stageCapOf } from "@/curriculum";
 import { FAMILIES } from "./families";
 import { validateRaw, dedupKey } from "./validate";
 import { makeRng, randomSeed } from "./rng";
@@ -48,7 +49,9 @@ export function generateQuestion(
   if (!family) {
     throw new GenerationError(`No generator family "${skill.family}" for ${skill.id}`);
   }
-  const st = Math.max(1, Math.min(5, stage));
+  // The cap is enforced here so no caller — practice ladder, review, weekly
+  // email — can reach an out-of-scope stage for this skill.
+  const st = Math.max(1, Math.min(stageCapOf(skill), stage));
   const avoid = opts.avoid ?? new Set<string>();
   let seed = opts.seed ?? randomSeed();
   let lastReasons: string[] = [];

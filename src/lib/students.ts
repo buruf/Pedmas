@@ -14,7 +14,7 @@ import {
   startPlacement,
   strandsToPlace,
 } from "@/engine/placement";
-import { strandChain, getSkill, strandLabel } from "@/curriculum";
+import { strandChain, getSkill, stageCapOf, strandLabel } from "@/curriculum";
 import {
   buildPracticeSession,
   currentSkillFor,
@@ -558,6 +558,7 @@ export function progressSummary(student: StudentProfile, timeZone?: string) {
             name: current.name,
             grade: current.grade,
             stage: state?.stage ?? 1,
+            stageCount: stageCapOf(current),
             stageLabel: stageLabelFor(current, state?.stage ?? 1),
             // The lesson that teaches THIS skill, so a parent or child can
             // open the teaching without starting a practice session.
@@ -599,6 +600,7 @@ export function progressSummary(student: StudentProfile, timeZone?: string) {
         grade: focusChoice.skill.grade,
         strandName: strandLabel(focusChoice.skill.strandId),
         stage: focusState?.stage ?? 1,
+        stageCount: stageCapOf(focusChoice.skill),
         stageLabel: stageLabelFor(focusChoice.skill, focusState?.stage ?? 1),
         progress: focusState ? skillProgress(focusState) : 0,
         isRepair: focusChoice.isRepair,

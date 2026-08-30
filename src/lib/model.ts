@@ -3,6 +3,7 @@ import type { SkillState } from "@/engine/mastery";
 import type { Question } from "@/engine/types";
 import type { QuestionPurpose } from "@/engine/practice";
 import { localise, type Region } from "./region";
+import { getSkill, stageCapOf } from "@/curriculum";
 
 export type Role = "PARENT" | "STUDENT" | "ADMIN";
 
@@ -223,6 +224,7 @@ export interface ClientQuestion {
   microSkill: string;
   strandName: string;
   stage: number;
+  stageCount: number;
   representation: string;
 }
 
@@ -246,6 +248,7 @@ export function toClientQuestion(q: Question, region: Region = "INTL"): ClientQu
     microSkill: t(q.microSkill),
     strandName: t(q.strandName),
     stage: q.stage,
+    stageCount: stageCapOf(getSkill(q.skillId)),
     representation: q.representation,
   };
 }
