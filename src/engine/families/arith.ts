@@ -612,11 +612,16 @@ const orderOfOps: GeneratorFamily = {
     [
       "Multiply before adding",
       "Brackets first",
-      "With exponents",
+      s.params["exponents"] === false ? "Multiply before subtracting" : "With exponents",
       "All four operations",
       "Nested and combined",
     ][st - 1],
   generate(skill, stage, rng): RawQuestion {
+    // Grades 4-5 use this family before exponents are taught (CCSS 6.EE.1,
+    // Ontario Grade 7), so params.exponents === false swaps the exponent
+    // stages for equally-hard bracket/mixed forms without renumbering the
+    // ladder (2026 curriculum audit).
+    const allowExp = skill.params["exponents"] !== false;
     let expr = "";
     let ans = 0;
     if (stage === 1) {
@@ -632,10 +637,18 @@ const orderOfOps: GeneratorFamily = {
       expr = rng.chance(0.5) ? `(${a} + ${b}) × ${c}` : `${c} × (${a} − ${b < a ? b : a - 1})`;
       ans = evalExpr(expr);
     } else if (stage === 3) {
-      const a = rng.int(2, 5);
-      const b = rng.int(2, 3);
-      const c = rng.int(1, 20);
-      expr = rng.chance(0.5) ? `${a}^${b} + ${c}` : `${c} + ${a}^${b}`;
+      if (allowExp) {
+        const a = rng.int(2, 5);
+        const b = rng.int(2, 3);
+        const c = rng.int(1, 20);
+        expr = rng.chance(0.5) ? `${a}^${b} + ${c}` : `${c} + ${a}^${b}`;
+      } else {
+        const a = rng.int(2, 9);
+        const b = rng.int(2, 9);
+        const c = rng.int(1, a * b - 1);
+        const t = a * b + rng.int(1, 20);
+        expr = rng.chance(0.5) ? `${a} × ${b} − ${c}` : `${t} − ${a} × ${b}`;
+      }
       ans = evalExpr(expr);
     } else if (stage === 4) {
       const d = rng.int(2, 6);
@@ -647,10 +660,19 @@ const orderOfOps: GeneratorFamily = {
     } else {
       const a = rng.int(2, 5);
       const b = rng.int(1, 4);
-      const c = rng.int(2, 4);
-      const d = rng.int(2, 5);
-      expr = `${c} × (${a} + ${b}) − ${d}^2`;
-      ans = c * (a + b) - d * d;
+      if (allowExp) {
+        const c = rng.int(2, 4);
+        const d = rng.int(2, 5);
+        expr = `${c} × (${a} + ${b}) − ${d}^2`;
+        ans = c * (a + b) - d * d;
+      } else {
+        // c ≥ 3 keeps c × (a + b) ≥ 9 ≥ d × e, so the answer never goes negative.
+        const c = rng.int(3, 5);
+        const d = rng.int(2, 3);
+        const e = rng.int(2, 3);
+        expr = `${c} × (${a} + ${b}) − ${d} × ${e}`;
+        ans = c * (a + b) - d * e;
+      }
     }
     const steps: string[] = [];
     if (expr.includes("(")) steps.push("Brackets first.");

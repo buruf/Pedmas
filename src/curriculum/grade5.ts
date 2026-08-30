@@ -24,7 +24,7 @@ export const grade5: GradeDef = {
         { name: "Multi-digit Subtraction", family: "multi-digit", params: { op: "sub", digits: 5 } },
         { name: "Multi-digit Multiplication", family: "mult-multi", params: {} },
         { name: "Long Division", family: "long-division", params: {} },
-        { name: "Order of Operations", family: "order-of-ops", params: {} },
+        { name: "Order of Operations", family: "order-of-ops", params: { exponents: false } },
         { name: "Estimation", family: "estimation", params: {} },
         { name: "Mental Math", family: "mental-math", params: { op: "mixed" } },
       ],

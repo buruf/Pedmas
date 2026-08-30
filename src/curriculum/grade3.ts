@@ -7,9 +7,11 @@ export const grade3: GradeDef = {
       id: "number",
       name: "Number Sense",
       topics: [
-        { name: "Place Value", family: "place-value", params: { max: 10000 } },
+        // Both standards keep Grade 3 within 1,000 (CCSS 3.NBT, Ontario B1);
+        // 10,000 was Grade 4 material arriving a year early (2026 audit).
+        { name: "Place Value", family: "place-value", params: { max: 1000 } },
         { name: "Rounding", family: "rounding", params: { max: 1000 } },
-        { name: "Comparing Numbers", family: "compare-numbers", params: { max: 10000 } },
+        { name: "Comparing Numbers", family: "compare-numbers", params: { max: 1000 } },
         { name: "Number Lines", family: "number-line", params: { max: 1000 } },
         { name: "Multiples", family: "factors-multiples", params: { max: 100 } },
         { name: "Factors", family: "factors-multiples", params: { max: 100 } },

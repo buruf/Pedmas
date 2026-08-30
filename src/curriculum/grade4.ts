@@ -28,7 +28,7 @@ export const grade4: GradeDef = {
         { name: "Long Division", family: "long-division", params: {} },
         { name: "Estimation", family: "estimation", params: {} },
         { name: "Mental Math", family: "mental-math", params: { op: "mixed" } },
-        { name: "Order of Operations Introduction", family: "order-of-ops", params: {} },
+        { name: "Order of Operations Introduction", family: "order-of-ops", params: { exponents: false } },
       ],
     },
     {
