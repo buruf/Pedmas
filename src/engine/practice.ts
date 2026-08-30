@@ -49,6 +49,10 @@ function stateFor(learner: LearnerState, skillId: string): SkillState {
 /** Advance the strand pointer past mastered skills. */
 export function currentSkillFor(learner: LearnerState, strandId: string): Skill | undefined {
   let id = learner.pointers[strandId];
+  // The curriculum can remove a skill (the 2026 audit deleted duplicates);
+  // a pointer to a removed id must re-anchor at the placed level below
+  // rather than silently stalling this strand forever.
+  if (id && !getSkill(id)) id = "";
   if (!id) {
     // No pointer yet — start at the placed level for this strand, NOT at the
     // beginning of the chain. Falling back to chain[0] served Grade 1 topics

@@ -41,8 +41,6 @@ export const grade8: GradeDef = {
       id: "algebra",
       name: "Linear Relationships",
       topics: [
-        { name: "Coordinate Plane", family: "coordinate-plane", params: { kind: "identify" } },
-        { name: "Ordered Pairs", family: "coordinate-plane", params: { kind: "quadrant" } },
         { name: "Tables", family: "proportional-relationships", params: {} },
         { name: "Graphs", family: "linear-equation", params: { kind: "graph" } },
         { name: "Slope", family: "slope", params: {} },

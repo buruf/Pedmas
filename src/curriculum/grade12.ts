@@ -96,11 +96,6 @@ export const grade12: GradeDef = {
       id: "functions",
       name: "Sequences & Series",
       topics: [
-        { name: "Arithmetic Sequences", family: "sequence", params: { kind: "arith" } },
-        { name: "Geometric Sequences", family: "sequence", params: { kind: "geom" } },
-        { name: "Recursive Sequences", family: "sequence", params: { kind: "recursive" } },
-        { name: "Arithmetic Series", family: "series", params: { kind: "arith" } },
-        { name: "Geometric Series", family: "series", params: { kind: "geom" } },
         { name: "Infinite Geometric Series", family: "series", params: { kind: "infinite" } },
         { name: "Binomial Expansion", family: "binomial-theorem", params: {} },
         { name: "Binomial Theorem", family: "binomial-theorem", params: {} },

@@ -108,8 +108,6 @@ export const grade11: GradeDef = {
         { name: "Trigonometric Graphs", family: "trig-graph", params: {} },
         { name: "Trigonometric Identities", family: "trig-identity", params: { level: 1 } },
         { name: "Trigonometric Equations", family: "trig-equation", params: {} },
-        { name: "Angle Sum Identities", family: "trig-identity", params: { level: 2 } },
-        { name: "Double Angle Identities", family: "trig-identity", params: { level: 2 } },
       ],
     },
     {

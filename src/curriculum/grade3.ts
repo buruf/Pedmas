@@ -98,10 +98,7 @@ export const grade3: GradeDef = {
       topics: [
         { name: "Area", family: "perimeter-area", params: { shape: "rect" } },
         { name: "Perimeter", family: "perimeter-area", params: { shape: "rect" } },
-        { name: "Angles", family: "angles", params: { kind: "identify" } },
-        { name: "Right Angles", family: "angles", params: { kind: "identify" } },
         { name: "Quadrilaterals", family: "shapes-2d", params: { maxStage: 4 } },
-        { name: "Triangles", family: "shapes-2d", params: { maxStage: 4 } },
         { name: "Symmetry", family: "symmetry", params: {} },
       ],
     },

@@ -10,7 +10,6 @@ export const grade9: GradeDef = {
         { name: "Real Numbers", family: "real-numbers", params: {} },
         { name: "Rational Numbers", family: "int-compare", params: { rational: true } },
         { name: "Irrational Numbers", family: "real-numbers", params: {} },
-        { name: "Radicals", family: "radical-expression", params: { kind: "simplify" } },
         { name: "Exponents", family: "exponent-eval", params: {} },
       ],
     },
@@ -32,7 +31,6 @@ export const grade9: GradeDef = {
       id: "algebra",
       name: "Linear Equations",
       topics: [
-        { name: "One-step Equations", family: "one-step-eq", params: {} },
         { name: "Multi-step Equations", family: "multi-step-eq", params: { kind: "mixed" } },
         { name: "Equations with Fractions", family: "multi-step-eq", params: { kind: "fractions" } },
         { name: "Equations with Decimals", family: "multi-step-eq", params: { kind: "decimals" } },
@@ -71,15 +69,12 @@ export const grade9: GradeDef = {
         { name: "Coordinate Geometry", family: "coordinate-plane", params: { kind: "mixed" } },
         { name: "Distance", family: "coordinate-plane", params: { kind: "distance" } },
         { name: "Midpoint", family: "coordinate-plane", params: { kind: "midpoint" } },
-        { name: "Transformations", family: "transformations", params: {} },
       ],
     },
     {
       id: "stats",
       name: "Probability & Statistics",
       topics: [
-        { name: "Simple Probability", family: "probability", params: { kind: "simple" } },
-        { name: "Compound Probability", family: "probability", params: { kind: "compound" } },
         { name: "Data Distributions", family: "mc-bank", params: { bank: "distributions" } },
         { name: "Correlation", family: "scatter-correlation", params: {} },
         { name: "Statistical Reasoning", family: "mc-bank", params: { bank: "correlation" } },

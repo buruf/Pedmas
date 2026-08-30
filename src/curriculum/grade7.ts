@@ -24,7 +24,6 @@ export const grade7: GradeDef = {
         { name: "Proportional Relationships", family: "proportional-relationships", params: {} },
         { name: "Solving Proportions", family: "proportion-solve", params: {} },
         { name: "Scale Drawings", family: "scale-drawings", params: {} },
-        { name: "Similar Figures", family: "similarity", params: {} },
       ],
     },
     {
