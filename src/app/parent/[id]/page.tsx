@@ -92,6 +92,16 @@ export default function ParentDashboard({ params }: { params: Promise<{ id: stri
               : `${strongest.strandName} is their strongest strand right now.`}{" "}
             Daily practice keeps every strand moving at the right pace.
           </p>
+          {/* Honest about the sequence (2026 curriculum audit): grade labels
+              follow an international sequence that runs ahead of some school
+              curricula, notably Ontario's. Said here so a parent reads an
+              unfamiliar topic as acceleration by design, not a mistake. */}
+          <p className="mt-3 border-t border-ink-100 pt-3 text-xs text-ink-500">
+            Grade levels here follow a rigorous international sequence, which introduces some
+            topics earlier than some school curricula do. If {data.name} meets something on
+            PEDMAS before it comes up at school, that is by design — every topic is fully
+            taught before it is practised.
+          </p>
         </Card>
       )}
 

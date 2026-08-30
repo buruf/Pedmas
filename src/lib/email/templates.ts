@@ -82,7 +82,10 @@ export function placementReportMail(
        <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0">${list}</table>
        <p>Different levels in different strands is completely normal — that is exactly what PEDMAS is built for. Practice starts each strand where ${esc(
          childName
-       )} is ready to learn, and moves up only when mastery is shown.</p>`,
+       )} is ready to learn, and moves up only when mastery is shown.</p>
+       <p style="font-size:12px;color:#6b7280">A note on grade levels: PEDMAS follows a rigorous international sequence that introduces some topics earlier than some school curricula do. If ${esc(
+         childName
+       )} meets something here before it comes up at school, that is by design — every topic is fully taught before it is practised.</p>`,
       { label: "Open the parent dashboard", url: dashboardUrl }
     ),
     text: `Hi ${parentName},
@@ -92,6 +95,8 @@ ${childName} (Grade ${schoolGrade} at school) has finished the PEDMAS placement.
 ${rows.map((r) => `${r.strandName}: Grade ${r.level} — ${r.status}`).join("\n")}
 
 Different levels in different strands is completely normal. Practice starts each strand where ${childName} is ready to learn.
+
+A note on grade levels: PEDMAS follows a rigorous international sequence that introduces some topics earlier than some school curricula do. Meeting something here before it comes up at school is by design — every topic is fully taught before it is practised.
 
 Parent dashboard: ${dashboardUrl}`,
   };

@@ -111,6 +111,16 @@ export default function PlacementPage({ params }: { params: Promise<{ id: string
             💜 Remember: different levels in different strands is completely normal — that&rsquo;s
             exactly what PEDMAS is built for.
           </p>
+          {/* Honest about the sequence (2026 curriculum audit): PEDMAS runs
+              ahead of some school curricula — notably Ontario's — and a
+              parent who meets an unfamiliar topic should read it as
+              acceleration by design, not a mistake. */}
+          <p className="mt-2 rounded-xl bg-paper px-4 py-3 text-xs text-ink-500">
+            A note on grade levels: PEDMAS follows a rigorous international sequence that
+            introduces some topics earlier than some school curricula do. Meeting something here
+            before it comes up at school is normal — every topic is fully taught before it is
+            practised.
+          </p>
           <div className="mt-5">
             <PrimaryButton href={`/app/${id}`}>Go to my dashboard</PrimaryButton>
           </div>
