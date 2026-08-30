@@ -1,6 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { COUNTRY_CODES } from "@/lib/countries";
+
+/**
+ * Localized country names from the browser itself — the parent sees the list
+ * in their own language, and we ship codes, not a translation table. The two
+ * most likely answers for this product sit at the top.
+ */
+function countryOptions(): { code: string; name: string }[] {
+  const display = new Intl.DisplayNames(undefined, { type: "region" });
+  const all = COUNTRY_CODES.map((code) => ({ code, name: display.of(code) ?? code }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const first = ["CA", "US"];
+  return [
+    ...first.map((code) => all.find((c) => c.code === code)!),
+    ...all.filter((c) => !first.includes(c.code)),
+  ];
+}
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo, PrimaryButton, Card } from "@/components/ui";
@@ -12,6 +29,7 @@ export function SignupForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [country, setCountry] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -23,7 +41,7 @@ export function SignupForm() {
     try {
       await api("/api/auth/register", {
         method: "POST",
-        json: { email, password, name, role, acceptedTerms, parentAffirmed },
+        json: { email, password, name, role, country, acceptedTerms, parentAffirmed },
       });
       router.push("/onboarding");
     } catch (e) {
@@ -82,6 +100,23 @@ export function SignupForm() {
               required
             />
           </label>
+          <label className="block text-sm font-medium text-ink-700">
+            Country
+            <select value={country} onChange={(e) => setCountry(e.target.value)} className="mt-1 w-full" required>
+              <option value="" disabled>
+                Choose your country…
+              </option>
+              {countryOptions().map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-xs font-normal text-ink-500">
+              This sets the curriculum style and measurement units your children learn. You can
+              change it later under Account.
+            </span>
+          </label>
           {/* Consent is recorded with the policy version — see lib/legal.ts. */}
           <div className="space-y-2.5 rounded-xl bg-paper px-3 py-3">
             <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
@@ -124,7 +159,7 @@ export function SignupForm() {
           {error && <p className="rounded-xl bg-err-100 px-3 py-2 text-sm text-err-600">{error}</p>}
           <PrimaryButton
             type="submit"
-            disabled={busy || !acceptedTerms || (role === "PARENT" && !parentAffirmed)}
+            disabled={busy || !country || !acceptedTerms || (role === "PARENT" && !parentAffirmed)}
             className="w-full"
           >
             {busy ? "Creating..." : "Create account"}

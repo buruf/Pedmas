@@ -56,6 +56,12 @@ export interface Account {
    * switched by their holiday.
    */
   region?: "US" | "INTL";
+  /**
+   * ISO 3166-1 alpha-2, as the parent stated it at signup. The region above
+   * is derived from it; the country itself is kept because jurisdiction may
+   * matter beyond curriculum (consent ages, tax) as the product grows.
+   */
+  country?: string;
   /** IANA timezone, so the day rolls over at the family's midnight. */
   timezone?: string;
   /**

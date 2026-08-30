@@ -129,6 +129,7 @@ export default function AdminPage() {
   const [famName, setFamName] = useState("");
   const [famEmail, setFamEmail] = useState("");
   const [famKids, setFamKids] = useState<{ name: string; grade: number }[]>([{ name: "", grade: 3 }]);
+  const [famCountry, setFamCountry] = useState("CA");
   const [famResult, setFamResult] = useState<{ email: string; password: string; children: { name: string; grade: number }[] } | null>(null);
   const [famError, setFamError] = useState("");
   const [famBusy, setFamBusy] = useState(false);
@@ -491,6 +492,12 @@ export default function AdminPage() {
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <input placeholder="Parent name" value={famName} onChange={(e) => setFamName(e.target.value)} />
               <input placeholder="Parent email" type="email" value={famEmail} onChange={(e) => setFamEmail(e.target.value)} />
+              <select value={famCountry} onChange={(e) => setFamCountry(e.target.value)} title="Sets the family's curriculum region from day one — no geo-IP guessing">
+                <option value="CA">Canada (metric)</option>
+                <option value="US">United States (US units)</option>
+                <option value="GB">United Kingdom (metric)</option>
+                <option value="AU">Australia (metric)</option>
+              </select>
             </div>
             {famKids.map((k, i) => (
               <div key={i} className="mt-2 flex gap-2">
@@ -509,7 +516,7 @@ export default function AdminPage() {
               <PrimaryButton className="!px-3 !py-1.5 text-xs" disabled={famBusy} onClick={async () => {
                 setFamBusy(true); setFamError("");
                 try {
-                  const res = await api<NonNullable<typeof famResult>>("/api/admin/families", { method: "POST", json: { parentName: famName, email: famEmail, children: famKids } });
+                  const res = await api<NonNullable<typeof famResult>>("/api/admin/families", { method: "POST", json: { parentName: famName, email: famEmail, children: famKids, country: famCountry } });
                   setFamResult(res);
                 } catch (e) { setFamError(e instanceof Error ? e.message : "Failed"); }
                 finally { setFamBusy(false); }

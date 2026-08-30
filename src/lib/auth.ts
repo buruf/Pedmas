@@ -1,4 +1,5 @@
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
+import { regionForCountry } from "./region";
 import { cookies } from "next/headers";
 import type { Account, AuthSession, Role } from "./model";
 import { allRows, getRow, newId, putRow, deleteRow, accountByEmail, isUniqueViolation } from "./store/db";
@@ -26,7 +27,8 @@ export async function createAccount(
   password: string,
   role: Role,
   name: string,
-  consent?: { acceptedTerms: boolean; parentAffirmed: boolean }
+  consent?: { acceptedTerms: boolean; parentAffirmed: boolean },
+  country?: string
 ): Promise<Account | { error: string }> {
   const norm = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(norm)) return { error: "Please enter a valid email." };
@@ -53,6 +55,11 @@ export async function createAccount(
       acceptedAt: Date.now(),
       parentAffirmed: Boolean(consent.parentAffirmed),
     },
+    // A stated country beats geo-IP detection: the parent said where they
+    // are, and that decides the curriculum variant and units from day one.
+    ...(country
+      ? { country: country.toUpperCase(), region: regionForCountry(country) }
+      : {}),
   };
   try {
     await putRow("accounts", account.id, account);

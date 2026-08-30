@@ -42,10 +42,21 @@ export async function POST(req: Request) {
 
   // A password the parent can actually type from a note, shown exactly once.
   const password = `Pedmas-${randomBytes(4).toString("hex")}`;
-  const account = await createAccount(email, password, "PARENT", parentName, {
-    acceptedTerms: true,
-    parentAffirmed: true,
-  });
+  // Country stated at creation, like signup: the first test families were
+  // geo-stamped US by a mis-routed connection and served the wrong units.
+  const { isCountryCode } = await import("@/lib/countries");
+  const country = isCountryCode(body?.country) ? String(body.country) : undefined;
+  const account = await createAccount(
+    email,
+    password,
+    "PARENT",
+    parentName,
+    {
+      acceptedTerms: true,
+      parentAffirmed: true,
+    },
+    country
+  );
   if ("error" in account) return bad(account.error);
 
   // Invited testers must not hit the paywall they were invited past.
