@@ -38,7 +38,15 @@ export function isWebhookConfigured(): boolean {
 }
 
 export function appUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:3080";
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  // Production must always speak its canonical name. This URL reaches
+  // sitemaps, email links and Stripe return URLs, and a misconfigured env
+  // var once handed all three the raw *.vercel.app deployment host — where
+  // the .pedmas.com auth cookie does not even work. A configured value wins
+  // only when it is not a deployment host.
+  if (configured && !/\.vercel\.app$/i.test(configured)) return configured;
+  if (process.env.VERCEL_ENV === "production") return "https://www.pedmas.com";
+  return configured ?? "http://localhost:3080";
 }
 
 export function stripeConfig(): StripeConfig | null {
