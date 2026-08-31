@@ -30,6 +30,7 @@ export default function HomePage() {
             <a href="#how" className="hover:text-brand-700">How It Works</a>
             <Link href="/sample-lesson" className="hover:text-brand-700">Sample Lesson</Link>
             <Link href="/curriculum" className="hover:text-brand-700">Curriculum</Link>
+            <Link href="/worksheets" className="hover:text-brand-700">Worksheets</Link>
             <a href="#adapts" className="hover:text-brand-700">About</a>
           </nav>
           <div className="flex items-center gap-2">
@@ -215,6 +216,7 @@ export default function HomePage() {
             <Link href="/privacy" className="hover:text-ink-900">Privacy</Link>
             <Link href="/terms" className="hover:text-ink-900">Terms</Link>
             <Link href="/pricing" className="hover:text-ink-900">Pricing</Link>
+            <Link href="/worksheets" className="hover:text-ink-900">Worksheets</Link>
           </nav>
         </div>
       </footer>
