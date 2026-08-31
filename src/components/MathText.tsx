@@ -33,6 +33,44 @@ function renderMath(text: string): React.ReactNode[] {
   };
   while (i < text.length) {
     const ch = text[i];
+    // Calculus prompts write limits and definite integrals in a fixed prose
+    // form ("lim as x → −1 of …", "∫ from 0 to 3 of … dx") because the CAS
+    // audit parses those exact strings. Typeset them properly here instead
+    // of changing the strings: "lim" gets its approach underneath, and the
+    // integral sign carries its bounds.
+    if (text.startsWith("lim as ", i)) {
+      const m = /^lim as (\S+) → (\S+) of /.exec(text.slice(i));
+      if (m) {
+        flush();
+        out.push(
+          <span className="lim" key={key++}>
+            <span>lim</span>
+            <span className="lim-sub">
+              {m[1]} → {m[2]}
+            </span>
+          </span>
+        );
+        i += m[0].length;
+        continue;
+      }
+    }
+    if (text.startsWith("∫ from ", i)) {
+      const m = /^∫ from (\S+) to (\S+) of /.exec(text.slice(i));
+      if (m) {
+        flush();
+        out.push(
+          <span key={key++}>
+            <span className="int-sign">∫</span>
+            <span className="intb">
+              <span>{m[2]}</span>
+              <span>{m[1]}</span>
+            </span>
+          </span>
+        );
+        i += m[0].length;
+        continue;
+      }
+    }
     if (ch === "{") {
       const close = findClose(text, i, "{", "}");
       const inner = text.slice(i + 1, close);

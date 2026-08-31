@@ -54,6 +54,33 @@ body {
   padding: 0.05em 0.25em 0;
 }
 
+/* Limit notation: "lim" with the approach underneath (MathText) */
+.lim {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1.05;
+  margin-right: 0.35em;
+}
+.lim > .lim-sub {
+  font-size: 0.68em;
+}
+
+/* Definite integral bounds: upper over lower, tucked against the sign */
+.int-sign {
+  font-size: 1.25em;
+}
+.intb {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  vertical-align: middle;
+  line-height: 1.15;
+  font-size: 0.68em;
+  margin: 0 0.35em 0 0.1em;
+}
+
 /* Minimum touch targets on interactive elements */
 button,
 a.btn,
