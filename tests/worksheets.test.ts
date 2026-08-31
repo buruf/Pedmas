@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildWorksheet,
+  stackFractions,
   legacyStrandTopic,
   topicsForGrade,
   topicSlug,
@@ -79,6 +80,21 @@ describe("determinism and seeds", () => {
 
   it("a full-size topic fills the whole sheet", () => {
     expect(buildWorksheet(3, "multiplication", 42, "INTL")!.questions.length).toBe(WORKSHEET_SIZE);
+  });
+});
+
+describe("answer-key fractions stack for print", () => {
+  it("bare fractions get MathText's stacked form", () => {
+    expect(stackFractions("5/6")).toBe("{5/6}");
+    expect(stackFractions("-3/4")).toBe("{-3/4}");
+    expect(stackFractions("2 1/2")).toBe("2 {1/2}");
+  });
+
+  it("non-fractions pass through untouched", () => {
+    expect(stackFractions("0.75")).toBe("0.75");
+    expect(stackFractions("3:4")).toBe("3:4");
+    expect(stackFractions("<")).toBe("<");
+    expect(stackFractions("42")).toBe("42");
   });
 });
 

@@ -118,6 +118,17 @@ export function buildWorksheet(
   return { grade, topicSlug: slug, topicName, questions };
 }
 
+/**
+ * Promote bare fractions in an answer to MathText's stacked form: answers
+ * come off the generator as the plain text a child would type ("5/6",
+ * "2 1/2"), which is right for grading but flat on a printed answer key.
+ * Only standalone a/b tokens are wrapped, so "3:4", "0.75" and units pass
+ * through untouched.
+ */
+export function stackFractions(answer: string): string {
+  return answer.replace(/(^|[\s(=])(-?\d+\/\d+)(?=$|[\s).,])/g, "$1{$2}");
+}
+
 /** FNV-1a of a string — the stable daily seed for indexable pages. */
 export function worksheetDailySeed(grade: number, slug: string, dayIso: string): number {
   let h = 2166136261;

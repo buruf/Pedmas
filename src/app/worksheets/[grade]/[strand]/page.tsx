@@ -6,6 +6,7 @@ import { MathText } from "@/components/MathText";
 import {
   buildWorksheet,
   legacyStrandTopic,
+  stackFractions,
   topicsForGrade,
   worksheetDailySeed,
   worksheetExists,
@@ -168,7 +169,7 @@ export default async function WorksheetPage({
           <p className="mt-2 text-sm leading-7 text-ink-700">
             {sheet.questions.map((q, i) => (
               <span key={i} className="mr-5 inline-block whitespace-nowrap">
-                <b>{i + 1}.</b> <MathText text={q.answer} />
+                <b>{i + 1}.</b> <MathText text={stackFractions(q.answer)} />
               </span>
             ))}
           </p>
