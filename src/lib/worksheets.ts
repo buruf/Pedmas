@@ -1,15 +1,20 @@
-import { allSkills, stageCapOf, strandLabel, GRADES } from "@/curriculum";
+import { allSkills, stageCapOf } from "@/curriculum";
 import { generateQuestion } from "@/engine/generate";
 import type { Region } from "@/lib/region";
 
 /**
- * The public worksheet library: free printable sheets per grade and strand.
+ * The public worksheet library: free printable sheets per grade and TOPIC.
  *
- * A parent printing "grade 3 fractions worksheets" is a parent shopping for
- * math help — so these pages are un-gated, watermarked, and end in the
- * placement pitch, exactly like the public sample lesson. Sheets draw on the
- * same validated generator the product uses; only pencil-and-paper question
- * kinds are eligible (the interactive drag/plot types cannot print).
+ * A parent printing "grade 3 multiplication worksheets" is a parent shopping
+ * for math help — so these pages are un-gated, watermarked, and end in the
+ * placement pitch, exactly like the public sample lesson. The page unit is
+ * the curriculum section a skill sits in (its strandName: "Multiplication",
+ * "Logarithms", "Percent") rather than the broad strand id, because that is
+ * the granularity people actually search at — "grade 9 number sense" is a
+ * curriculum term, "grade 11 logarithms worksheet" is a query. Sheets draw
+ * on the same validated generator the product uses; only pencil-and-paper
+ * question kinds are eligible (the interactive drag/plot types cannot
+ * print).
  */
 
 export interface WorksheetQuestion {
@@ -23,29 +28,48 @@ export interface WorksheetQuestion {
 
 export interface Worksheet {
   grade: number;
-  strandId: string;
-  strandName: string;
+  topicSlug: string;
+  topicName: string;
   questions: WorksheetQuestion[];
 }
 
 export const WORKSHEET_SIZE = 20;
 
-/** Unique strand ids for a grade, in curriculum order. */
-export function strandsForGrade(grade: number): { id: string; name: string }[] {
-  const def = GRADES.find((g) => g.grade === grade);
-  if (!def) return [];
+/** URL slug for a curriculum section name: "Sequences & Series" → "sequences-series". */
+export function topicSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, " ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Topic pages for a grade, in curriculum order; same-named sections merge. */
+export function topicsForGrade(grade: number): { slug: string; name: string }[] {
   const seen = new Set<string>();
-  const out: { id: string; name: string }[] = [];
-  for (const s of def.strands) {
-    if (seen.has(s.id)) continue;
-    seen.add(s.id);
-    out.push({ id: s.id, name: strandLabel(s.id) });
+  const out: { slug: string; name: string }[] = [];
+  for (const s of allSkills()) {
+    if (s.grade !== grade) continue;
+    const slug = topicSlug(s.strandName);
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({ slug, name: s.strandName });
   }
   return out;
 }
 
-export function worksheetExists(grade: number, strandId: string): boolean {
-  return strandsForGrade(grade).some((s) => s.id === strandId);
+export function worksheetExists(grade: number, slug: string): boolean {
+  return topicsForGrade(grade).some((t) => t.slug === slug);
+}
+
+/**
+ * Where an old strand-id URL should land now. The library launched briefly
+ * with one page per strand id (/worksheets/grade-9/number); anything crawled
+ * in that window redirects to the first topic page of that strand.
+ */
+export function legacyStrandTopic(grade: number, strandId: string): string | null {
+  const skill = allSkills().find((s) => s.grade === grade && s.strandId === strandId);
+  return skill ? topicSlug(skill.strandName) : null;
 }
 
 /**
@@ -55,20 +79,19 @@ export function worksheetExists(grade: number, strandId: string): boolean {
  */
 export function buildWorksheet(
   grade: number,
-  strandId: string,
+  slug: string,
   seed: number,
   region: Region
 ): Worksheet | null {
-  const skills = allSkills().filter((s) => s.grade === grade && s.strandId === strandId);
+  const skills = allSkills().filter((s) => s.grade === grade && topicSlug(s.strandName) === slug);
   if (skills.length === 0) return null;
 
   const questions: WorksheetQuestion[] = [];
   const avoid = new Set<string>();
-  // Round-robin across the strand's skills, easy stages first, so a sheet
-  // covers the strand rather than drilling one topic. Attempt-based rather
-  // than a fixed number of rounds: a strand with a single skill (Grade 5
-  // measurement) needs many draws from that one skill to fill a sheet. The
-  // generator itself enforces each skill's stage cap.
+  // Round-robin across the topic's skills, easy stages first, so a sheet
+  // covers the topic rather than drilling one skill. Attempt-based rather
+  // than a fixed number of rounds: a topic with few skills needs many draws
+  // from each to fill a sheet. The generator enforces each skill's stage cap.
   const maxAttempts = WORKSHEET_SIZE * 4;
   for (let attempt = 0; attempt < maxAttempts && questions.length < WORKSHEET_SIZE; attempt++) {
     const skill = skills[attempt % skills.length];
@@ -91,13 +114,14 @@ export function buildWorksheet(
     }
   }
   if (questions.length === 0) return null;
-  return { grade, strandId, strandName: strandLabel(strandId), questions };
+  const topicName = skills[0].strandName;
+  return { grade, topicSlug: slug, topicName, questions };
 }
 
 /** FNV-1a of a string — the stable daily seed for indexable pages. */
-export function worksheetDailySeed(grade: number, strandId: string, dayIso: string): number {
+export function worksheetDailySeed(grade: number, slug: string, dayIso: string): number {
   let h = 2166136261;
-  for (const ch of `${grade}:${strandId}:${dayIso}`) {
+  for (const ch of `${grade}:${slug}:${dayIso}`) {
     h ^= ch.charCodeAt(0);
     h = Math.imul(h, 16777619);
   }

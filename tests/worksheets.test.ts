@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   buildWorksheet,
-  strandsForGrade,
+  legacyStrandTopic,
+  topicsForGrade,
+  topicSlug,
   worksheetDailySeed,
   worksheetExists,
   WORKSHEET_SIZE,
@@ -9,27 +11,48 @@ import {
 
 /**
  * The public worksheet library serves strangers with no account: every
- * advertised grade × strand page must actually produce a printable sheet,
+ * advertised grade × topic page must actually produce a printable sheet,
  * deterministically for a given seed (search engines index the daily
- * default), and only from pencil-and-paper question kinds.
+ * default), and only from pencil-and-paper question kinds. Pages are per
+ * curriculum TOPIC ("Multiplication", "Logarithms") — the granularity
+ * people search at — not per broad strand id.
  */
 
 describe("every advertised page produces a real sheet", () => {
   for (let grade = 1; grade <= 12; grade++) {
-    it(`grade ${grade}: all strands fill a sheet in both regions`, () => {
-      for (const s of strandsForGrade(grade)) {
+    it(`grade ${grade}: all topics fill a sheet in both regions`, () => {
+      const topics = topicsForGrade(grade);
+      expect(topics.length).toBeGreaterThanOrEqual(5);
+      for (const t of topics) {
         for (const region of ["US", "INTL"] as const) {
-          const sheet = buildWorksheet(grade, s.id, 12345, region);
-          expect(sheet, `${grade}/${s.id}/${region}`).not.toBeNull();
-          expect(sheet!.questions.length, `${grade}/${s.id}/${region}`).toBeGreaterThanOrEqual(10);
+          const sheet = buildWorksheet(grade, t.slug, 12345, region);
+          expect(sheet, `${grade}/${t.slug}/${region}`).not.toBeNull();
+          expect(sheet!.questions.length, `${grade}/${t.slug}/${region}`).toBeGreaterThanOrEqual(10);
           for (const q of sheet!.questions) {
-            expect(["mc", "input"], `${grade}/${s.id}: unprintable kind`).toContain(q.kind);
+            expect(["mc", "input"], `${grade}/${t.slug}: unprintable kind`).toContain(q.kind);
             expect(String(q.answer).length).toBeGreaterThan(0);
           }
         }
       }
     });
   }
+
+  it("topic slugs are unique within every grade", () => {
+    for (let grade = 1; grade <= 12; grade++) {
+      const slugs = topicsForGrade(grade).map((t) => t.slug);
+      expect(new Set(slugs).size).toBe(slugs.length);
+    }
+  });
+
+  it("high grades are split at searchable granularity", () => {
+    const g11 = topicsForGrade(11).map((t) => t.slug);
+    expect(g11).toContain("logarithms");
+    expect(g11).toContain("trigonometry");
+    const g12 = topicsForGrade(12).map((t) => t.slug);
+    expect(g12).toContain("calculus");
+    const g10 = topicsForGrade(10).map((t) => t.slug);
+    expect(g10).toContain("quadratics");
+  });
 });
 
 describe("determinism and seeds", () => {
@@ -54,16 +77,28 @@ describe("determinism and seeds", () => {
     );
   });
 
-  it("a full-size strand fills the whole sheet", () => {
-    expect(buildWorksheet(3, "operations", 42, "INTL")!.questions.length).toBe(WORKSHEET_SIZE);
+  it("a full-size topic fills the whole sheet", () => {
+    expect(buildWorksheet(3, "multiplication", 42, "INTL")!.questions.length).toBe(WORKSHEET_SIZE);
   });
 });
 
-describe("existence checks match the curriculum", () => {
+describe("slugs, existence, and legacy strand URLs", () => {
+  it("slugifies section names the obvious way", () => {
+    expect(topicSlug("Sequences & Series")).toBe("sequences-series");
+    expect(topicSlug("Addition & Subtraction")).toBe("addition-subtraction");
+    expect(topicSlug("Logarithms")).toBe("logarithms");
+  });
+
   it("real combos exist, invented ones do not", () => {
-    expect(worksheetExists(3, "fractions")).toBe(true);
+    expect(worksheetExists(3, "multiplication")).toBe(true);
     expect(worksheetExists(12, "calculus")).toBe(true);
     expect(worksheetExists(1, "calculus")).toBe(false);
     expect(worksheetExists(3, "nonsense")).toBe(false);
+  });
+
+  it("old strand-id URLs resolve to a topic for the redirect", () => {
+    expect(legacyStrandTopic(9, "number")).toBe("number-systems");
+    expect(legacyStrandTopic(3, "operations")).toBe("addition-subtraction");
+    expect(legacyStrandTopic(3, "nonsense")).toBeNull();
   });
 });

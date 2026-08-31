@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import { appUrl } from "@/lib/billing/stripe";
-import { strandsForGrade } from "@/lib/worksheets";
+import { topicsForGrade } from "@/lib/worksheets";
 
 /**
- * The sitemap exists mostly for the worksheet library: ~70 long-tail landing
- * pages that crawlers would otherwise have to discover by walking the
- * lattice links. Worksheet pages are marked daily because their default
- * sheet regenerates with the daily seed.
+ * The sitemap exists mostly for the worksheet library: ~90 long-tail landing
+ * pages (one per grade × topic) that crawlers would otherwise have to
+ * discover by walking the lattice links. Worksheet pages are marked daily
+ * because their default sheet regenerates with the daily seed.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = appUrl();
@@ -24,9 +24,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const worksheets: MetadataRoute.Sitemap = [];
   for (let grade = 1; grade <= 12; grade++) {
-    for (const strand of strandsForGrade(grade)) {
+    for (const topic of topicsForGrade(grade)) {
       worksheets.push({
-        url: `${base}/worksheets/grade-${grade}/${strand.id}`,
+        url: `${base}/worksheets/grade-${grade}/${topic.slug}`,
         lastModified: now,
         changeFrequency: "daily",
         priority: 0.7,

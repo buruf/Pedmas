@@ -1,24 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Logo } from "@/components/ui";
 import { MathText } from "@/components/MathText";
-import { buildWorksheet, strandsForGrade, worksheetDailySeed, worksheetExists } from "@/lib/worksheets";
-import { strandLabel } from "@/curriculum";
+import {
+  buildWorksheet,
+  legacyStrandTopic,
+  topicsForGrade,
+  worksheetDailySeed,
+  worksheetExists,
+} from "@/lib/worksheets";
 import { currentAccount } from "@/lib/auth";
 import { regionForRequest } from "@/lib/regionServer";
 import { registrationOpen } from "@/lib/flags";
 import { WorksheetToolbar } from "./Toolbar";
 
 /**
- * One public worksheet page per grade × strand — an SEO landing page whose
- * content is the product's own generator. The default seed is stable for a
- * day so search engines index consistent pages; ?seed= re-rolls the sheet.
+ * One public worksheet page per grade × topic — an SEO landing page whose
+ * content is the product's own generator. The page unit is the curriculum
+ * section ("Multiplication", "Logarithms"), which is what people search
+ * for. The default seed is stable for a day so search engines index
+ * consistent pages; ?seed= re-rolls the sheet.
  */
 
 interface Params {
   grade: string;
-  strand: string;
+  strand: string; // the topic slug; the segment name predates the topic split
 }
 
 function parseGrade(param: string): number | null {
@@ -27,13 +34,14 @@ function parseGrade(param: string): number | null {
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const { grade: gradeParam, strand } = await params;
+  const { grade: gradeParam, strand: slug } = await params;
   const grade = parseGrade(gradeParam);
-  if (!grade || !worksheetExists(grade, strand)) return {};
-  const name = strandLabel(strand);
+  if (!grade) return {};
+  const topic = topicsForGrade(grade).find((t) => t.slug === slug);
+  if (!topic) return {};
   return {
-    title: `Grade ${grade} ${name} Worksheets — Free & Printable | PEDMAS`,
-    description: `Free printable Grade ${grade} ${name.toLowerCase()} worksheets with answer keys. Every sheet is freshly generated — print as many as you need.`,
+    title: `Grade ${grade} ${topic.name} Worksheets — Free & Printable | PEDMAS`,
+    description: `Free printable Grade ${grade} ${topic.name.toLowerCase()} worksheets with answer keys. Every sheet is freshly generated — print as many as you need.`,
   };
 }
 
@@ -44,24 +52,31 @@ export default async function WorksheetPage({
   params: Promise<Params>;
   searchParams: Promise<{ seed?: string }>;
 }) {
-  const { grade: gradeParam, strand } = await params;
+  const { grade: gradeParam, strand: slug } = await params;
   const grade = parseGrade(gradeParam);
-  if (!grade || !worksheetExists(grade, strand)) notFound();
+  if (!grade) notFound();
+  if (!worksheetExists(grade, slug)) {
+    // The library launched briefly with one page per strand id; anything
+    // crawled in that window lands on the strand's first topic page.
+    const legacy = legacyStrandTopic(grade, slug);
+    if (legacy) permanentRedirect(`/worksheets/grade-${grade}/${legacy}`);
+    notFound();
+  }
 
   const { seed: seedParam } = await searchParams;
   const seed =
     seedParam && /^\d{1,10}$/.test(seedParam)
       ? Number(seedParam)
-      : worksheetDailySeed(grade, strand, new Date().toISOString().slice(0, 10));
+      : worksheetDailySeed(grade, slug, new Date().toISOString().slice(0, 10));
 
   const region = await regionForRequest(await currentAccount());
-  const sheet = buildWorksheet(grade, strand, seed, region);
+  const sheet = buildWorksheet(grade, slug, seed, region);
   if (!sheet) notFound();
 
   const signupsOpen = registrationOpen();
-  const siblingStrands = strandsForGrade(grade).filter((s) => s.id !== strand);
+  const siblingTopics = topicsForGrade(grade).filter((t) => t.slug !== slug);
   const otherGrades = Array.from({ length: 12 }, (_, i) => i + 1).filter(
-    (g) => g !== grade && worksheetExists(g, strand)
+    (g) => g !== grade && worksheetExists(g, slug)
   );
 
   return (
@@ -85,13 +100,13 @@ export default async function WorksheetPage({
         <div className="print:hidden">
           <p className="text-xs text-ink-500">
             <Link href="/worksheets" className="hover:text-brand-700">Worksheets</Link> › Grade {grade} ›{" "}
-            <span className="font-semibold text-ink-900">{sheet.strandName}</span>
+            <span className="font-semibold text-ink-900">{sheet.topicName}</span>
           </p>
           <h1 className="mt-1 text-3xl font-black tracking-tight text-ink-900">
-            Grade {grade} {sheet.strandName} Worksheets
+            Grade {grade} {sheet.topicName} Worksheets
           </h1>
           <p className="mt-2 max-w-2xl text-ink-700">
-            Free printable {sheet.strandName.toLowerCase()} practice for Grade {grade}, drawn from
+            Free printable {sheet.topicName.toLowerCase()} practice for Grade {grade}, drawn from
             the same question engine PEDMAS students use — with an answer key. Every sheet is
             different: print one, or print ten.
           </p>
@@ -104,7 +119,7 @@ export default async function WorksheetPage({
         <div className="mt-6 rounded-2xl border border-ink-100 bg-white p-8 shadow-sm print:mt-0 print:rounded-none print:border-0 print:p-0 print:shadow-none">
           <div className="flex flex-wrap items-baseline justify-between gap-3 border-b-2 border-ink-900 pb-3">
             <h2 className="text-lg font-extrabold text-ink-900">
-              Grade {grade} · {sheet.strandName} — Practice Sheet
+              Grade {grade} · {sheet.topicName} — Practice Sheet
             </h2>
             <p className="text-sm text-ink-500">
               Name <span className="mx-1 inline-block w-28 border-b border-ink-300" /> Date{" "}
@@ -179,26 +194,26 @@ export default async function WorksheetPage({
         <div className="mt-8 print:hidden">
           <h3 className="text-xs font-bold uppercase tracking-wide text-ink-500">More Grade {grade} worksheets</h3>
           <div className="mt-2 flex flex-wrap gap-2">
-            {siblingStrands.map((s) => (
+            {siblingTopics.map((t) => (
               <Link
-                key={s.id}
-                href={`/worksheets/grade-${grade}/${s.id}`}
+                key={t.slug}
+                href={`/worksheets/grade-${grade}/${t.slug}`}
                 className="btn rounded-full border border-ink-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-700 hover:border-brand-400 hover:text-brand-700"
               >
-                {s.name}
+                {t.name}
               </Link>
             ))}
           </div>
           {otherGrades.length > 0 && (
             <>
               <h3 className="mt-5 text-xs font-bold uppercase tracking-wide text-ink-500">
-                {sheet.strandName} worksheets by grade
+                {sheet.topicName} worksheets by grade
               </h3>
               <div className="mt-2 flex flex-wrap gap-2">
                 {otherGrades.map((g) => (
                   <Link
                     key={g}
-                    href={`/worksheets/grade-${g}/${strand}`}
+                    href={`/worksheets/grade-${g}/${slug}`}
                     className="btn rounded-full border border-ink-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-700 hover:border-brand-400 hover:text-brand-700"
                   >
                     Grade {g}

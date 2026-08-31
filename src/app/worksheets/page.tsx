@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/ui";
-import { strandsForGrade } from "@/lib/worksheets";
+import { topicsForGrade } from "@/lib/worksheets";
 import { registrationOpen } from "@/lib/flags";
 
 export const metadata: Metadata = {
@@ -41,10 +41,10 @@ export default function WorksheetsIndex() {
             <section key={g}>
               <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink-500">Grade {g}</h2>
               <div className="mt-2 flex flex-wrap gap-2">
-                {strandsForGrade(g).map((s) => (
+                {topicsForGrade(g).map((s) => (
                   <Link
-                    key={s.id}
-                    href={`/worksheets/grade-${g}/${s.id}`}
+                    key={s.slug}
+                    href={`/worksheets/grade-${g}/${s.slug}`}
                     className="btn rounded-full border border-ink-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-700 hover:border-brand-400 hover:text-brand-700"
                   >
                     {s.name}
