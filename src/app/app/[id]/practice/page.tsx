@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Logo, Card, PrimaryButton, ProgressBar } from "@/components/ui";
+import { GhostButton, Logo, Card, PrimaryButton, ProgressBar } from "@/components/ui";
 import { QuestionView, FeedbackPanel } from "@/components/QuestionView";
 import { WorkedExample, type WorkedExampleData } from "@/components/WorkedExample";
 import { LESSON_COMPONENTS } from "@/components/lesson/registry";
@@ -62,8 +62,8 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
   /** Lesson reopened deliberately from the practice screen. */
   const [lessonReopened, setLessonReopened] = useState<LessonKey | null>(null);
 
-  const load = useCallback(() => {
-    api<PracticePayload>(`/api/students/${id}/practice`)
+  const load = useCallback((extra = false) => {
+    api<PracticePayload>(`/api/students/${id}/practice${extra ? "?extra=1" : ""}`)
       .then(setState)
       .catch((e) => {
         if (e instanceof ApiError && e.status === 402) {
@@ -175,8 +175,13 @@ export default function PracticePage({ params }: { params: Promise<{ id: string 
               🔥 {state.streak}-day streak
             </p>
           )}
-          <div className="mt-5 flex justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
             <PrimaryButton href={`/app/${id}`}>Back to dashboard</PrimaryButton>
+            {/* Extra practice is a choice, never the default: finishing the
+                day used to roll silently into endless fresh questions. */}
+            <GhostButton onClick={() => { setState(null); setFeedback(null); load(true); }}>
+              ➕ Extra practice
+            </GhostButton>
           </div>
         </Card>
       </Shell>

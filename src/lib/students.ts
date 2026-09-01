@@ -229,13 +229,19 @@ function initFromPlacement(student: StudentProfile): void {
 export function ensureSession(
   student: StudentProfile,
   timeZone?: string,
-  region?: Region
+  region?: Region,
+  opts: { startExtra?: boolean } = {}
 ): PracticeSessionState {
   const now = Date.now();
   const dayKey = dayKeyOf(now, timeZone);
   const active = student.activeSession;
-  if (active && !active.completedAt && active.dayKey === dayKey && active.items.length > 0) {
-    return active;
+  if (active && active.dayKey === dayKey && active.items.length > 0) {
+    if (!active.completedAt) return active;
+    // Today's practice is DONE. A tester's exact words: "there is no end to
+    // the questions" — finishing used to silently roll straight into a fresh
+    // sitting on the next load. The day now ends unless the learner
+    // explicitly asks for extra practice.
+    if (!opts.startExtra) return active;
   }
   const items = buildPracticeSession(
     {
@@ -333,6 +339,8 @@ export function activeMinutes(sessions: SessionSummary[]): number {
 export interface WorkedExample {
   instruction: string;
   prompt: string;
+  /** The example's own geometric figure, where its question carries one. */
+  figure?: import("@/engine/figures").FigureSpec;
   answer: string;
   steps: string[];
   concept: string;
@@ -366,6 +374,7 @@ export function workedExampleFor(student: StudentProfile): WorkedExample | null 
     return {
       instruction: example.instruction,
       prompt: example.prompt,
+      figure: example.figure,
       answer: example.answer,
       steps: example.steps,
       concept: example.concept,

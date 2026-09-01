@@ -98,6 +98,17 @@ describe("answer-key fractions stack for print", () => {
   });
 });
 
+describe("the reroll gate", () => {
+  const page = require("fs").readFileSync(
+    require("path").join(process.cwd(), "src/app/worksheets/[grade]/[strand]/page.tsx"),
+    "utf8"
+  );
+  it("the ?seed parameter only takes effect for signed-in accounts", () => {
+    expect(page).toMatch(/canReroll && seedParam/);
+    expect(page).toContain("const canReroll = Boolean(account);");
+  });
+});
+
 describe("slugs, existence, and legacy strand URLs", () => {
   it("slugifies section names the obvious way", () => {
     expect(topicSlug("Sequences & Series")).toBe("sequences-series");

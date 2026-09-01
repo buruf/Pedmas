@@ -65,13 +65,18 @@ export default async function WorksheetPage({
     notFound();
   }
 
+  const account = await currentAccount();
   const { seed: seedParam } = await searchParams;
+  // The daily sheet is the free sample; LIMITLESS regeneration is the
+  // giveaway worth an account. Enforced here, not just in the button — a
+  // visitor pasting ?seed= gets the daily sheet back.
+  const canReroll = Boolean(account);
   const seed =
-    seedParam && /^\d{1,10}$/.test(seedParam)
+    canReroll && seedParam && /^\d{1,10}$/.test(seedParam)
       ? Number(seedParam)
       : worksheetDailySeed(grade, slug, new Date().toISOString().slice(0, 10));
 
-  const region = await regionForRequest(await currentAccount());
+  const region = await regionForRequest(account);
   const sheet = buildWorksheet(grade, slug, seed, region);
   if (!sheet) notFound();
 
@@ -109,11 +114,13 @@ export default async function WorksheetPage({
           </h1>
           <p className="mt-2 max-w-2xl text-ink-700">
             Free printable {sheet.topicName.toLowerCase()} practice for Grade {grade}, drawn from
-            the same question engine PEDMAS students use — with an answer key. Every sheet is
-            different: print one, or print ten.
+            the same question engine PEDMAS students use — with an answer key. A fresh sheet
+            every day{canReroll
+              ? ", and you can roll a new one any time."
+              : " — families with a PEDMAS account can roll new sheets any time."}
           </p>
           <div className="mt-5">
-            <WorksheetToolbar />
+            <WorksheetToolbar canReroll={canReroll} signupsOpen={signupsOpen} />
           </div>
         </div>
 

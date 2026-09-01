@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { MathText } from "./MathText";
+import { Figure } from "./Figure";
+import type { FigureSpec } from "@/engine/figures";
 
 export interface WorkedExampleData {
   instruction: string;
   prompt: string;
+  figure?: FigureSpec;
   answer: string;
   steps: string[];
   concept: string;
@@ -55,6 +58,7 @@ export function WorkedExample({
         <div className="text-sm font-semibold text-ink-500">{data.instruction}</div>
         <div className="mt-1 text-xl font-bold text-ink-900">
           <MathText text={data.prompt} />
+          {data.figure && <div className="mt-2"><Figure spec={data.figure} /></div>}
         </div>
       </div>
 

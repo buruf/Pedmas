@@ -33,7 +33,7 @@ async function locked(account: Parameters<typeof entitlementFor>[0]) {
 }
 
 /** GET: today's session state and the current question. */
-export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const account = await requireAccount();
   if (isResponse(account)) return account;
   const { id } = await ctx.params;
@@ -48,7 +48,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const gate = await locked(account);
   if (gate) return gate;
   const region = await ensureAccountRegion(account);
-  const session = ensureSession(student, account.timezone, region);
+  // ?extra=1 is the learner's explicit "more practice, please" — without it,
+  // a finished day stays finished.
+  const startExtra = new URL(req.url).searchParams.get("extra") === "1";
+  const session = ensureSession(student, account.timezone, region, { startExtra });
   // Start the clock on whichever question is now in front of the student.
   markServed(student);
   await saveStudent(student);
