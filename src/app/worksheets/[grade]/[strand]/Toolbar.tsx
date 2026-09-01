@@ -12,21 +12,27 @@ import { useRouter } from "next/navigation";
  */
 export function WorksheetToolbar({
   canReroll,
+  unlocked,
   signupsOpen,
 }: {
   canReroll: boolean;
+  unlocked: boolean;
   signupsOpen: boolean;
 }) {
   const router = useRouter();
   return (
     <div className="flex flex-wrap gap-2.5 print:hidden">
-      <button
-        type="button"
-        className="btn rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700"
-        onClick={() => window.print()}
-      >
-        🖨 Print this sheet
-      </button>
+      {/* A locked page holds only a preview — printing it would hand a
+          parent four questions and no key, which just looks broken. */}
+      {unlocked && (
+        <button
+          type="button"
+          className="btn rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700"
+          onClick={() => window.print()}
+        >
+          🖨 Print this sheet
+        </button>
+      )}
       {canReroll ? (
         <button
           type="button"
@@ -43,13 +49,15 @@ export function WorksheetToolbar({
           🔒 Unlimited new sheets — {signupsOpen ? "free with an account" : "log in to unlock"}
         </Link>
       )}
-      <button
-        type="button"
-        className="btn rounded-xl border border-ink-100 bg-white px-4 py-2.5 text-sm font-bold text-ink-700 hover:border-brand-300"
-        onClick={() => document.getElementById("answer-key")?.scrollIntoView({ behavior: "smooth" })}
-      >
-        Answer key
-      </button>
+      {unlocked && (
+        <button
+          type="button"
+          className="btn rounded-xl border border-ink-100 bg-white px-4 py-2.5 text-sm font-bold text-ink-700 hover:border-brand-300"
+          onClick={() => document.getElementById("answer-key")?.scrollIntoView({ behavior: "smooth" })}
+        >
+          Answer key
+        </button>
+      )}
     </div>
   );
 }

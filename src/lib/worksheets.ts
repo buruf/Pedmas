@@ -37,6 +37,23 @@ export interface Worksheet {
 
 export const WORKSHEET_SIZE = 20;
 
+/**
+ * The free showcase: exactly these sheets are fully public — one primary,
+ * one senior, so a visiting parent sees the range. Every other page shows a
+ * short preview and asks for an account (the owner's call: an infinite
+ * generator is too much to give away). Signed-in families see everything.
+ */
+export const FREE_WORKSHEETS: ReadonlyArray<{ grade: number; slug: string }> = [
+  { grade: 3, slug: "multiplication" },
+  { grade: 8, slug: "algebra" },
+];
+
+export const WORKSHEET_PREVIEW_SIZE = 4;
+
+export function isFreeWorksheet(grade: number, slug: string): boolean {
+  return FREE_WORKSHEETS.some((f) => f.grade === grade && f.slug === slug);
+}
+
 /** URL slug for a curriculum section name: "Sequences & Series" → "sequences-series". */
 export function topicSlug(name: string): string {
   return name

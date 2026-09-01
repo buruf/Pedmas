@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   buildWorksheet,
+  FREE_WORKSHEETS,
+  isFreeWorksheet,
   stackFractions,
   legacyStrandTopic,
   topicsForGrade,
@@ -127,5 +129,29 @@ describe("slugs, existence, and legacy strand URLs", () => {
     expect(legacyStrandTopic(9, "number")).toBe("number-systems");
     expect(legacyStrandTopic(3, "operations")).toBe("addition-subtraction");
     expect(legacyStrandTopic(3, "nonsense")).toBeNull();
+  });
+});
+
+describe("the free-showcase lock", () => {
+  const fs2 = require("fs");
+  const path2 = require("path");
+  const page = fs2.readFileSync(
+    path2.join(process.cwd(), "src/app/worksheets/[grade]/[strand]/page.tsx"),
+    "utf8"
+  );
+
+  it("exactly two sheets are free, and they exist", () => {
+    expect(FREE_WORKSHEETS.length).toBe(2);
+    for (const f of FREE_WORKSHEETS) {
+      expect(worksheetExists(f.grade, f.slug), `${f.grade}/${f.slug}`).toBe(true);
+      expect(isFreeWorksheet(f.grade, f.slug)).toBe(true);
+    }
+    expect(isFreeWorksheet(3, "fractions")).toBe(false);
+  });
+
+  it("locked pages are sliced to the preview SERVER-side, and hide the key", () => {
+    expect(page).toContain("full.questions.slice(0, WORKSHEET_PREVIEW_SIZE)");
+    expect(page).toContain("const unlocked = canReroll || isFreeWorksheet(grade, slug);");
+    expect(page).toContain("{unlocked && (");
   });
 });

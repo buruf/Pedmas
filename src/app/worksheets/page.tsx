@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/ui";
-import { topicsForGrade } from "@/lib/worksheets";
+import { isFreeWorksheet, topicsForGrade } from "@/lib/worksheets";
 import { registrationOpen } from "@/lib/flags";
 
 export const metadata: Metadata = {
@@ -34,7 +34,8 @@ export default function WorksheetsIndex() {
         <h1 className="text-3xl font-black tracking-tight text-ink-900">Free Printable Math Worksheets</h1>
         <p className="mt-2 max-w-2xl text-ink-700">
           Every sheet is generated fresh from the same question engine PEDMAS students use —
-          pick a grade and topic, print, and the answer key comes with it. Grades 1–12, free.
+          pick a grade and topic, print, and the answer key comes with it. Two sample sheets are
+          open to everyone — the full library is free with a PEDMAS account.
         </p>
         <div className="mt-8 space-y-6">
           {grades.map((g) => (
@@ -48,6 +49,9 @@ export default function WorksheetsIndex() {
                     className="btn rounded-full border border-ink-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-700 hover:border-brand-400 hover:text-brand-700"
                   >
                     {s.name}
+                    {isFreeWorksheet(g, s.slug) && (
+                      <span className="ml-1.5 rounded-full bg-ok-100 px-1.5 py-0.5 text-[10px] font-bold text-ok-600">FREE</span>
+                    )}
                   </Link>
                 ))}
               </div>
