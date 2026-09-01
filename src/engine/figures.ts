@@ -27,7 +27,25 @@ export type FigureSpec =
   | { fig: "circle"; mode: "radius" | "diameter"; label: string }
   | { fig: "cube"; edgeLabel: string }
   | { fig: "cuboid"; l: number; w: number; h: number; lLabel: string; wLabel: string; hLabel: string }
-  | { fig: "grid-point"; x: number; y: number; label: string; quad: boolean };
+  | { fig: "grid-point"; x: number; y: number; label: string; quad: boolean }
+  | { fig: "poly"; name: string }
+  | { fig: "letter"; ch: string }
+  | { fig: "grid-2pts"; x1: number; y1: number; x2: number; y2: number; l1: string; l2: string; segment: boolean; line: boolean }
+  | { fig: "grid-reflect"; x: number; y: number; axis: "x" | "y" }
+  | { fig: "grid-map"; x1: number; y1: number; x2: number; y2: number }
+  | { fig: "similar-tris"; small: [string, string]; large: [string, string]; k: number }
+  | { fig: "similar-rects"; sideLabel: string; k: number };
+
+/** Shape names the polygon renderer knows, normalised from prompt wording. */
+export function normaliseShapeName(raw: string): string | null {
+  const base = raw.toLowerCase().replace(/\(.*\)/, "").replace(/\bregular\b/, "").trim();
+  const KNOWN = [
+    "triangle", "equilateral triangle", "isosceles triangle", "quadrilateral",
+    "square", "rectangle", "rhombus", "parallelogram", "trapezoid", "trapezium",
+    "pentagon", "hexagon", "heptagon", "octagon",
+  ];
+  return KNOWN.includes(base) ? base : null;
+}
 
 const num = (s: string) => Number(s.replace("−", "-"));
 
@@ -147,13 +165,121 @@ export function deriveFigure(family: string, prompt: string): FigureSpec | null 
     if ((m = /^(?:Point P is|A point sits) (\d+) units? right of the origin and (\d+) units? up/.exec(prompt))) {
       return { fig: "grid-point", x: num(m[1]), y: num(m[2]), label: "P", quad: false };
     }
-    if ((m = /^Where does the point \((−?-?\d+), (−?-?\d+)\)/.exec(prompt))) {
+    // NOT matched on purpose: "In which quadrant…" / "Where does the point
+    // (x, y) lie?" — plotting the point would answer the question.
+    if (
+      (m = /^(?:How far apart are the points|What is the distance between the points) \(([−-]?\d+), ([−-]?\d+)\) and \(([−-]?\d+), ([−-]?\d+)\)/.exec(prompt))
+    ) {
+      return twoPoints(m, "A", "B", false, false);
+    }
+    if ((m = /^What is the exact distance between \(0, 0\) and \((\d+), (\d+)\)/.exec(prompt))) {
+      return { fig: "grid-2pts", x1: 0, y1: 0, x2: num(m[1]), y2: num(m[2]), l1: "O", l2: "A", segment: false, line: false };
+    }
+    if (
+      (m = /^(?:What is the midpoint of the segment joining|A segment joins) \(([−-]?\d+), ([−-]?\d+)\) and \(([−-]?\d+), ([−-]?\d+)\)/.exec(prompt))
+    ) {
+      return twoPoints(m, "A", "B", true, false);
+    }
+    if ((m = /^M\(([−-]?\d+), ([−-]?\d+)\) is the midpoint of a segment\. One endpoint is A\(([−-]?\d+), ([−-]?\d+)\)/.exec(prompt))) {
+      return twoPoints(m, "M", "A", false, false);
+    }
+    if ((m = /^The point \(([−-]?\d+), ([−-]?\d+)\)(?: in Quadrant I)? is reflected over the ([xy])-axis/.exec(prompt))) {
+      return { fig: "grid-reflect", x: num(m[1]), y: num(m[2]), axis: m[3] as "x" | "y" };
+    }
+    return null;
+  }
+
+  if (family === "shapes-2d") {
+    if ((m = /^How many (?:sides|corners \(vertices\)) does a ([a-z]+) have\?/.exec(prompt))) {
+      const name = normaliseShapeName(m[1]);
+      return name ? { fig: "poly", name } : null;
+    }
+    return null;
+  }
+
+  if (family === "symmetry") {
+    if ((m = /^Does the capital letter ([A-Z]) have a line of symmetry\?/.exec(prompt))) {
+      return { fig: "letter", ch: m[1] };
+    }
+    if (
+      (m = /^(?:How many lines of symmetry does an?|What is the order of rotational symmetry of an?) ([a-z ()]+?)\s*have\?/.exec(prompt)) ||
+      (m = /^What is the order of rotational symmetry of an? ([a-z ()]+?)\?/.exec(prompt))
+    ) {
+      const name = normaliseShapeName(m[1]);
+      return name ? { fig: "poly", name } : null;
+    }
+    return null;
+  }
+
+  if (family === "transformations") {
+    if ((m = /^The point \(([−-]?\d+), ([−-]?\d+)\) is translated (\d+) units? right and (\d+) units? up/.exec(prompt))) {
+      const x = num(m[1]);
+      const y = num(m[2]);
+      return { fig: "grid-point", x, y, label: "P", quad: x < 0 || y < 0 };
+    }
+    if ((m = /^The point \(([−-]?\d+), ([−-]?\d+)\) is reflected over the ([xy])-axis/.exec(prompt))) {
+      return { fig: "grid-reflect", x: num(m[1]), y: num(m[2]), axis: m[3] as "x" | "y" };
+    }
+    if ((m = /^The point \(([−-]?\d+), ([−-]?\d+)\) is rotated /.exec(prompt))) {
       return { fig: "grid-point", x: num(m[1]), y: num(m[2]), label: "P", quad: true };
+    }
+    if ((m = /^A transformation maps the point \(([−-]?\d+), ([−-]?\d+)\) to \(([−-]?\d+), ([−-]?\d+)\)\./.exec(prompt))) {
+      return { fig: "grid-map", x1: num(m[1]), y1: num(m[2]), x2: num(m[3]), y2: num(m[4]) };
+    }
+    return null;
+  }
+
+  if (family === "slope") {
+    if ((m = /^\(([−-]?\d+), ([−-]?\d+)\) and \(([−-]?\d+), ([−-]?\d+)\)$/.exec(prompt))) {
+      return twoPoints(m, "A", "B", false, true);
+    }
+    return null;
+  }
+
+  if (family === "similarity") {
+    if ((m = /^A photo has a side of (\d+) (\S+)\. It is enlarged by a scale factor of (\d+)/.exec(prompt))) {
+      return { fig: "similar-rects", sideLabel: `${m[1]} ${m[2]}`, k: num(m[3]) };
+    }
+    if ((m = /^Two similar figures match a side of (\d+) (\S+) to a side of (\d+) \S+/.exec(prompt))) {
+      return {
+        fig: "similar-tris",
+        small: [`${m[1]} ${m[2]}`, ""],
+        large: [`${m[3]} ${m[2]}`, ""],
+        k: Math.max(1.2, Math.min(3, num(m[3]) / num(m[1]))),
+      };
+    }
+    if ((m = /^Side AB = (\d+) (\S+) matches side DE = (\d+) \S+\. Side BC = (\d+) \S+ matches side EF\./.exec(prompt))) {
+      return {
+        fig: "similar-tris",
+        small: [`AB = ${m[1]} ${m[2]}`, `BC = ${m[4]} ${m[2]}`],
+        large: [`DE = ${m[3]} ${m[2]}`, "EF = ?"],
+        k: Math.max(1.2, Math.min(3, num(m[3]) / num(m[1]))),
+      };
     }
     return null;
   }
 
   return null;
+}
+
+function twoPoints(
+  m: RegExpExecArray,
+  l1: string,
+  l2: string,
+  segment: boolean,
+  line: boolean
+): FigureSpec {
+  return {
+    fig: "grid-2pts",
+    x1: num(m[1]),
+    y1: num(m[2]),
+    x2: num(m[3]),
+    y2: num(m[4]),
+    l1,
+    l2,
+    segment,
+    line,
+  };
 }
 
 /**

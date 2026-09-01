@@ -119,6 +119,75 @@ describe("figures never lie about their question", () => {
   });
 });
 
+describe("wave 2: shapes, symmetry, transformations, similarity", () => {
+  it("sides-counting questions draw the named polygon", () => {
+    const qs = sweep("shapes-2d", [1]).filter((q) => /^How many/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(10);
+    for (const q of qs) {
+      const name = /does an? ([a-z ]+?) have/.exec(q.prompt)![1];
+      expect(q.figure, q.prompt).toBeDefined();
+      expect(name).toContain((q.figure as { name: string }).name.split(" ").pop()!);
+    }
+  });
+
+  it("name-the-shape questions get NO figure — it would be the answer", () => {
+    const qs = sweep("shapes-2d", [2]).filter((q) => /^Which shape has exactly/.test(q.prompt));
+    for (const q of qs) expect(q.figure, q.prompt).toBeUndefined();
+  });
+
+  it("quadrant questions get NO figure — the plot would be the answer", () => {
+    const qs = sweep("coordinate-plane", [1, 2, 3]).filter((q) =>
+      /^(In which quadrant|Where does the point)/.test(q.prompt)
+    );
+    for (const q of qs) expect(q.figure, q.prompt).toBeUndefined();
+  });
+
+  it("letter-symmetry questions show the letter", () => {
+    const qs = sweep("symmetry", [1]).filter((q) => /^Does the capital letter/.test(q.prompt));
+    for (const q of qs) {
+      const ch = /letter ([A-Z])/.exec(q.prompt)![1];
+      expect(q.figure, q.prompt).toBeDefined();
+      expect((q.figure as { ch: string }).ch).toBe(ch);
+    }
+  });
+
+  it("transformation questions plot the original point, never the image", () => {
+    const qs = sweep("transformations", [2, 3]).filter((q) => /^The point/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(10);
+    for (const q of qs) {
+      const m = /^The point \(([−-]?\d+), ([−-]?\d+)\)/.exec(q.prompt)!;
+      expect(q.figure, q.prompt).toBeDefined();
+      const f = q.figure as { x: number; y: number };
+      expect(f.x).toBe(Number(m[1].replace("−", "-")));
+      expect(f.y).toBe(Number(m[2].replace("−", "-")));
+    }
+  });
+
+  it("distance and midpoint questions plot both given points", () => {
+    const qs = sweep("coordinate-plane", [4, 5]).filter((q) =>
+      /^(What is the distance between the points|What is the midpoint)/.test(q.prompt)
+    );
+    for (const q of qs) {
+      expect(q.figure, q.prompt).toBeDefined();
+      expect(q.figure!.fig).toBe("grid-2pts");
+    }
+  });
+
+  it("slope questions draw the line through the two points", () => {
+    const qs = sweep("slope", [3, 4]).filter((q) => /^([−-]?d+, [−-]?d+) and/.test(q.prompt));
+    for (const q of qs) {
+      expect(q.figure, q.prompt).toBeDefined();
+      expect((q.figure as { line: boolean }).line).toBe(true);
+    }
+  });
+
+  it("similarity scale questions draw both figures at the stated ratio", () => {
+    const qs = sweep("similarity", [1, 3]).filter((q) => /^(A photo has a side|Side AB =)/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(5);
+    for (const q of qs) expect(q.figure, q.prompt).toBeDefined();
+  });
+});
+
 describe("triangle construction is geometrically exact", () => {
   it("the apex angle of the built triangle equals 180 − A − B", () => {
     for (const [a, b] of [

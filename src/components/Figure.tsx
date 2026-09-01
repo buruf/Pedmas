@@ -50,6 +50,85 @@ function arc(cx: number, cy: number, r: number, startDeg: number, endDeg: number
   return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 0 ${x1} ${y1}`;
 }
 
+/** Vertex sets for named shapes, in a 160×120 box. Regular n-gons by formula. */
+function shapePoints(name: string): [number, number][] | null {
+  const regular = (n: number, r = 58, cx = 80, cy = 62): [number, number][] =>
+    Array.from({ length: n }, (_, i) => {
+      const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    });
+  switch (name) {
+    case "triangle":
+    case "equilateral triangle":
+      return regular(3, 62);
+    case "isosceles triangle":
+      return [[80, 8], [44, 116], [116, 116]];
+    case "square":
+      return [[30, 12], [130, 12], [130, 112], [30, 112]];
+    case "rectangle":
+      return [[10, 32], [150, 32], [150, 96], [10, 96]];
+    case "rhombus":
+      return [[80, 8], [136, 62], [80, 116], [24, 62]];
+    case "parallelogram":
+      return [[42, 30], [152, 30], [118, 98], [8, 98]];
+    case "trapezoid":
+    case "trapezium":
+      return [[48, 28], [112, 28], [148, 100], [12, 100]];
+    case "quadrilateral":
+      return [[36, 18], [140, 34], [122, 108], [16, 88]];
+    case "pentagon":
+      return regular(5);
+    case "hexagon":
+      return regular(6);
+    case "heptagon":
+      return regular(7);
+    case "octagon":
+      return regular(8);
+    default:
+      return null;
+  }
+}
+
+/** Shared coordinate grid for the point-based figures. */
+function Grid({
+  extent,
+  quad,
+  children,
+}: {
+  extent: number;
+  quad: boolean;
+  children: (toPx: (x: number, y: number) => [number, number]) => React.ReactNode;
+}) {
+  const max = Math.max(4, extent);
+  const cell = Math.min(18, 130 / max);
+  const half = max * cell;
+  const ox = quad ? half + 14 : 26;
+  const oy = half + 14;
+  const toPx = (x: number, y: number): [number, number] => [ox + x * cell, oy - y * cell];
+  const lines: React.ReactNode[] = [];
+  for (let i = -(quad ? max : 0); i <= max; i++) {
+    lines.push(
+      <path key={`v${i}`} d={`M ${ox + i * cell} ${oy - half} V ${quad ? oy + half : oy}`} strokeWidth={0.5} strokeOpacity={i === 0 ? 0.9 : 0.2} />,
+      <path key={`h${i}`} d={`M ${quad ? ox - half : ox} ${oy - i * cell} H ${ox + half}`} strokeWidth={0.5} strokeOpacity={i === 0 ? 0.9 : 0.2} />
+    );
+  }
+  return (
+    <Svg w={ox + half + 30} h={(quad ? oy + half : oy) + 22}>
+      {lines}
+      <Label x={ox + half + 12} y={oy + 4} anchor="start">x</Label>
+      <Label x={ox - 2} y={oy - half - 6} anchor="end">y</Label>
+      {children(toPx)}
+    </Svg>
+  );
+}
+
+const Pt = ({ at, label }: { at: [number, number]; label: string }) => (
+  <>
+    <circle cx={at[0]} cy={at[1]} r={3.4} fill="currentColor" stroke="none" />
+    <Label x={at[0] + 8} y={at[1] - 6} anchor="start">{label}</Label>
+  </>
+);
+
 export function Figure({ spec }: { spec: FigureSpec }) {
   switch (spec.fig) {
     case "rect": {
@@ -246,6 +325,142 @@ export function Figure({ spec }: { spec: FigureSpec }) {
               <Label x={x0 + L + D / 2 + 8} y={y0 + H + 8} anchor="start">{spec.wLabel}</Label>
             </>
           )}
+        </Svg>
+      );
+    }
+
+    case "poly": {
+      const pts = shapePoints(spec.name);
+      if (!pts) return null;
+      const d = `M ${pts.map((p) => p.join(" ")).join(" L ")} Z`;
+      return (
+        <Svg w={168} h={128}>
+          <path d={d} fill="currentColor" fillOpacity={0.06} />
+        </Svg>
+      );
+    }
+
+    case "letter":
+      return (
+        <Svg w={110} h={110}>
+          <text x={55} y={82} fontSize={78} fontWeight={700} textAnchor="middle" fill="currentColor" stroke="none" fontFamily="inherit">
+            {spec.ch}
+          </text>
+        </Svg>
+      );
+
+    case "grid-2pts": {
+      const extent = Math.max(Math.abs(spec.x1), Math.abs(spec.y1), Math.abs(spec.x2), Math.abs(spec.y2)) + 1;
+      const quad = spec.x1 < 0 || spec.y1 < 0 || spec.x2 < 0 || spec.y2 < 0;
+      return (
+        <Grid extent={extent} quad={quad}>
+          {(toPx) => {
+            const p1 = toPx(spec.x1, spec.y1);
+            const p2 = toPx(spec.x2, spec.y2);
+            let ext: React.ReactNode = null;
+            if (spec.line) {
+              // Extend the line through both points to the drawing's edge.
+              const dx = p2[0] - p1[0];
+              const dy = p2[1] - p1[1];
+              const n = Math.hypot(dx, dy) || 1;
+              const ux = dx / n;
+              const uy = dy / n;
+              ext = (
+                <path
+                  d={`M ${p1[0] - ux * 300} ${p1[1] - uy * 300} L ${p2[0] + ux * 300} ${p2[1] + uy * 300}`}
+                  strokeOpacity={0.55}
+                />
+              );
+            }
+            return (
+              <>
+                {ext}
+                {spec.segment && <path d={`M ${p1[0]} ${p1[1]} L ${p2[0]} ${p2[1]}`} strokeOpacity={0.7} />}
+                <Pt at={p1} label={`${spec.l1}(${spec.x1}, ${spec.y1})`} />
+                <Pt at={p2} label={`${spec.l2}(${spec.x2}, ${spec.y2})`} />
+              </>
+            );
+          }}
+        </Grid>
+      );
+    }
+
+    case "grid-reflect": {
+      const extent = Math.max(Math.abs(spec.x), Math.abs(spec.y)) + 1;
+      return (
+        <Grid extent={extent} quad>
+          {(toPx) => {
+            const p = toPx(spec.x, spec.y);
+            const a0 = spec.axis === "x" ? toPx(-extent, 0) : toPx(0, -extent);
+            const a1 = spec.axis === "x" ? toPx(extent, 0) : toPx(0, extent);
+            return (
+              <>
+                <path d={`M ${a0[0]} ${a0[1]} L ${a1[0]} ${a1[1]}`} strokeWidth={2} strokeDasharray="5 4" strokeOpacity={0.7} />
+                <Pt at={p} label={`P(${spec.x}, ${spec.y})`} />
+              </>
+            );
+          }}
+        </Grid>
+      );
+    }
+
+    case "grid-map": {
+      const extent = Math.max(Math.abs(spec.x1), Math.abs(spec.y1), Math.abs(spec.x2), Math.abs(spec.y2)) + 1;
+      return (
+        <Grid extent={extent} quad>
+          {(toPx) => {
+            const p1 = toPx(spec.x1, spec.y1);
+            const p2 = toPx(spec.x2, spec.y2);
+            const dx = p2[0] - p1[0];
+            const dy = p2[1] - p1[1];
+            const n = Math.hypot(dx, dy) || 1;
+            const hx = p2[0] - (dx / n) * 8;
+            const hy = p2[1] - (dy / n) * 8;
+            return (
+              <>
+                <path d={`M ${p1[0]} ${p1[1]} L ${hx} ${hy}`} strokeDasharray="4 3" strokeOpacity={0.7} />
+                <path d={`M ${p2[0]} ${p2[1]} L ${hx - (dy / n) * 4} ${hy + (dx / n) * 4} M ${p2[0]} ${p2[1]} L ${hx + (dy / n) * 4} ${hy - (dx / n) * 4}`} strokeOpacity={0.7} />
+                <Pt at={p1} label={`(${spec.x1}, ${spec.y1})`} />
+                <Pt at={p2} label={`(${spec.x2}, ${spec.y2})`} />
+              </>
+            );
+          }}
+        </Grid>
+      );
+    }
+
+    case "similar-tris": {
+      const k = spec.k;
+      const sw = 66;
+      const sh = 48;
+      const lw = sw * k;
+      const lh = sh * k;
+      const gap = 26;
+      const y0 = 16 + lh;
+      return (
+        <Svg w={sw + lw + gap + 60} h={lh + 56}>
+          <path d={`M 10 ${y0} h ${sw} l ${-sw} ${-sh} Z`} fill="currentColor" fillOpacity={0.06} />
+          <path d={`M ${10 + sw + gap} ${y0} h ${lw} l ${-lw} ${-lh} Z`} fill="currentColor" fillOpacity={0.06} />
+          <Label x={10 + sw / 2} y={y0 + 18}>{spec.small[0]}</Label>
+          {spec.small[1] && <Label x={4} y={y0 - sh / 2} anchor="start">{spec.small[1]}</Label>}
+          <Label x={10 + sw + gap + lw / 2} y={y0 + 18}>{spec.large[0]}</Label>
+          {spec.large[1] && <Label x={10 + sw + gap - 6} y={y0 - lh / 2} anchor="end">{spec.large[1]}</Label>}
+        </Svg>
+      );
+    }
+
+    case "similar-rects": {
+      const k = Math.max(1.2, Math.min(3, spec.k));
+      const sw = 54;
+      const sh = 40;
+      const y0 = 14 + sh * k;
+      return (
+        <Svg w={sw + sw * k + 100} h={sh * k + 50}>
+          <rect x={10} y={y0 - sh} width={sw} height={sh} fill="currentColor" fillOpacity={0.06} />
+          <rect x={sw + 40} y={y0 - sh * k} width={sw * k} height={sh * k} fill="currentColor" fillOpacity={0.06} />
+          <Label x={10 + sw / 2} y={y0 + 16}>{spec.sideLabel}</Label>
+          <Label x={sw + 40 + (sw * k) / 2} y={y0 + 16}>?</Label>
+          <Label x={sw + 24} y={y0 - sh * k - 2} anchor="start">{`× ${spec.k}`}</Label>
         </Svg>
       );
     }
