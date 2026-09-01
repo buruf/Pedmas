@@ -1,6 +1,7 @@
 import { allSkills, stageCapOf } from "@/curriculum";
 import { generateQuestion } from "@/engine/generate";
 import type { Region } from "@/lib/region";
+import type { FigureSpec } from "@/engine/figures";
 
 /**
  * The public worksheet library: free printable sheets per grade and TOPIC.
@@ -19,6 +20,7 @@ import type { Region } from "@/lib/region";
 
 export interface WorksheetQuestion {
   kind: "mc" | "input";
+  figure?: FigureSpec;
   instruction: string;
   prompt: string;
   choices?: string[];
@@ -102,6 +104,7 @@ export function buildWorksheet(
       if (q.kind !== "mc" && q.kind !== "input") continue;
       questions.push({
         kind: q.kind,
+        figure: q.figure,
         instruction: q.instruction,
         prompt: q.prompt,
         choices: q.choices,

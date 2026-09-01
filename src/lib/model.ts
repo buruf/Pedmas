@@ -232,6 +232,7 @@ export interface ClientQuestion {
   stage: number;
   stageCount: number;
   representation: string;
+  figure?: Question["figure"];
 }
 
 /**
@@ -256,6 +257,7 @@ export function toClientQuestion(q: Question, region: Region = "INTL"): ClientQu
     stage: q.stage,
     stageCount: stageCapOf(getSkill(q.skillId)),
     representation: q.representation,
+    figure: q.figure,
   };
 }
 

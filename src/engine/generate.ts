@@ -7,6 +7,7 @@ import { makeRng, randomSeed } from "./rng";
 import { errorAnalysisFor, hasErrorAnalysis } from "./errorAnalysis";
 import type { Region } from "@/lib/region";
 import { deriveMetadata } from "./metadata";
+import { deriveFigure } from "./figures";
 
 const MAX_ATTEMPTS = 40;
 
@@ -79,6 +80,7 @@ export function generateQuestion(
       microSkill: family.stageLabel(toRef(skill), st),
       accept: [],
       representation: "numeric",
+      figure: deriveFigure(skill.family, raw.prompt) ?? undefined,
       ...pub,
       difficulty: difficultyOf(skill, st),
       metadata: deriveMetadata(raw, skill, st, family.stageLabel(toRef(skill), st)),

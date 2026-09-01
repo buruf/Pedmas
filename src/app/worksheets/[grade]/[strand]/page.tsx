@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Logo } from "@/components/ui";
 import { MathText } from "@/components/MathText";
+import { Figure } from "@/components/Figure";
 import {
   buildWorksheet,
   legacyStrandTopic,
@@ -138,6 +139,7 @@ export default async function WorksheetPage({
                     <p className="text-xs text-ink-500"><MathText text={q.instruction} /></p>
                   )}
                   <p className="whitespace-pre-line font-semibold text-ink-900"><MathText text={q.prompt} /></p>
+                  {q.figure && <div className="mt-2"><Figure spec={q.figure} /></div>}
                   {q.kind === "mc" ? (
                     <ul className="mt-1.5 space-y-1 text-sm">
                       {q.choices?.map((c) => (

@@ -2,10 +2,14 @@ export type AnswerFormat = "integer" | "decimal" | "fraction" | "text" | "choice
 export type QKind = "input" | "mc";
 
 /** A fully-formed, validated question served to a student. */
+import type { FigureSpec } from "./figures";
+
 export interface Question {
   id: string;
   skillId: string;
   stage: number; // 1..5
+  /** Accurate geometric figure to render with the prompt, where one applies. */
+  figure?: FigureSpec;
   grade: number;
   strandId: string;
   strandName: string;

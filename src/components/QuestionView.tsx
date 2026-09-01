@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MathText } from "./MathText";
+import { Figure } from "@/components/Figure";
 import { PrimaryButton } from "./ui";
 import type { ClientQuestion } from "@/lib/model";
 
@@ -49,6 +50,11 @@ export function QuestionView({
       <div className="text-sm font-semibold text-ink-500">
         <MathText text={question.instruction} />
       </div>
+      {question.figure && (
+        <div className="mt-3">
+          <Figure spec={question.figure} />
+        </div>
+      )}
       <div className={`mt-3 whitespace-pre-line ${size} font-bold leading-relaxed text-ink-900`}>
         <MathText text={question.prompt} />
       </div>
