@@ -42,8 +42,15 @@ describe("the duplicate skills are gone and their keepers remain", () => {
     });
   }
 
-  it("29 skills were removed (634 → 605)", () => {
-    expect(allSkills().length).toBe(605);
+  it("29 duplicates removed, missing topics added (634 → 605 → 607)", () => {
+    // The additions: g6 Nets of 3D Shapes (CCSS 6.G.A.4) and g8 Transforming
+    // Shapes (8.G.A.1-3) — spec topics with no content at all. g8 Congruence
+    // kept its id but was repointed from the similarity family (mislabeled —
+    // it taught scale factors) to the real congruence family.
+    expect(allSkills().length).toBe(607);
+    expect(getSkill("g6.geometry.nets-of-3d-shapes")).toBeDefined();
+    expect(getSkill("g8.geometry.congruence")?.family).toBe("congruence");
+    expect(getSkill("g8.geometry.transforming-shapes")).toBeDefined();
   });
 });
 

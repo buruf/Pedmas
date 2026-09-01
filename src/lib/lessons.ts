@@ -424,6 +424,11 @@ export function lessonKeyForSkill(
   if (family === "coordinate-plane") return "geo-coordinates";
   if (family === "pythagorean") return "geo-pythagoras";
   if (family === "transformations") return "geo-transformations";
+  // Nets read a solid's faces laid flat; congruence is taught through rigid
+  // motions (CCSS 8.G.A.2), which is the transformations lesson's ground.
+  if (family === "nets") return "geo-shapes-3d";
+  if (family === "congruence") return "geo-transformations";
+  if (family === "shape-transform") return "geo-transformations";
   if (family === "similarity") return "geo-similarity";
   if (family === "circle-measure") return "geo-circle";
   if (family === "unit-conversion") return "meas-conversion";

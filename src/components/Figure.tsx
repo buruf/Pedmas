@@ -465,6 +465,180 @@ export function Figure({ spec }: { spec: FigureSpec }) {
       );
     }
 
+    case "net": {
+      const s = 34; // unit face size
+      const sq = (x: number, y: number, w = s, h = s, key?: string) => (
+        <rect key={key} x={x} y={y} width={w} height={h} fill="currentColor" fillOpacity={0.06} />
+      );
+      const tri = (pts: [number, number][], key?: string) => (
+        <path key={key} d={`M ${pts.map((p) => p.join(" ")).join(" L ")} Z`} fill="currentColor" fillOpacity={0.06} />
+      );
+      const label = spec.label ? (
+        <Label x={14 + 1.5 * s} y={14 + 3 * s + 16}>{spec.label}</Label>
+      ) : null;
+      if (spec.solid === "cube" || spec.solid === "rectangular prism") {
+        // The classic cross: four faces in a column, two wings. A prism
+        // stretches the column faces.
+        const w = spec.solid === "cube" ? s : Math.round(s * 1.5);
+        const x0 = 14;
+        return (
+          <Svg w={x0 + w + 2 * s + 20} h={14 + 4 * s + (spec.label ? 26 : 8)}>
+            {sq(x0 + s, 14, w, s, "a")}
+            {sq(x0 + s, 14 + s, w, s, "b")}
+            {sq(x0 + s, 14 + 2 * s, w, s, "c")}
+            {sq(x0 + s, 14 + 3 * s, w, s, "d")}
+            {sq(x0 + s - s, 14 + s, s, s, "e")}
+            {sq(x0 + s + w, 14 + s, s, s, "f")}
+            {label}
+          </Svg>
+        );
+      }
+      if (spec.solid === "square pyramid") {
+        const x0 = 30;
+        const y0 = 44;
+        return (
+          <Svg w={x0 + s + 76} h={y0 + s + 46}>
+            {sq(x0, y0)}
+            {tri([[x0, y0], [x0 + s, y0], [x0 + s / 2, y0 - 30]], "t")}
+            {tri([[x0, y0 + s], [x0 + s, y0 + s], [x0 + s / 2, y0 + s + 30]], "b")}
+            {tri([[x0, y0], [x0, y0 + s], [x0 - 30, y0 + s / 2]], "l")}
+            {tri([[x0 + s, y0], [x0 + s, y0 + s], [x0 + s + 30, y0 + s / 2]], "r")}
+          </Svg>
+        );
+      }
+      if (spec.solid === "triangular prism") {
+        const x0 = 14;
+        const y0 = 44;
+        const w = Math.round(s * 1.3);
+        return (
+          <Svg w={x0 + 3 * w + 20} h={y0 + s + 44}>
+            {sq(x0, y0, w, s, "r1")}
+            {sq(x0 + w, y0, w, s, "r2")}
+            {sq(x0 + 2 * w, y0, w, s, "r3")}
+            {tri([[x0 + w, y0], [x0 + 2 * w, y0], [x0 + 1.5 * w, y0 - 32]], "t")}
+            {tri([[x0 + w, y0 + s], [x0 + 2 * w, y0 + s], [x0 + 1.5 * w, y0 + s + 32]], "b")}
+          </Svg>
+        );
+      }
+      if (spec.solid === "cylinder") {
+        const x0 = 14;
+        const r = 20;
+        const y0 = 14 + 2 * r + 6;
+        const w = Math.round(2 * Math.PI * r * 0.6);
+        return (
+          <Svg w={x0 + w + 20} h={y0 + s + 2 * r + 18}>
+            <circle cx={x0 + w / 2} cy={14 + r} r={r} fill="currentColor" fillOpacity={0.06} />
+            {sq(x0, y0, w, s, "body")}
+            <circle cx={x0 + w / 2} cy={y0 + s + r + 6} r={r} fill="currentColor" fillOpacity={0.06} />
+          </Svg>
+        );
+      }
+      // Triangular pyramid: one central triangle, three folded outward.
+      const cx = 90;
+      const cy = 74;
+      const R = 40;
+      const v = [0, 1, 2].map((i): [number, number] => {
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / 3;
+        return [cx + R * Math.cos(a), cy + R * Math.sin(a)];
+      });
+      const mirror = (i: number, j: number): [number, number] => {
+        const k = 3 - i - j;
+        const mx = (v[i][0] + v[j][0]) / 2;
+        const my = (v[i][1] + v[j][1]) / 2;
+        return [2 * mx - v[k][0], 2 * my - v[k][1]];
+      };
+      return (
+        <Svg w={180} h={150}>
+          {tri(v, "mid")}
+          {tri([v[0], v[1], mirror(0, 1)], "f1")}
+          {tri([v[1], v[2], mirror(1, 2)], "f2")}
+          {tri([v[0], v[2], mirror(0, 2)], "f3")}
+        </Svg>
+      );
+    }
+
+    case "net-box": {
+      const sc = 26 / Math.max(spec.l, spec.w, spec.h) + 3;
+      const L = spec.l * sc;
+      const W = spec.w * sc;
+      const H = spec.h * sc;
+      const x0 = 16 + W;
+      const y0 = 14 + W;
+      // Cross: column of front(l×h), bottom(l×w), back(l×h), top(l×w); side wings (w×h).
+      return (
+        <Svg w={x0 + L + W + 70} h={y0 + H + W + H + 30}>
+          <rect x={x0} y={y0 - W} width={L} height={W} fill="currentColor" fillOpacity={0.06} />
+          <rect x={x0} y={y0} width={L} height={H} fill="currentColor" fillOpacity={0.06} />
+          <rect x={x0} y={y0 + H} width={L} height={W} fill="currentColor" fillOpacity={0.06} />
+          <rect x={x0} y={y0 + H + W} width={L} height={H} fill="currentColor" fillOpacity={0.06} />
+          <rect x={x0 - W} y={y0} width={W} height={H} fill="currentColor" fillOpacity={0.06} />
+          <rect x={x0 + L} y={y0} width={W} height={H} fill="currentColor" fillOpacity={0.06} />
+          <Label x={x0 + L / 2} y={y0 + H + W + H + 16}>{`${spec.l} ${spec.unit}`}</Label>
+          <Label x={x0 + L + W + 8} y={y0 + H / 2 + 4} anchor="start">{`${spec.h} ${spec.unit}`}</Label>
+          <Label x={x0 + L + W + 8} y={y0 + H + W / 2 + 4} anchor="start">{`${spec.w} ${spec.unit}`}</Label>
+        </Svg>
+      );
+    }
+
+    case "congruent-tris": {
+      // Two identical triangles, the second rotated — congruent, not just
+      // similar, and visibly "moved" rather than copied in place.
+      const t1: [number, number][] = [[14, 96], [86, 96], [32, 30]];
+      const c = [150, 63];
+      const t2 = t1.map(([x, y]): [number, number] => [2 * c[0] - x + 60, 2 * c[1] - y]);
+      const names1 = ["A", "B", "C"];
+      const names2 = ["D", "E", "F"];
+      return (
+        <Svg w={330} h={122}>
+          <path d={`M ${t1.map((p) => p.join(" ")).join(" L ")} Z`} fill="currentColor" fillOpacity={0.06} />
+          <path d={`M ${t2.map((p) => p.join(" ")).join(" L ")} Z`} fill="currentColor" fillOpacity={0.06} />
+          {t1.map((p, i) => (
+            <Label key={i} x={p[0] + (i === 1 ? 8 : -8)} y={p[1] + (i === 2 ? -6 : 12)} anchor={i === 1 ? "start" : "end"}>{names1[i]}</Label>
+          ))}
+          {t2.map((p, i) => (
+            <Label key={i} x={p[0] + (i === 1 ? -8 : 8)} y={p[1] + (i === 2 ? 14 : -6)} anchor={i === 1 ? "end" : "start"}>{names2[i]}</Label>
+          ))}
+        </Svg>
+      );
+    }
+
+    case "grid-shape":
+    case "grid-shape2": {
+      const all = spec.fig === "grid-shape2" ? [...spec.pts, ...spec.imgPts] : spec.pts;
+      const extent = Math.max(...all.map(([x, y]) => Math.max(Math.abs(x), Math.abs(y)))) + 1;
+      const quad = spec.fig === "grid-shape2" || all.some(([x, y]) => x < 0 || y < 0);
+      const names = spec.fig === "grid-shape" ? spec.names : ["A", "B", "C"];
+      return (
+        <Grid extent={extent} quad={quad}>
+          {(toPx) => {
+            const px = spec.pts.map(([x, y]) => toPx(x, y));
+            const d = `M ${px.map((p) => p.join(" ")).join(" L ")} Z`;
+            let img: React.ReactNode = null;
+            if (spec.fig === "grid-shape2") {
+              const ip = spec.imgPts.map(([x, y]) => toPx(x, y));
+              img = (
+                <>
+                  <path d={`M ${ip.map((p) => p.join(" ")).join(" L ")} Z`} strokeDasharray="4 3" fill="currentColor" fillOpacity={0.04} />
+                  {ip.map((p, i) => (
+                    <Label key={`i${i}`} x={p[0] + 7} y={p[1] - 5} anchor="start">{`${names[i]}′`}</Label>
+                  ))}
+                </>
+              );
+            }
+            return (
+              <>
+                <path d={d} fill="currentColor" fillOpacity={0.08} />
+                {px.map((p, i) => (
+                  <Label key={i} x={p[0] - 7} y={p[1] - 5} anchor="end">{names[i]}</Label>
+                ))}
+                {img}
+              </>
+            );
+          }}
+        </Grid>
+      );
+    }
+
     case "grid-point": {
       const max = spec.quad ? 5 : Math.max(5, Math.abs(spec.x) + 1, Math.abs(spec.y) + 1);
       const cell = spec.quad ? 16 : Math.min(20, 120 / max);

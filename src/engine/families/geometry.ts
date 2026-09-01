@@ -1881,7 +1881,321 @@ const circleMeasure: GeneratorFamily = {
   },
 };
 
+/* ------------------------------------------------------------------- nets */
+/**
+ * Nets of 3D shapes (CCSS 6.G.A.4). Prompts name the pieces in a fixed,
+ * parseable form ("6 identical squares") so the figure engine can draw the
+ * matching net; the drawn net and the text are the same given.
+ */
+const NET_SOLIDS = [
+  { name: "cube", desc: "6 identical squares", faces: 6 },
+  { name: "rectangular prism", desc: "2 identical squares and 4 identical rectangles", faces: 6 },
+  { name: "square pyramid", desc: "1 square and 4 identical triangles", faces: 5 },
+  { name: "triangular prism", desc: "2 triangles and 3 rectangles", faces: 5 },
+  { name: "cylinder", desc: "2 circles and 1 rectangle", faces: 3 },
+  { name: "triangular pyramid", desc: "4 identical triangles", faces: 4 },
+] as const;
+
+const nets: GeneratorFamily = {
+  stageLabel: (s, st) =>
+    ["Read the net", "Count the faces", "Match the pieces", "Area of a cube net", "Area of a box net"][st - 1],
+  generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
+    if (stage === 1) {
+      const solid = rng.pick(NET_SOLIDS);
+      const wrongs = NET_SOLIDS.filter((s) => s.name !== solid.name).map((s) => s.name);
+      return mcQ({
+        instruction: "A net is a flat pattern that folds into a solid.",
+        prompt: `A net is made of ${solid.desc}. Which solid does it fold into?`,
+        choices: mcChoices(rng, solid.name, rng.shuffle([...wrongs]).slice(0, 3)),
+        answer: solid.name,
+        hint: "Count the faces and their shapes, then picture the fold.",
+        steps: [
+          `The net has ${solid.desc}.`,
+          `Folded up, those faces make a ${solid.name}.`,
+        ],
+        concept: "A net shows every face of a solid laid flat.",
+      });
+    }
+    if (stage === 2) {
+      const solid = rng.pick(NET_SOLIDS.filter((s) => s.name !== "cylinder"));
+      return inputQ({
+        instruction: "Every face of the solid appears once in its net.",
+        prompt: `A ${solid.name} is unfolded into its net. How many faces does the net show?`,
+        answer: String(solid.faces),
+        hint: "The net has exactly one piece per face.",
+        steps: [`A ${solid.name} has ${solid.faces} faces, so its net shows ${solid.faces} pieces.`],
+        concept: "A net has one piece for every face of the solid.",
+        verify: () => solid.faces >= 3,
+      });
+    }
+    if (stage === 3) {
+      const solid = rng.pick(NET_SOLIDS);
+      const wrongs = NET_SOLIDS.filter((s) => s.name !== solid.name).map((s) => s.name);
+      return mcQ({
+        instruction: "Work backwards from the pieces.",
+        prompt: `Which solid has a net made of ${solid.desc}?`,
+        choices: mcChoices(rng, solid.name, rng.shuffle([...wrongs]).slice(0, 3)),
+        answer: solid.name,
+        hint: "Match each shape in the list to a face of the solid.",
+        steps: [`${solid.desc} are exactly the faces of a ${solid.name}.`],
+        concept: "The pieces of a net are the faces of its solid.",
+      });
+    }
+    if (stage === 4) {
+      const e = rng.int(2, 9);
+      const a = 6 * e * e;
+      return inputQ({
+        instruction: "The area of a net equals the surface area of its solid.",
+        prompt: `The net of a cube is made of 6 squares with sides of ${e} ${U}. What is the total area of the net in ${U}^2?`,
+        answer: String(a),
+        hint: "Find one square's area, then multiply by 6.",
+        steps: [`One square: ${e} × ${e} = ${e * e} ${U}^2.`, `Six of them: 6 × ${e * e} = ${a} ${U}^2.`],
+        concept: "A cube's net is six identical squares.",
+        verify: () => a / 6 === e * e,
+      });
+    }
+    const l = rng.int(3, 8);
+    const w = rng.int(2, l);
+    const h = rng.int(2, 6);
+    const sa = 2 * (l * w + l * h + w * h);
+    return inputQ({
+      instruction: "The area of a net equals the surface area of its solid.",
+      prompt: `A box is ${l} ${U} long, ${w} ${U} wide, and ${h} ${U} tall. Its net is drawn flat. What is the total area of the net in ${U}^2?`,
+      answer: String(sa),
+      hint: "The net has three pairs of identical rectangles.",
+      steps: [
+        `Top and bottom: 2 × (${l} × ${w}) = ${2 * l * w} ${U}^2.`,
+        `Front and back: 2 × (${l} × ${h}) = ${2 * l * h} ${U}^2.`,
+        `Two sides: 2 × (${w} × ${h}) = ${2 * w * h} ${U}^2.`,
+        `Total: ${sa} ${U}^2.`,
+      ],
+      concept: "A box's net pairs up its six rectangular faces.",
+      verify: () => sa % 2 === 0,
+    });
+  },
+};
+
+/* -------------------------------------------------------------- congruence */
+/**
+ * Congruent figures (CCSS 8.G.A.2): same shape AND size, with corresponding
+ * parts equal. The correspondence used throughout is ABC ↔ DEF in order:
+ * AB↔DE, BC↔EF, AC↔DF, ∠A↔∠D, ∠B↔∠E, ∠C↔∠F.
+ */
+const CORR_SIDES: Record<string, string> = { AB: "DE", BC: "EF", AC: "DF" };
+const CORR_ANGLES: Record<string, string> = { A: "D", B: "E", C: "F" };
+
+const congruence: GeneratorFamily = {
+  stageLabel: (s, st) =>
+    ["What congruent means", "Corresponding sides", "Name the matching side", "Corresponding angles", "Perimeter of the twin"][st - 1],
+  generate(skill, stage, rng): RawQuestion {
+    const U = lenU(skill.params);
+    if (stage === 1) {
+      if (rng.chance(0.5)) {
+        const answer = "They have the same shape and the same size.";
+        return mcQ({
+          instruction: "Know what the word promises.",
+          prompt: `Two figures are congruent. What must be true?`,
+          choices: mcChoices(rng, answer, rng.shuffle([
+            "They have the same shape, but can be different sizes.",
+            "They have the same area, but can be different shapes.",
+            "They point in the same direction.",
+          ])),
+          answer,
+          hint: "Congruent is stronger than similar.",
+          steps: [
+            "Similar figures share only a shape; congruent figures share shape AND size.",
+            "A congruent copy may still be flipped or turned — direction does not matter.",
+          ],
+          concept: "Congruent means identical in shape and size.",
+        });
+      }
+      const k = rng.pick([2, 3, 4]);
+      const answer = `a dilation with scale factor ${k}`;
+      return mcQ({
+        instruction: "Some moves keep a figure congruent; some do not.",
+        prompt: `Which transformation does NOT always give an image congruent to the original?`,
+        choices: mcChoices(rng, answer, rng.shuffle(["a translation", "a rotation", "a reflection"])),
+        answer,
+        hint: "Which of these changes the size?",
+        steps: [
+          "Translations, rotations and reflections move a figure without resizing it.",
+          `A dilation with scale factor ${k} makes every length ${k} times longer — the image is similar, not congruent.`,
+        ],
+        concept: "Rigid motions preserve congruence; dilations do not.",
+      });
+    }
+    if (stage === 2) {
+      const side = rng.pick(["AB", "BC", "AC"] as const);
+      const len = rng.int(3, 15);
+      return inputQ({
+        instruction: "Corresponding parts of congruent triangles are equal.",
+        prompt: `Triangle ABC is congruent to triangle DEF. Side ${side} is ${len} ${U} long. How long is side ${CORR_SIDES[side]} in ${unitLong(U)}?`,
+        answer: String(len),
+        hint: `${side} and ${CORR_SIDES[side]} are corresponding sides.`,
+        steps: [
+          `The letters match in order: ${side} in ABC corresponds to ${CORR_SIDES[side]} in DEF.`,
+          `Congruent triangles have equal corresponding sides, so ${CORR_SIDES[side]} = ${len} ${U}.`,
+        ],
+        concept: "Matching letters name the matching parts.",
+        verify: () => CORR_SIDES[side].length === 2,
+      });
+    }
+    if (stage === 3) {
+      const side = rng.pick(["AB", "BC", "AC"] as const);
+      const ans = CORR_SIDES[side];
+      const wrongs = Object.values(CORR_SIDES).filter((s) => s !== ans);
+      return mcQ({
+        instruction: "Read the correspondence from the letter order.",
+        prompt: `Triangle ABC is congruent to triangle DEF. Which side of DEF corresponds to side ${side}?`,
+        choices: mcChoices(rng, ans, rng.shuffle([...wrongs, "DA"])),
+        answer: ans,
+        hint: "A↔D, B↔E, C↔F — read the side's two letters across.",
+        steps: [`${side[0]}↔${CORR_SIDES[side][0]} and ${side[1]}↔${CORR_SIDES[side][1]}, so ${side} corresponds to ${ans}.`],
+        concept: "The naming order of congruent triangles carries the correspondence.",
+      });
+    }
+    if (stage === 4) {
+      const v = rng.pick(["A", "B", "C"] as const);
+      const deg = rng.int(25, 110);
+      return inputQ({
+        instruction: "Corresponding angles of congruent triangles are equal. Answer in degrees.",
+        prompt: `Triangle ABC is congruent to triangle DEF. Angle ${v} measures ${deg}°. What does angle ${CORR_ANGLES[v]} measure?`,
+        answer: String(deg),
+        hint: `${v} and ${CORR_ANGLES[v]} sit at corresponding vertices.`,
+        steps: [`${v}↔${CORR_ANGLES[v]} by the letter order, and corresponding angles are equal: ${deg}°.`],
+        concept: "Congruence copies angles exactly.",
+        verify: () => deg > 0 && deg < 180,
+      });
+    }
+    const a = rng.int(4, 9);
+    const b = rng.int(4, 9);
+    const c = rng.int(Math.abs(a - b) + 1, a + b - 1);
+    const p = a + b + c;
+    return inputQ({
+      instruction: "Congruent figures have equal perimeters.",
+      prompt: `Triangle ABC is congruent to triangle DEF. AB = ${a} ${U}, BC = ${b} ${U}, and AC = ${c} ${U}. What is the perimeter of triangle DEF in ${unitLong(U)}?`,
+      answer: String(p),
+      hint: "Every side of DEF equals its corresponding side in ABC.",
+      steps: [
+        `DEF's sides equal ABC's: ${a}, ${b} and ${c} ${U}.`,
+        `Perimeter = ${a} + ${b} + ${c} = ${p} ${U}.`,
+      ],
+      concept: "Equal sides give equal perimeters.",
+      verify: () => a + b > c && a + c > b && b + c > a,
+    });
+  },
+};
+
+/* --------------------------------------------------------- shape-transform */
+/** Transformations of whole shapes on the coordinate plane (CCSS 8.G.A.1-3). */
+function triVerts(rng: Rng): [number, number][] {
+  const ax = rng.int(1, 3);
+  const ay = rng.int(1, 3);
+  return [
+    [ax, ay],
+    [ax + rng.int(2, 3), ay],
+    [ax + 1, ay + rng.int(2, 3)],
+  ];
+}
+const fmtPt = (p: [number, number]) => `(${p[0]}, ${p[1]})`;
+
+const shapeTransform: GeneratorFamily = {
+  stageLabel: (s, st) =>
+    ["Translate a shape", "Reflect a shape", "Rotate a shape", "Dilate a shape", "Name the transformation"][st - 1],
+  generate(skill, stage, rng): RawQuestion {
+    const [A, B, C] = triVerts(rng);
+    const names = ["A", "B", "C"] as const;
+    const verts: Record<string, [number, number]> = { A, B, C };
+    const pick = rng.pick([...names]);
+    const p = verts[pick];
+    const header = `Triangle ABC has vertices A${fmtPt(A)}, B${fmtPt(B)}, and C${fmtPt(C)}.`;
+
+    const mcCoords = (ans: [number, number], wrongs: [number, number][]): string[] =>
+      mcChoices(rng, fmtPt(ans), wrongs.map(fmtPt));
+
+    if (stage === 1) {
+      const dx = rng.int(1, 5);
+      const dy = rng.int(1, 5);
+      const img: [number, number] = [p[0] + dx, p[1] + dy];
+      return mcQ({
+        instruction: "Every vertex moves the same way.",
+        prompt: `${header} The triangle is translated ${dx} units right and ${dy} units up. What are the coordinates of the image of ${pick}?`,
+        choices: mcCoords(img, [[p[0] - dx, p[1] - dy], [p[0] + dy, p[1] + dx], [p[0] + dx, p[1]]]),
+        answer: fmtPt(img),
+        hint: "Add to x for right, add to y for up.",
+        steps: [`${pick}${fmtPt(p)} moves to (${p[0]} + ${dx}, ${p[1]} + ${dy}) = ${fmtPt(img)}.`],
+        concept: "A translation adds the same amounts to every vertex.",
+        verify: () => img[0] - p[0] === dx && img[1] - p[1] === dy,
+      });
+    }
+    if (stage === 2) {
+      const overX = rng.chance(0.5);
+      const img: [number, number] = overX ? [p[0], -p[1]] : [-p[0], p[1]];
+      return mcQ({
+        instruction: "Reflection flips the sign of one coordinate.",
+        prompt: `${header} The triangle is reflected over the ${overX ? "x" : "y"}-axis. What are the coordinates of the image of ${pick}?`,
+        choices: mcCoords(img, [[-p[0], -p[1]], overX ? [-p[0], p[1]] : [p[0], -p[1]], [p[1], p[0]]]),
+        answer: fmtPt(img),
+        hint: overX ? "Over the x-axis: y changes sign." : "Over the y-axis: x changes sign.",
+        steps: [`${pick}${fmtPt(p)} reflects to ${fmtPt(img)}.`],
+        concept: "Reflecting over an axis negates the other coordinate.",
+        verify: () => (overX ? img[0] === p[0] && img[1] === -p[1] : img[0] === -p[0] && img[1] === p[1]),
+      });
+    }
+    if (stage === 3) {
+      const half = rng.chance(0.5);
+      const img: [number, number] = half ? [-p[0], -p[1]] : [-p[1], p[0]];
+      return mcQ({
+        instruction: "Rotate about the origin.",
+        prompt: `${header} The triangle is rotated ${half ? "180°" : "90° counterclockwise"} about the origin. What are the coordinates of the image of ${pick}?`,
+        choices: mcCoords(img, [[p[1], -p[0]], [p[0], -p[1]], half ? [-p[1], p[0]] : [-p[0], -p[1]]]),
+        answer: fmtPt(img),
+        hint: half ? "180°: both coordinates change sign." : "90° counterclockwise: (x, y) → (−y, x).",
+        steps: [`${pick}${fmtPt(p)} rotates to ${fmtPt(img)}.`],
+        concept: "Rotations about the origin follow fixed coordinate rules.",
+        verify: () => (half ? img[0] === -p[0] && img[1] === -p[1] : img[0] === -p[1] && img[1] === p[0]),
+      });
+    }
+    if (stage === 4) {
+      const k = rng.pick([2, 3]);
+      const img: [number, number] = [k * p[0], k * p[1]];
+      return mcQ({
+        instruction: "Dilation from the origin multiplies both coordinates.",
+        prompt: `${header} The triangle is dilated by a scale factor of ${k} centered at the origin. What are the coordinates of the image of ${pick}?`,
+        choices: mcCoords(img, [[p[0] + k, p[1] + k], [k * p[0], p[1]], [p[0], k * p[1]]]),
+        answer: fmtPt(img),
+        hint: "Multiply x and y by the scale factor.",
+        steps: [`${pick}${fmtPt(p)} maps to (${k} × ${p[0]}, ${k} × ${p[1]}) = ${fmtPt(img)}.`],
+        concept: "A dilation centred at the origin scales every coordinate.",
+        verify: () => img[0] === k * p[0] && img[1] === k * p[1],
+      });
+    }
+    const kinds = [
+      { name: "a translation", map: (q: [number, number]): [number, number] => [q[0] + 2, q[1] + 1] },
+      { name: "a reflection over the x-axis", map: (q: [number, number]): [number, number] => [q[0], -q[1]] },
+      { name: "a rotation of 180° about the origin", map: (q: [number, number]): [number, number] => [-q[0], -q[1]] },
+      { name: "a dilation with scale factor 2", map: (q: [number, number]): [number, number] => [2 * q[0], 2 * q[1]] },
+    ] as const;
+    const t = rng.pick([...kinds]);
+    const [A2, B2, C2] = [t.map(A), t.map(B), t.map(C)];
+    return mcQ({
+      instruction: "Compare the image with the original.",
+      prompt: `${header} Its image has vertices A′${fmtPt(A2)}, B′${fmtPt(B2)}, and C′${fmtPt(C2)}. Which transformation was applied?`,
+      choices: mcChoices(rng, t.name, rng.shuffle(kinds.filter((k) => k.name !== t.name).map((k) => k.name)).slice(0, 3)),
+      answer: t.name,
+      hint: "Check the signs and sizes of the coordinates.",
+      steps: [`A${fmtPt(A)} became A′${fmtPt(A2)} — that is ${t.name}.`],
+      concept: "Each transformation leaves a recognisable fingerprint on the coordinates.",
+      verify: () => fmtPt(t.map(A)) === fmtPt(A2),
+    });
+  },
+};
+
 export const geometryFamilies = {
+  nets,
+  congruence,
+  "shape-transform": shapeTransform,
   "shapes-2d": shapes2d,
   "shapes-3d": shapes3d,
   symmetry,

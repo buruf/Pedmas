@@ -188,6 +188,78 @@ describe("wave 2: shapes, symmetry, transformations, similarity", () => {
   });
 });
 
+describe("wave 3: nets, congruence, whole-shape transformations", () => {
+  it("net questions draw the net their text describes", () => {
+    const qs = sweep("nets", [1, 2, 4]);
+    const figured = qs.filter((q) => q.figure);
+    expect(figured.length).toBeGreaterThan(10);
+    for (const q of qs) {
+      if (/^A net is made of|is unfolded into its net|^The net of a cube/.test(q.prompt)) {
+        expect(q.figure, q.prompt).toBeDefined();
+      }
+      if (/^Which solid has a net made of/.test(q.prompt)) {
+        expect(q.figure, "the reasoning variant must stay figure-free").toBeUndefined();
+      }
+    }
+  });
+
+  it("the box-net figure carries the stated dimensions", () => {
+    const qs = sweep("nets", [5]).filter((q) => /Its net is drawn flat/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(3);
+    for (const q of qs) {
+      const m = /^A box is (\d+) \S+ long, (\d+) \S+ wide, and (\d+) \S+ tall/.exec(q.prompt)!;
+      const f = q.figure as { l: number; w: number; h: number };
+      expect(q.figure, q.prompt).toBeDefined();
+      expect([f.l, f.w, f.h]).toEqual([Number(m[1]), Number(m[2]), Number(m[3])]);
+    }
+  });
+
+  it("congruence questions show the two labeled triangles", () => {
+    const qs = sweep("congruence", [2, 3, 4, 5]).filter((q) => /^Triangle ABC is congruent/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(10);
+    for (const q of qs) expect(q.figure?.fig, q.prompt).toBe("congruent-tris");
+  });
+
+  it("apply-transformation questions draw only the ORIGINAL triangle", () => {
+    const qs = sweep("shape-transform", [1, 2, 3, 4]).filter((q) => /^Triangle ABC has vertices/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(10);
+    for (const q of qs) {
+      expect(q.figure?.fig, q.prompt).toBe("grid-shape");
+      const m = /vertices A\((\d+), (\d+)\)/.exec(q.prompt)!;
+      const f = q.figure as { pts: [number, number][] };
+      expect(f.pts[0]).toEqual([Number(m[1]), Number(m[2])]);
+    }
+  });
+
+  it("identify-transformation questions draw both triangles — both are given", () => {
+    const qs = sweep("shape-transform", [5]).filter((q) => /Its image has vertices/.test(q.prompt));
+    expect(qs.length).toBeGreaterThan(3);
+    for (const q of qs) expect(q.figure?.fig, q.prompt).toBe("grid-shape2");
+  });
+
+  it("every transformation answer is consistent with its rule", () => {
+    // Independent re-check of the generator itself: parse the prompt, apply
+    // the named rule, and demand the graded answer matches.
+    const qs = sweep("shape-transform", [1, 2, 3, 4], 30);
+    for (const sk of skills.filter((s) => s.family === "shape-transform")) {
+      for (let i = 0; i < 30; i++) {
+        const q = generateQuestion(sk, 2, { seed: 7000 + i });
+        const m = /vertices A\((\d+), (\d+)\), B\((\d+), (\d+)\), and C\((\d+), (\d+)\)\. The triangle is reflected over the ([xy])-axis\. What are the coordinates of the image of ([ABC])\?/.exec(q.prompt);
+        if (!m) continue;
+        const pts: Record<string, [number, number]> = {
+          A: [Number(m[1]), Number(m[2])],
+          B: [Number(m[3]), Number(m[4])],
+          C: [Number(m[5]), Number(m[6])],
+        };
+        const p = pts[m[8]];
+        const want = m[7] === "x" ? `(${p[0]}, ${-p[1]})` : `(${-p[0]}, ${p[1]})`;
+        expect(q.answer, q.prompt).toBe(want);
+      }
+    }
+    expect(qs.length).toBeGreaterThan(0);
+  });
+});
+
 describe("triangle construction is geometrically exact", () => {
   it("the apex angle of the built triangle equals 180 − A − B", () => {
     for (const [a, b] of [

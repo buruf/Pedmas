@@ -34,7 +34,29 @@ export type FigureSpec =
   | { fig: "grid-reflect"; x: number; y: number; axis: "x" | "y" }
   | { fig: "grid-map"; x1: number; y1: number; x2: number; y2: number }
   | { fig: "similar-tris"; small: [string, string]; large: [string, string]; k: number }
-  | { fig: "similar-rects"; sideLabel: string; k: number };
+  | { fig: "similar-rects"; sideLabel: string; k: number }
+  | { fig: "net"; solid: NetSolid; label?: string }
+  | { fig: "net-box"; l: number; w: number; h: number; unit: string }
+  | { fig: "congruent-tris" }
+  | { fig: "grid-shape"; pts: [number, number][]; names: string[] }
+  | { fig: "grid-shape2"; pts: [number, number][]; imgPts: [number, number][] };
+
+export type NetSolid =
+  | "cube"
+  | "rectangular prism"
+  | "square pyramid"
+  | "triangular prism"
+  | "cylinder"
+  | "triangular pyramid";
+
+const NET_BY_DESC: Record<string, NetSolid> = {
+  "6 identical squares": "cube",
+  "2 identical squares and 4 identical rectangles": "rectangular prism",
+  "1 square and 4 identical triangles": "square pyramid",
+  "2 triangles and 3 rectangles": "triangular prism",
+  "2 circles and 1 rectangle": "cylinder",
+  "4 identical triangles": "triangular pyramid",
+};
 
 /** Shape names the polygon renderer knows, normalised from prompt wording. */
 export function normaliseShapeName(raw: string): string | null {
@@ -257,6 +279,57 @@ export function deriveFigure(family: string, prompt: string): FigureSpec | null 
       };
     }
     return null;
+  }
+
+  if (family === "nets") {
+    if ((m = /^A net is made of (.+?)\. Which solid/.exec(prompt))) {
+      const solid = NET_BY_DESC[m[1]];
+      return solid ? { fig: "net", solid } : null;
+    }
+    // "Which solid has a net made of…" deliberately gets no figure — the
+    // pure-reasoning variant of the same task.
+    if ((m = /^A (cube|rectangular prism|square pyramid|triangular prism|triangular pyramid) is unfolded into its net/.exec(prompt))) {
+      return { fig: "net", solid: m[1] as NetSolid };
+    }
+    if ((m = /^The net of a cube is made of 6 squares with sides of (\d+) (\S+)/.exec(prompt))) {
+      return { fig: "net", solid: "cube", label: `${m[1]} ${m[2]}` };
+    }
+    if ((m = /^A box is (\d+) (\S+) long, (\d+) \S+ wide, and (\d+) \S+ tall\. Its net is drawn flat/.exec(prompt))) {
+      return { fig: "net-box", l: num(m[1]), w: num(m[3]), h: num(m[4]), unit: m[2] };
+    }
+    return null;
+  }
+
+  if (family === "congruence") {
+    if (/^Triangle ABC is congruent to triangle DEF/.test(prompt)) {
+      return { fig: "congruent-tris" };
+    }
+    return null;
+  }
+
+  if (family === "shape-transform") {
+    const head = /^Triangle ABC has vertices A\(([−-]?\d+), ([−-]?\d+)\), B\(([−-]?\d+), ([−-]?\d+)\), and C\(([−-]?\d+), ([−-]?\d+)\)\./.exec(prompt);
+    if (!head) return null;
+    const pts: [number, number][] = [
+      [num(head[1]), num(head[2])],
+      [num(head[3]), num(head[4])],
+      [num(head[5]), num(head[6])],
+    ];
+    const img = /Its image has vertices A′\(([−-]?\d+), ([−-]?\d+)\), B′\(([−-]?\d+), ([−-]?\d+)\), and C′\(([−-]?\d+), ([−-]?\d+)\)/.exec(prompt);
+    if (img) {
+      // Identify-the-transformation: both triangles are given, so both draw.
+      return {
+        fig: "grid-shape2",
+        pts,
+        imgPts: [
+          [num(img[1]), num(img[2])],
+          [num(img[3]), num(img[4])],
+          [num(img[5]), num(img[6])],
+        ],
+      };
+    }
+    // Apply-the-transformation: only the ORIGINAL draws — the image is the answer.
+    return { fig: "grid-shape", pts, names: ["A", "B", "C"] };
   }
 
   return null;

@@ -57,8 +57,11 @@ export const grade8: GradeDef = {
         { name: "Translations", family: "transformations", params: {} },
         { name: "Reflections", family: "transformations", params: {} },
         { name: "Rotations", family: "transformations", params: {} },
-        { name: "Congruence", family: "similarity", params: {} },
+        { name: "Congruence", family: "congruence", params: {} },
         { name: "Similarity", family: "similarity", params: {} },
+        // Added Aug 2026: congruence and whole-shape transformations were
+        // named spec topics with no content (CCSS 8.G.A.1-3).
+        { name: "Transforming Shapes", family: "shape-transform", params: {} },
         { name: "Pythagorean Theorem", family: "pythagorean", params: {} },
         { name: "Volume", family: "volume-surface", params: { kind: "volume" } },
         { name: "Surface Area", family: "volume-surface", params: { kind: "surface" } },

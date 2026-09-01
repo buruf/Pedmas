@@ -86,6 +86,9 @@ export const grade6: GradeDef = {
         { name: "Circles", family: "circle-measure", params: { kind: "mixed" } },
         { name: "Surface Area", family: "volume-surface", params: { kind: "surface" } },
         { name: "Volume", family: "volume-surface", params: { kind: "volume" } },
+        // Added Aug 2026: nets were a named spec topic with no content
+        // (CCSS 6.G.A.4 puts them exactly here).
+        { name: "Nets of 3D Shapes", family: "nets", params: {} },
         { name: "Coordinate Plane", family: "coordinate-plane", params: { kind: "quadrant" } },
       ],
     },

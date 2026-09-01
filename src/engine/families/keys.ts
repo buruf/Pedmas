@@ -120,6 +120,9 @@ export const FAMILY_KEYS = [
   "transformations",
   "similarity",
   "circle-measure",
+  "nets",
+  "congruence",
+  "shape-transform",
   // measurement
   "length-compare",
   "measure-units",
