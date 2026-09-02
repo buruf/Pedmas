@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo, Card, PrimaryButton, GhostButton, ProgressBar, StatusPill } from "@/components/ui";
+import { LogoutButton } from "@/components/LogoutButton";
 import { styleForGrade } from "@/lib/ageBand";
 import { api } from "@/lib/client";
 
@@ -85,6 +86,10 @@ export default function StudentDashboard({ params }: { params: Promise<{ id: str
           <span className="hidden rounded-full bg-ink-100 px-3 py-1 text-sm font-semibold text-ink-700 sm:inline">
             {data.name} · Grade {data.grade}
           </span>
+          {/* A child on a shared family tablet must be able to leave their
+              own session — otherwise the next person to pick it up is
+              still signed in as them. */}
+          <LogoutButton label="Sign out" />
         </div>
       </header>
 

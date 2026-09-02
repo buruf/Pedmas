@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/client";
 import { Logo, Card, PrimaryButton, GhostButton } from "@/components/ui";
+import { LogoutButton } from "@/components/LogoutButton";
 
 interface BillingStatus {
   configured: boolean;
@@ -77,6 +78,7 @@ export default function BillingPage() {
         >
           Back
         </Link>
+        <LogoutButton />
       </header>
 
       <h1 className="text-3xl font-extrabold text-ink-900">Billing</h1>

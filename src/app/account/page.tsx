@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo, Card, GhostButton } from "@/components/ui";
+import { LogoutButton } from "@/components/LogoutButton";
 import { api } from "@/lib/client";
 
 interface Me {
@@ -68,9 +69,12 @@ export default function AccountPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <header className="mb-8 flex items-center justify-between">
         <Link href="/"><Logo /></Link>
-        <Link href="/home" className="text-sm font-semibold text-ink-500 hover:text-ink-900">
-          Back
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/home" className="text-sm font-semibold text-ink-500 hover:text-ink-900">
+            Back
+          </Link>
+          <LogoutButton />
+        </div>
       </header>
 
       <h1 className="text-3xl font-extrabold text-ink-900">Account &amp; data</h1>

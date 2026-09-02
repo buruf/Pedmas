@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo, Card, PrimaryButton } from "@/components/ui";
+import { LogoutButton } from "@/components/LogoutButton";
 import { MathText } from "@/components/MathText";
 import { api } from "@/lib/client";
 import { MfaPanel } from "@/components/MfaPanel";
@@ -194,7 +195,10 @@ export default function AdminPage() {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
         <Link href="/"><Logo /></Link>
-        <span className="rounded-full bg-ink-900 px-3 py-1 text-xs font-bold text-white">ADMIN</span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-ink-900 px-3 py-1 text-xs font-bold text-white">ADMIN</span>
+          <LogoutButton />
+        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

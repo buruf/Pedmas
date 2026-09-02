@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo, Card, ProgressBar, StatusPill } from "@/components/ui";
+import { LogoutButton } from "@/components/LogoutButton";
 import { api } from "@/lib/client";
 
 interface StudentPayload {
@@ -16,7 +17,7 @@ interface StudentPayload {
       strandName: string;
       level: number;
       percent: number;
-      currentSkill: { name: string; stage: number } | null;
+      currentSkill: { name: string; stage: number; stageCount: number } | null;
     }[];
     masteredCount: number;
     masteredRecent: string[];
@@ -51,9 +52,12 @@ export default function ParentDashboard({ params }: { params: Promise<{ id: stri
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
         <Link href="/home"><Logo /></Link>
-        <Link href="/home" className="text-sm font-semibold text-ink-500 hover:text-ink-900">
-          ← All learners
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/home" className="text-sm font-semibold text-ink-500 hover:text-ink-900">
+            ← All learners
+          </Link>
+          <LogoutButton />
+        </div>
       </header>
       <h1 className="text-2xl font-extrabold text-ink-900">Parent Dashboard</h1>
       <p className="mt-1 text-ink-500">
@@ -151,7 +155,7 @@ export default function ParentDashboard({ params }: { params: Promise<{ id: stri
               <ProgressBar value={s.percent} />
               {s.currentSkill && (
                 <div className="mt-1 text-xs text-ink-500">
-                  Working on: {s.currentSkill.name} (stage {s.currentSkill.stage}/5)
+                  Working on: {s.currentSkill.name} (stage {s.currentSkill.stage}/{s.currentSkill.stageCount})
                 </div>
               )}
             </div>
