@@ -1,7 +1,11 @@
 # PEDMAS — project notes for Claude
 
 ## Deploy
-- Push to `main` auto-deploys www.pedmas.com (Vercel, project `pedmas`, team `eduyro-s-projects`).
+- **Always deploy with `npm run deploy`** — never a bare `git push`. A push is NOT a deploy: on 2026-09-01 a commit reached GitHub, the Vercel webhook silently never fired, and production kept serving the previous commit for hours. The script pushes, confirms GitHub has the commit, waits for the auto-deploy, and runs `vercel --prod` itself if the webhook does not deliver — then proves production is running HEAD, or exits non-zero.
+- `npm run deploy:check` answers "what is live right now?" at any time.
+- `GET /api/version` returns the commit production is actually running. That is the source of truth; deployment dashboards can disagree with reality.
+- Auto-deploy from `main` (Vercel, project `pedmas`, team `eduyro-s-projects`) still works most of the time — the script exists because "most of the time" is not good enough for a live product.
+- Verifying a change on prod: client-rendered pages (/admin, dashboards) do NOT show new UI in server HTML — grep the `/_next/static/chunks/*.js` bundles. And note every page inlines Next's error CSS containing `rgba(255,255,255`, which trips naive number regexes.
 
 ## Email (migrated to Brevo, 2026-08-23)
 - Transport: `src/lib/email/send.ts` — tries `BREVO_API_KEY` (Brevo REST, no SDK) first, falls back to `RESEND_API_KEY`. Tests in `tests/emailSend.test.ts`.

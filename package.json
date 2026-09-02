@@ -11,7 +11,9 @@
     "verify:store": "tsx scripts/verify-store.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "audit:cas": "tsx scripts/cas-audit.ts",
-    "audit:cas:report": "tsx scripts/cas-report.ts"
+    "audit:cas:report": "tsx scripts/cas-report.ts",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:check": "node scripts/deploy.mjs --check"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
