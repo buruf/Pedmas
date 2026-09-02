@@ -65,9 +65,13 @@ describe("placement covers the whole curriculum a student could owe", () => {
   });
 
   it("stays a short test despite the wider coverage", () => {
+    // The budget scales with the number of strands (a flat 26 gave a Grade 12
+    // student 2.2 questions per strand, so the test ran out and estimated the
+    // rest), but it is still hard-capped: no child ever faces more than 42,
+    // and the mercy rule ends it far sooner for anyone struggling.
     for (const [grade, ability] of [[8, 8], [8, 4], [8, 2], [1, 1], [12, 12]] as [number, number][]) {
       const { state } = simulate(grade, ability);
-      expect(state.asked, `grade ${grade}/ability ${ability} asked ${state.asked}`).toBeLessThanOrEqual(26);
+      expect(state.asked, `grade ${grade}/ability ${ability} asked ${state.asked}`).toBeLessThanOrEqual(42);
     }
   });
 

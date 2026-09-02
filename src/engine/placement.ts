@@ -55,8 +55,18 @@ export interface PlacementState {
 }
 
 const QUESTIONS_PER_GRADE = 2;
-/** A child should never face more than this many placement questions. */
-const MAX_QUESTIONS = 26;
+/**
+ * The question budget, scaled to how much there is to measure.
+ *
+ * A flat 26 gave a Grade 12 student 2.2 questions per strand — not enough to
+ * settle one grade, let alone search for it — so the test ran out and
+ * estimated the rest. A Grade 1 child has six strands and still finishes in a
+ * handful of questions; the cap only ever binds on students who are ANSWERING
+ * WELL, because the mercy rule ends the test for anyone who is not.
+ */
+function maxQuestionsFor(strandCount: number): number {
+  return Math.max(26, Math.min(42, Math.round(strandCount * 3.5)));
+}
 /** Consecutive wrong answers that end the test. */
 const MERCY_WRONG_STREAK = 5;
 
@@ -245,7 +255,10 @@ export function nextPlacementQuestion(state: PlacementState): PlacementQuestion 
     strandName: probe.strandName,
     progress: {
       asked: state.asked,
-      estimatedTotal: Math.min(MAX_QUESTIONS, state.order.length * (QUESTIONS_PER_GRADE + 1)),
+      estimatedTotal: Math.min(
+        maxQuestionsFor(state.order.length),
+        state.order.length * (QUESTIONS_PER_GRADE + 1)
+      ),
       strandIndex: state.current,
       strandCount: state.order.length,
     },
@@ -346,12 +359,43 @@ export function applyPlacementAnswer(state: PlacementState, correct: boolean): v
   }
 
   // Mercy rule and hard cap: never let placement become an endurance test.
-  if (!state.done && (state.wrongStreak >= MERCY_WRONG_STREAK || state.asked >= MAX_QUESTIONS)) {
+  if (
+    !state.done &&
+    (state.wrongStreak >= MERCY_WRONG_STREAK ||
+      state.asked >= maxQuestionsFor(state.order.length))
+  ) {
     endEarly(state);
   }
 }
 
 /** Close out the test, leaving untouched strands honestly un-assessed. */
+/**
+ * Where to start a strand the test never got to.
+ *
+ * "We ran out of questions" is not "start at the beginning" — but that is
+ * what this used to record, and it placed an on-level Grade 8 student at
+ * GRADE 1 statistics whenever the question budget ran out before that
+ * strand. Ability correlates across strands, so the honest estimate is what
+ * the student has already proven elsewhere, one grade below it: Kumon's
+ * deliberate "comfortable starting point", which the mastery engine
+ * promotes out of within days if it is too easy. Under-placing by one grade
+ * is recoverable; under-placing by seven is a child doing counting for a
+ * month.
+ */
+function estimateUnreached(state: PlacementState, probe: StrandProbe): number {
+  const known = demonstratedLevel(state);
+  // Only a grade actually FAILED is a ceiling. The probe's pending testGrade
+  // is not evidence: after a miss it has already halved toward the floor, so
+  // capping against it buried a student who failed once at Grade 8 down at
+  // Grade 3.
+  const failed = Object.entries(probe.outcomes)
+    .filter(([, ok]) => !ok)
+    .map(([g]) => Number(g));
+  const ceiling = failed.length ? Math.min(...failed) - 1 : 12;
+  const top = Math.min(lastGradeOf(probe.strandId), ceiling);
+  return Math.max(probe.firstGrade, Math.min(top, known - 1));
+}
+
 function endEarly(state: PlacementState): void {
   const activeId = state.order[state.current];
   const active = state.probes[activeId];
@@ -360,13 +404,17 @@ function endEarly(state: PlacementState): void {
     const passed = Object.entries(active.outcomes)
       .filter(([, ok]) => ok)
       .map(([g]) => Number(g));
-    active.finalGrade = passed.length ? Math.max(...passed) : active.low;
+    // Nothing passed here yet: they are below the grade being probed, but
+    // that is not evidence for Grade 1 — estimate, capped below the probe.
+    active.finalGrade = passed.length
+      ? Math.max(...passed)
+      : estimateUnreached(state, active);
     active.assessed = passed.length > 0;
   }
   for (let i = state.current + 1; i < state.order.length; i++) {
     const p = state.probes[state.order[i]];
     if (p && p.finalGrade === undefined) {
-      p.finalGrade = p.firstGrade;
+      p.finalGrade = estimateUnreached(state, p);
       p.assessed = false;
     }
   }
