@@ -1,12 +1,29 @@
 import React from "react";
 import Link from "next/link";
 
+/**
+ * The mark is the four operations in a square. No letter, so it needs no
+ * reading — a child who cannot yet read the wordmark still recognises the
+ * app — and it is the form that survives best at browser-tab size, where
+ * a monogram turns to mush. Drawn, never set as text, so it cannot reshape
+ * itself when a font fails to load.
+ */
 export function Logo({ dark = false }: { dark?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-lg font-black text-white">
-        P
-      </span>
+      <svg viewBox="0 0 64 64" className="h-9 w-9" aria-hidden="true" focusable="false">
+        <rect width="64" height="64" rx="16" fill="#7c3aed" />
+        <g stroke="#fff" strokeWidth="4.6" strokeLinecap="round" fill="none">
+          <path d="M15 20h10M20 15v10" />
+          <path d="M39 20h10" />
+          <path d="M15.5 40.5l9 9M24.5 40.5l-9 9" />
+          <path d="M39 45h10" />
+        </g>
+        <g fill="#fff">
+          <circle cx="44" cy="39.4" r="2.5" />
+          <circle cx="44" cy="50.6" r="2.5" />
+        </g>
+      </svg>
       <span
         className={`text-xl font-extrabold tracking-tight ${
           dark ? "text-white" : "text-ink-900"
