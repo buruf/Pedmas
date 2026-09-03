@@ -37,3 +37,15 @@ export const PARENT_CONSENT_STATEMENT =
 
 export const TERMS_ACCEPT_STATEMENT =
   "I agree to the Terms of Service and the Privacy Policy.";
+
+/**
+ * Text a student affirms when creating their OWN account.
+ *
+ * A child under the threshold cannot consent for themselves — a parent must
+ * create the account and add them, which is the path the product is built
+ * around (the parent then issues a sign-in code). Self-signup therefore
+ * requires this affirmation, recorded with the consent record.
+ */
+export const STUDENT_AGE_STATEMENT =
+  `I am ${CHILD_AGE_THRESHOLD} or older. (Younger learners: ask a parent to create the ` +
+  "account and add you — they will give you a sign-in code.)";

@@ -3,7 +3,7 @@ import { regionForCountry } from "./region";
 import { cookies } from "next/headers";
 import type { Account, AuthSession, Role } from "./model";
 import { allRows, getRow, newId, putRow, deleteRow, accountByEmail, isUniqueViolation } from "./store/db";
-import { POLICY_VERSION } from "./legal";
+import { CHILD_AGE_THRESHOLD, POLICY_VERSION } from "./legal";
 
 const COOKIE = "pedmas_session";
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -27,7 +27,7 @@ export async function createAccount(
   password: string,
   role: Role,
   name: string,
-  consent?: { acceptedTerms: boolean; parentAffirmed: boolean },
+  consent?: { acceptedTerms: boolean; parentAffirmed: boolean; ageAffirmed?: boolean },
   country?: string
 ): Promise<Account | { error: string }> {
   const norm = email.trim().toLowerCase();
@@ -40,6 +40,18 @@ export async function createAccount(
   }
   if (role === "PARENT" && !consent.parentAffirmed) {
     return { error: "Please confirm you are the parent or guardian of the children you add." };
+  }
+  // A student creating their OWN account must affirm they are old enough to
+  // consent for themselves. Below the threshold a parent has to create the
+  // account and add them — which is the product's intended path anyway, and
+  // the only one that records verifiable parental consent. Enforced here, not
+  // just in the form: the endpoint is public.
+  if (role === "STUDENT" && !consent.ageAffirmed) {
+    return {
+      error:
+        `You need to be ${CHILD_AGE_THRESHOLD} or older to make your own account. ` +
+        "Ask a parent to create one and add you — they will give you a sign-in code.",
+    };
   }
   const existing = await accountByEmail<Account>(norm);
   if (existing) return { error: "An account with that email already exists." };
@@ -54,6 +66,8 @@ export async function createAccount(
       policyVersion: POLICY_VERSION,
       acceptedAt: Date.now(),
       parentAffirmed: Boolean(consent.parentAffirmed),
+      // Recorded so the affirmation can be evidenced later, like the others.
+      ageAffirmed: Boolean(consent.ageAffirmed),
     },
     // A stated country beats geo-IP detection: the parent said where they
     // are, and that decides the curriculum variant and units from day one.

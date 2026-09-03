@@ -34,6 +34,7 @@ export function SignupForm() {
   const [busy, setBusy] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [parentAffirmed, setParentAffirmed] = useState(false);
+  const [ageAffirmed, setAgeAffirmed] = useState(false);
 
   const submit = async () => {
     setBusy(true);
@@ -41,7 +42,7 @@ export function SignupForm() {
     try {
       await api("/api/auth/register", {
         method: "POST",
-        json: { email, password, name, role, country, acceptedTerms, parentAffirmed },
+        json: { email, password, name, role, country, acceptedTerms, parentAffirmed, ageAffirmed },
       });
       router.push("/onboarding");
     } catch (e) {
@@ -139,6 +140,24 @@ export function SignupForm() {
                 .
               </span>
             </label>
+            {role === "STUDENT" && (
+              <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
+                <input
+                  type="checkbox"
+                  checked={ageAffirmed}
+                  onChange={(e) => setAgeAffirmed(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+                  required
+                />
+                <span>
+                  I am 13 or older.{" "}
+                  <span className="text-ink-500">
+                    Younger learners: ask a parent to create the account and add you — they
+                    will give you a sign-in code.
+                  </span>
+                </span>
+              </label>
+            )}
             {role === "PARENT" && (
               <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-700">
                 <input
@@ -159,7 +178,7 @@ export function SignupForm() {
           {error && <p className="rounded-xl bg-err-100 px-3 py-2 text-sm text-err-600">{error}</p>}
           <PrimaryButton
             type="submit"
-            disabled={busy || !country || !acceptedTerms || (role === "PARENT" && !parentAffirmed)}
+            disabled={busy || !country || !acceptedTerms || (role === "PARENT" && !parentAffirmed) || (role === "STUDENT" && !ageAffirmed)}
             className="w-full"
           >
             {busy ? "Creating..." : "Create account"}

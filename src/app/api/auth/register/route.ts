@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     {
       acceptedTerms: Boolean(body.acceptedTerms),
       parentAffirmed: Boolean(body.parentAffirmed),
+      ageAffirmed: Boolean(body.ageAffirmed),
     },
     body.country
   );

@@ -90,6 +90,8 @@ export interface Account {
     acceptedAt: number;
     /** True when the holder affirmed they are a parent or guardian. */
     parentAffirmed: boolean;
+    /** True when a self-registering student affirmed they meet the age threshold. */
+    ageAffirmed?: boolean;
   };
 }
 
