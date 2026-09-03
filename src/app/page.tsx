@@ -16,12 +16,21 @@ export default function HomePage() {
   const signupsOpen = registrationOpen();
   return (
     <div className="min-h-screen bg-white">
-      {/* Sits above the header so it is the first thing read, and is not
-          dismissible — a visitor who misses it could try to sign up. */}
-      <div className="bg-warn-600 px-4 py-2.5 text-center text-sm font-semibold text-white">
-        🚧 Under construction — PEDMAS is still being built and tested.
-        {!signupsOpen && <span className="font-normal"> New sign-ups are closed for now.</span>}
-      </div>
+      {/* Sits above the header so it is the first thing read. While sign-ups
+          were closed this warned visitors off; now that families can join it
+          says the honest thing instead — a "still being built" banner over a
+          paid product argues against every signup underneath it. */}
+      {signupsOpen ? (
+        <div className="bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white">
+          ✨ PEDMAS is newly launched — thank you for being among the first families.
+          <span className="font-normal"> Spot something wrong? Tell us and we&rsquo;ll fix it.</span>
+        </div>
+      ) : (
+        <div className="bg-warn-600 px-4 py-2.5 text-center text-sm font-semibold text-white">
+          🚧 Under construction — PEDMAS is still being built and tested.
+          <span className="font-normal"> New sign-ups are closed for now.</span>
+        </div>
+      )}
 
       <header className="sticky top-0 z-10 border-b border-ink-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
