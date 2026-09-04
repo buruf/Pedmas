@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo, PrimaryButton, Card } from "@/components/ui";
 import { api } from "@/lib/client";
+import { formatCodeInput, CODE_GROUP, CODE_GROUPS } from "@/lib/codeFormat";
 
 /**
  * Where a child signs in on their own.
@@ -55,10 +56,15 @@ export default function StudentSignInPage() {
             <input
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              // Hyphens appear on their own after every four characters;
+              // children were hunting for the hyphen key.
+              onChange={(e) => setCode(formatCodeInput(e.target.value))}
               autoFocus
               autoComplete="off"
+              autoCapitalize="characters"
+              autoCorrect="off"
               spellCheck={false}
+              maxLength={CODE_GROUP * CODE_GROUPS + CODE_GROUPS - 1}
               className="mt-1 text-center text-lg uppercase tracking-[0.2em]"
               placeholder="ABCD-EFGH-JKLM"
               required

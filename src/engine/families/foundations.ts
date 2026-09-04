@@ -227,11 +227,21 @@ const placeValue: GeneratorFamily = {
       lo = 10 ** (nDigits - 1);
     }
     const hi = Math.max(lo, Math.min(max, 10 ** nDigits - 1));
-    const n = rng.int(lo, hi);
-    const str = String(n);
+    let n = rng.int(lo, hi);
+    let str = String(n);
     if (stage === 2 || stage === 5) {
-      let pos = rng.int(0, str.length - 1);
-      if (str[pos] === "0") pos = 0;
+      // "What is the value of the digit 9 in 399?" has two answers. Only a
+      // digit that appears ONCE in the number may be asked about, so draw
+      // again until the number has one (a child reported the 399 case).
+      const askable = (s: string) =>
+        [...s].map((_, i) => i).filter((i) => s[i] !== "0" && s.indexOf(s[i]) === s.lastIndexOf(s[i]));
+      let positions = askable(str);
+      for (let tries = 0; positions.length === 0 && tries < 40; tries++) {
+        n = rng.int(lo, hi);
+        str = String(n);
+        positions = askable(str);
+      }
+      const pos = positions.length ? rng.pick(positions) : 0;
       const digit = Number(str[pos]);
       const value = digit * 10 ** (str.length - 1 - pos);
       return inputQ({
@@ -244,7 +254,8 @@ const placeValue: GeneratorFamily = {
           `Its value is ${digit} × ${fmtInt(10 ** (str.length - 1 - pos))} = ${fmtInt(value)}.`,
         ],
         concept: "A digit's value depends on its place.",
-        verify: () => String(n).includes(String(digit)) && value <= n,
+        // Rejected outright if the digit is not unique: the question would be ambiguous.
+        verify: () => str.split(String(digit)).length === 2 && digit !== 0 && value <= n,
       });
     }
     const parts = [...str]
