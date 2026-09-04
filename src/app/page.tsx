@@ -102,12 +102,18 @@ export default function HomePage() {
               className="mx-auto overflow-hidden rounded-2xl shadow-sm ring-1 ring-brand-100"
               style={{ width: 263, height: 233 }}
             >
+              {/* unoptimized on purpose. The optimiser was upscaling this
+                  265px source to 384px and 640px and re-encoding at q=75 —
+                  lossy compression on top of an upscale, which is most of
+                  why it looked blurry. Served raw it is pixel-exact, and at
+                  62KB there is nothing to gain from optimising it. */}
               <Image
                 src="/hero-student.png"
                 alt="A student working through a math problem at a laptop"
                 width={265}
                 height={237}
                 priority
+                unoptimized
                 className="block max-w-none"
                 style={{ marginTop: -4 }}
               />
