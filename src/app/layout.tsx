@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ErrorReporter } from "@/components/ErrorReporter";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
@@ -26,6 +27,7 @@ export default function RootLayout({
         <ErrorReporter />
         <ServiceWorker />
         {children}
+        <Analytics />
       </body>
     </html>
   );
