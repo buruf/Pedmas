@@ -36,7 +36,7 @@ The curriculum's skill graph is linear inside a strand (each skill's prerequisit
 | number ⟷ operations | **siblings** — operations introduces `mental-math` (G1) and `integer-ops` (G6) first; number introduces `skip-counting` |
 | measurement ⟷ geometry | **siblings** — geometry has `perimeter-area` first (G3); measurement has `volume-surface` first (G4) |
 
-`mc-bank` is shared too, but it is a generic bank of multiple-choice items, not a dependency. Trig and calculus share no family with any other strand, so they carry only the foundation below — **no algebra or functions edge**. That is what the data supports; if a cap on trig by algebra is wanted, the curriculum needs a shared family (or a decision to add the edge by judgment).
+`mc-bank` is shared too, but it is a generic bank of multiple-choice items, not a dependency. Trig and calculus share no family with any other strand. **Trig → algebra is the one edge added by judgement** (owner decision, 4 Sep 2026): solving trig equations and handling radicals rests on algebra even though no generator family is shared. Calculus carries only the arithmetic foundation.
 
 **Rule 2 — arithmetic foundation.** Every grade file lists the five arithmetic strands first (number, operations, fractions, decimals, ratios) before algebra, geometry, measurement and statistics. Each of the five depends on those listed before it (number and operations being siblings by rule 1), and every other strand depends on all five.
 
@@ -54,7 +54,7 @@ Resolved table (`STRAND_PREREQS`):
 | geometry | number, operations, fractions, decimals, ratios |
 | stats | number, operations, fractions, decimals, ratios |
 | functions | number, operations, fractions, decimals, ratios, algebra |
-| trig | number, operations, fractions, decimals, ratios |
+| trig | number, operations, fractions, decimals, ratios, **algebra** (by judgement) |
 | calculus | number, operations, fractions, decimals, ratios |
 
 Two views of the levels placed so far feed this rule. **Estimated** levels (a strand's placed grade; one below the floor if it failed the floor or was gated) choose where later strands start and which are gated — cheap decisions the staircase corrects. **Earned** levels (only grades actually passed) compute the caps that bind the final result; an unverified estimate a higher strand leans on is re-probed rather than trusted.

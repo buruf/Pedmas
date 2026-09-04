@@ -169,6 +169,15 @@ describe("1. the prerequisite map is derived from the curriculum, not invented",
     }
   });
 
+  it("trig rests on algebra — the one edge added by judgement, not data", () => {
+    expect(STRAND_PREREQS.trig).toContain("algebra");
+    // A Grade 12 student with algebra at Grade 8 cannot be placed above
+    // Grade 10 trig (trig at G needs algebra at G − 1).
+    expect(prerequisiteCap("trig", 12, { number: 9, operations: 6, fractions: 6, decimals: 7, ratios: 7, algebra: 8 })).toEqual({ cap: 10, bindingPrereq: "algebra" });
+    // Calculus stays data-only: arithmetic foundation, no algebra edge.
+    expect(STRAND_PREREQS.calculus).not.toContain("algebra");
+  });
+
   it("prerequisites are placed before the strands that depend on them", () => {
     const order = strandsToPlace(12);
     for (const [s, prereqs] of Object.entries(STRAND_PREREQS)) {

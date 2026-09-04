@@ -109,8 +109,9 @@ const STRAND_ORDER = [
  *        measurement ⟷ geometry  siblings: geometry has perimeter-area
  *                                first (g3), measurement has
  *                                volume-surface first (g4)
- *      Trig and calculus share no family with any other strand, so they
- *      carry only the foundation below — no algebra or functions edge.
+ *      Trig and calculus share no family with any other strand; trig
+ *      gets an algebra edge by the owner's judgement (see below), calculus
+ *      carries only the foundation.
  *
  *  (2) ARITHMETIC FOUNDATION. Every grade file lists the five arithmetic
  *      strands first — number, operations, fractions, decimals, ratios —
@@ -136,7 +137,11 @@ export const STRAND_PREREQS: Record<string, string[]> = {
   geometry: [...ARITHMETIC],
   stats: [...ARITHMETIC],
   functions: [...ARITHMETIC, "algebra"],
-  trig: [...ARITHMETIC],
+  // BY JUDGEMENT (owner decision, Sep 4 2026): the curriculum data shows no
+  // shared family between trig and algebra, but solving trig equations and
+  // handling radicals rests on algebra, so algebra caps trig. Calculus keeps
+  // the data-only foundation.
+  trig: [...ARITHMETIC, "algebra"],
   calculus: [...ARITHMETIC],
 };
 
