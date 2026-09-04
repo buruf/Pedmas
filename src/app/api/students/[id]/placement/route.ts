@@ -4,6 +4,7 @@ import {
   beginPlacement,
   placementAnswer,
   placementCurrent,
+  placementIsStale,
   saveStudent,
   studentFor,
 } from "@/lib/students";
@@ -26,7 +27,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (student.placedAt && !student.placement?.done) {
     // placedAt implies a finished run; fall through to report below.
   }
-  if (!student.placement) {
+  // A placement stored by the previous engine version cannot be resumed —
+  // its state has a different shape. Anyone caught mid-test restarts; a
+  // finished one is left alone (its report is still a report).
+  if (!student.placement || (placementIsStale(student) && !student.placement.done)) {
     beginPlacement(student);
     await saveStudent(student);
   }

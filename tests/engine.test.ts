@@ -293,20 +293,23 @@ describe("placement engine", () => {
     for (const row of report) {
       expect(row.level).toBeLessThan(6);
       // Strands gated behind unmet prerequisites are reported honestly as
-      // not-yet-assessed rather than guessed at.
-      expect(["Developing", "Practicing", "Ready to Learn"]).toContain(row.status);
+      // "Not started" at their floor rather than guessed at.
+      expect(["Developing", "Practicing", "Ready to Learn", "Not started"]).toContain(row.status);
     }
   });
 
-  it("opens with an easy question rather than one at the school grade", () => {
-    // A young child should meet the gentlest question first, whatever year
-    // they are in — starting at the school grade was what made the test feel
-    // impossible for children who are behind.
+  it("opens at the student's own grade, in its gentlest form", () => {
+    // Version 2 starts the staircase at the age-expected grade (the owner's
+    // spec), so the level is found by stepping rather than by climbing from
+    // the bottom. What stays gentle is the FORM: the first item at any grade
+    // is stage 1 of a skill there, never a mid-difficulty exercise. A child
+    // who is behind steps down two misses later, and every later strand
+    // starts from what the earlier ones revealed.
     for (const grade of [1, 2, 3, 5, 8]) {
       const state = startPlacement(grade, 42, 0);
       const first = nextPlacementQuestion(state)!;
       expect(first.question.stage).toBe(1);
-      expect(first.question.grade).toBeLessThanOrEqual(Math.max(1, grade - 3));
+      expect(first.grade).toBe(Math.min(grade, 9)); // number sense ends at Grade 9
     }
   });
 
@@ -323,16 +326,24 @@ describe("placement engine", () => {
     }
     expect(seen.has("fractions")).toBe(false);
     const fractions = placementReport(state).find((r) => r.strandId === "fractions");
-    expect(fractions?.status).toBe("Ready to Learn");
+    // Gated on prerequisites: reported at the strand's floor as not started.
+    expect(fractions?.status).toBe("Not started");
+    expect(fractions?.level).toBe(2);
   });
 
   it("still places a much-older struggling student instead of giving up", () => {
     // The mercy rule used to fire before the search had found anything, so a
     // Grade 8 student working at Grade 2 ended up with nothing measured.
     const report = run(8, (g) => g <= 2);
-    const measured = report.filter((r) => r.status !== "Ready to Learn");
+    const measured = report.filter((r) => r.status !== "Ready to Learn" && r.status !== "Not started");
     expect(measured.length).toBeGreaterThan(0);
-    for (const row of measured) expect(row.level).toBeLessThanOrEqual(3);
+    for (const row of measured) expect(row.level, row.strandId).toBeLessThanOrEqual(3);
+    // Decimals (floor 4) and ratios (floor 5) need Grade 3 number and
+    // operations, which this student cannot earn: they are gated and reported
+    // "Not started" AT THEIR FLOOR — never measured, never dumped at Grade 1.
+    const gated = report.filter((r) => r.status === "Not started");
+    expect(gated.map((r) => r.strandId).sort()).toEqual(["decimals", "ratios"]);
+    for (const row of gated) expect(row.level).toBe(row.strandId === "decimals" ? 4 : 5);
   });
 
   it("keeps a struggling student's failure rate humane", () => {
@@ -350,7 +361,10 @@ describe("placement engine", () => {
       if (!correct) wrong += 1;
       applyPlacementAnswer(state, correct);
     }
-    expect(asked).toBeLessThanOrEqual(14);
+    // Each strand now earns 6–10 items (3-of-4 per grade), so the total is
+    // larger than the old 2–3-item probes allowed — but still bounded, and
+    // still with more right answers than wrong for a child who is behind.
+    expect(asked).toBeLessThanOrEqual(state.order.length * 8);
     expect(wrong / asked).toBeLessThanOrEqual(0.55);
   });
 
@@ -367,7 +381,10 @@ describe("placement engine", () => {
       if (!next) break;
       applyPlacementAnswer(state, Math.random() > 0.4);
     }
-    expect(state.asked).toBeLessThanOrEqual(70);
+    // Coin-flip answering is the expensive case: every grade takes the full
+    // four items to decide and the staircase reverses often. Even so, the
+    // per-strand cap bounds it.
+    expect(state.asked).toBeLessThanOrEqual(state.order.length * 12);
   });
 });
 

@@ -13,6 +13,7 @@ import {
   placementReport,
   startPlacement,
   strandsToPlace,
+  PLACEMENT_VERSION,
 } from "@/engine/placement";
 import { strandChain, getSkill, stageCapOf, strandLabel } from "@/curriculum";
 import {
@@ -163,8 +164,14 @@ export function resetPlacement(student: StudentProfile): { kept: number; cleared
   return { kept, cleared };
 }
 
+/** True when the stored placement predates the current engine. */
+export function placementIsStale(student: StudentProfile): boolean {
+  return Boolean(student.placement) && student.placement!.version !== PLACEMENT_VERSION;
+}
+
 export function placementCurrent(student: StudentProfile, region: Region = "INTL") {
   if (!student.placement || student.placement.done) return null;
+  if (placementIsStale(student)) return null;
   const next = nextPlacementQuestion(student.placement);
   if (!next) return null;
   return {
@@ -180,6 +187,7 @@ export function placementAnswer(
   opts: { idk?: boolean } = {}
 ) {
   if (!student.placement || student.placement.done) return null;
+  if (placementIsStale(student)) return null;
   const next = nextPlacementQuestion(student.placement);
   if (!next) return null;
   // "I don't know" is an honest negative — better placement data than a

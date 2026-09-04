@@ -44,8 +44,7 @@ function simulate(schoolGrade: number, trueLevel: number, seed: number) {
   while (!state.done && guard++ < 400) {
     const q = nextPlacementQuestion(state);
     if (!q) break;
-    const probe = state.probes[q.strandId];
-    applyPlacementAnswer(state, rnd() < pCorrect(probe.testGrade, trueLevel));
+    applyPlacementAnswer(state, rnd() < pCorrect(q.grade, trueLevel));
   }
   return { report: placementReport(state), asked: state.asked };
 }
@@ -106,8 +105,10 @@ describe("the budget scales with what there is to measure", () => {
       const lengths: number[] = [];
       for (let t = 0; t < 20; t++) lengths.push(simulate(grade, level, 3000 + t * 7919).asked);
       const median = lengths.sort((a, b) => a - b)[10];
+      // 6–10 staircase items per strand by design (3-of-4 per grade), plus the
+      // prerequisite re-probes the confirm phase may add.
       expect(median, `grade ${grade} test length`).toBeLessThanOrEqual(
-        Math.max(30, strandsToPlace(grade).length * 4)
+        Math.max(36, strandsToPlace(grade).length * 9)
       );
     }
   });

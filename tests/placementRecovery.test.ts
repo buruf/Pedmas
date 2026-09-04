@@ -28,8 +28,9 @@ function runPlacement(
     const q = nextPlacementQuestion(state);
     if (!q) break;
     seen[q.strandId] = (seen[q.strandId] ?? 0) + 1;
-    const probe = state.probes[q.strandId];
-    applyPlacementAnswer(state, !wrongOn(q.strandId, probe.testGrade, seen[q.strandId]));
+    // q.grade is the grade under test — also correct during the prerequisite
+    // and tie-break probes, where a probe's own testGrade would be stale.
+    applyPlacementAnswer(state, !wrongOn(q.strandId, q.grade, seen[q.strandId]));
   }
   return placementReport(state);
 }
@@ -48,9 +49,11 @@ describe("placement recovers from a single slip", () => {
   it("one wrong measurement answer costs extra questions, not two grades", () => {
     const report = runPlacement(12, (s, _g, nth) => s === "measurement" && nth === 1);
     const m = levelOf(report, "measurement");
-    // The slip is re-tested at the same grade; two of three decides.
+    // The slip costs one refinement item, not two grades: 3-of-4 still passes
+    // the grade, and the extra item makes it 4 of 5 — "Strong". Mastered is
+    // reserved for ≥90% at the level, which one miss in five cannot reach.
     expect(m.level, "a single slip must not drag a strong student to Grade 3").toBe(5);
-    expect(m.status).toBe("Mastered");
+    expect(m.status).toBe("Strong");
   });
 
   it("a student genuinely weak in measurement still places low", () => {

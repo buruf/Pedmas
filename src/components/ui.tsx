@@ -77,6 +77,7 @@ export function StatusPill({ status }: { status: string }) {
     Developing: "bg-warn-100 text-warn-600",
     Practicing: "bg-blue-50 text-blue-600",
     "Ready to Learn": "bg-ink-100 text-ink-700",
+    "Not started": "bg-ink-50 text-ink-500",
     Current: "bg-brand-600 text-white",
     // Where the strand resumes once the current topic is mastered.
     "Next up": "bg-brand-50 text-brand-700",

@@ -64,14 +64,16 @@ describe("placement covers the whole curriculum a student could owe", () => {
     }
   });
 
-  it("stays a short test despite the wider coverage", () => {
-    // The budget scales with the number of strands (a flat 26 gave a Grade 12
-    // student 2.2 questions per strand, so the test ran out and estimated the
-    // rest), but it is still hard-capped: no child ever faces more than 42,
-    // and the mercy rule ends it far sooner for anyone struggling.
+  it("stays a bounded test despite the wider coverage", () => {
+    // Each strand earns 6–10 items (3-of-4 at each grade of an adaptive
+    // staircase) rather than the 2–3 the old engine spent, so the total is
+    // larger than before — but it is capped per strand, and a struggling
+    // student fails grades in two misses and descends fast.
     for (const [grade, ability] of [[8, 8], [8, 4], [8, 2], [1, 1], [12, 12]] as [number, number][]) {
       const { state } = simulate(grade, ability);
-      expect(state.asked, `grade ${grade}/ability ${ability} asked ${state.asked}`).toBeLessThanOrEqual(42);
+      expect(state.asked, `grade ${grade}/ability ${ability} asked ${state.asked}`).toBeLessThanOrEqual(
+        strandsToPlace(grade).length * 10
+      );
     }
   });
 
@@ -79,7 +81,7 @@ describe("placement covers the whole curriculum a student could owe", () => {
     const { state } = simulate(1, 1);
     const firstQuestion = startPlacement(1, 42, Date.now());
     expect(nextPlacementQuestion(firstQuestion)?.question.grade).toBe(1);
-    expect(state.asked).toBeLessThanOrEqual(20);
+    expect(state.asked).toBeLessThanOrEqual(strandsToPlace(1).length * 6);
   });
 });
 
@@ -98,6 +100,9 @@ describe("status is judged against the strand, not the school year", () => {
     const { report } = simulate(8, 3);
     const number = report.find((r) => r.strandId === "number")!;
     expect(number.level).toBeLessThan(8);
-    expect(["Developing", "Practicing", "Ready to Learn"]).toContain(number.status);
+    // Status describes accuracy AT the placed level, not distance from the
+    // school year: a student solid at Grade 3 is "Strong" at Grade 3, and the
+    // level itself is what says they are behind.
+    expect(["Strong", "Developing", "Practicing", "Ready to Learn"]).toContain(number.status);
   });
 });
