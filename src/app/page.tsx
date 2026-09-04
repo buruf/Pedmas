@@ -91,31 +91,25 @@ export default function HomePage() {
           {/* The per-strand profile lives in the "adapts to you" section below,
               so the hero shows the student rather than repeating it. */}
           <div className="pop-in">
-            {/* Shown at its native 265×237 rather than stretched: the source is
-                a small crop, and upscaling it would go soft next to crisp text.
-                The wrapper trims the two artifacts the crop carried with it —
-                4px of a violet button bleeding in along the top edge, and a
-                2px white strip down the right. */}
-            {/* Rounded because the source has its own pale background baked in:
-                square edges read as a rectangle pasted onto the gradient. */}
-            <div
-              className="mx-auto overflow-hidden rounded-2xl shadow-sm ring-1 ring-brand-100"
-              style={{ width: 263, height: 233 }}
-            >
-              {/* unoptimized on purpose. The optimiser was upscaling this
-                  265px source to 384px and 640px and re-encoding at q=75 —
-                  lossy compression on top of an upscale, which is most of
-                  why it looked blurry. Served raw it is pixel-exact, and at
-                  62KB there is nothing to gain from optimising it. */}
+            {/* Capped at 360px because the source is 540 wide and a 1.5x
+                display needs 1.5 device pixels per CSS pixel: 360 x 1.5 = 540
+                exactly, so it renders pixel-for-pixel rather than stretched.
+                Below that width it only ever scales DOWN, which stays sharp.
+                Rounded because the artwork has its own pale background baked
+                in — square edges read as a rectangle pasted on the gradient. */}
+            <div className="mx-auto w-full max-w-[360px] overflow-hidden rounded-2xl shadow-sm ring-1 ring-brand-100">
+              {/* unoptimized on purpose: the optimiser was upscaling the source
+                  and re-encoding it at q=75 — lossy compression on top of an
+                  upscale, which is what made it look blurry. Served raw it is
+                  exact, and there is nothing to gain from optimising it. */}
               <Image
                 src="/hero-student.png"
                 alt="A student working through a math problem at a laptop"
-                width={265}
-                height={237}
+                width={540}
+                height={433}
                 priority
                 unoptimized
-                className="block max-w-none"
-                style={{ marginTop: -4 }}
+                className="block h-auto w-full"
               />
             </div>
             <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-brand-100 bg-white px-4 py-3 text-center text-sm text-ink-700 shadow-sm">
